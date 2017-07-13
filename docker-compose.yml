@@ -2,7 +2,7 @@ version: "3.3"
 services:
   postgres:
     image: postgres:10
-  app:
+  project:
     build: .
     image: pg_party
     links:
