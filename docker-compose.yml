@@ -2,10 +2,10 @@ version: "3.3"
 services:
   postgres:
     image: postgres:10
-  project:
+  code:
     build: .
     image: pg_party
     links:
       - postgres
     volumes:
-      - .:/project
+      - .:/code

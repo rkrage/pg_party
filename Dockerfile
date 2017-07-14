@@ -10,8 +10,8 @@ RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main 10" >> /
        postgresql-client-10 \
   && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /project
+RUN mkdir /code
 
-WORKDIR /project
+WORKDIR /code
 
 CMD /bin/sleep infinity

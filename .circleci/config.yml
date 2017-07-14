@@ -5,14 +5,32 @@ jobs:
       - image: tmaier/docker-compose
 
     steps:
-      - setup_remote_docker
-
       - checkout
 
-      - run: docker-compose up -d
+      - setup_remote_docker
 
-      - run: docker cp . repo_project_1:/project
+      - run:
+          name: Prepare and start containers
+          command: |
+            docker-compose up -d
+            docker cp . project_code_1:/code
 
-      - run: bin/de bundle
+      - run:
+          name: Install gems
+          command: bin/de bundle
 
-      - run: bin/de rake
+      - run:
+          name: Run tests
+          command: bin/de rake ci
+
+      - run:
+          name: Attempt to copy test results from container
+          when: always
+          command: |
+            set +e
+            mkdir -p /tmp/results
+            docker cp project_code_1:/code/spec/reports/rspec.xml /tmp/results/rspec.xml
+            /bin/true
+
+      - store_test_results:
+          path: /tmp/results

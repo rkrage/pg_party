@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-docker-compose exec project "$@"
+docker-compose exec code "$@"
