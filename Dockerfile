@@ -14,4 +14,6 @@ RUN mkdir /code
 
 WORKDIR /code
 
+ENV PATH "/code/bin:$PATH"
+
 CMD /bin/sleep infinity

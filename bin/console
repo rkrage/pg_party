@@ -1,7 +1,11 @@
 #!/usr/bin/env ruby
 
-require "bundler/setup"
-require "pg_party"
+ENV["RAILS_ENV"] ||= "development"
 
-require "pry"
+require "bundler/setup"
+require "combustion"
+
+Combustion.initialize! :active_record
+
+require "pry-byebug"
 Pry.start
