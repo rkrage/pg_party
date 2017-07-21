@@ -1,5 +1,7 @@
-require "active_record"
-
 require "pg_party/version"
-require "pg_party/abstract_schema_statements"
-require "pg_party/postgresql_schema_statements"
+require "active_support"
+
+ActiveSupport.on_load(:active_record) do
+  require "pg_party/connection_handling"
+  ActiveRecord::Base.send(:extend, PgParty::ConnectionHandling)
+end

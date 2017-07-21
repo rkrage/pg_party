@@ -1,5 +1,3 @@
-require 'active_record/connection_adapters/abstract_adapter'
-
 module PgParty
   module AbstractSchemaStatements
     def create_master_partition(*args)
@@ -11,5 +9,3 @@ module PgParty
     end
   end
 end
-
-ActiveRecord::ConnectionAdapters::AbstractAdapter.send(:include, PgParty::AbstractSchemaStatements)

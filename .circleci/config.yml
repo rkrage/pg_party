@@ -16,20 +16,23 @@ jobs:
             docker cp . project_code_1:/code
 
       - run:
-          name: Install gems
+          name: Install global gems
           command: bin/de bundle
 
       - run:
+          name: Install appraisal gems
+          command: bin/de appraisal
+
+      - run:
           name: Run tests
-          command: bin/de rake ci
+          command: bin/de appraisal rake ci
 
       - run:
           name: Attempt to copy test results from container
           when: always
           command: |
             set +e
-            mkdir -p /tmp/results
-            docker cp project_code_1:/code/spec/reports/rspec.xml /tmp/results/rspec.xml
+            docker cp project_code_1:/code/spec/results /tmp
             /bin/true
 
       - store_test_results:

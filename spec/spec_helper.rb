@@ -1,7 +1,12 @@
-require "bundler/setup"
-require "pg"
+ENV["RAILS_ENV"] ||= "test"
+
+require "combustion"
+
+Combustion.initialize! :active_record
+
 require "pry-byebug"
-require "pg_party"
+require "rspec/rails"
+require "rspec/its"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

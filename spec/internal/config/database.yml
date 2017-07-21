@@ -1,0 +1,8 @@
+test:
+  database: pg_party_<%= Rails.env %>
+  adapter: postgresql
+  encoding: unicode
+  username: postgres
+  host: postgres
+  port: 5432
+  pool: 5

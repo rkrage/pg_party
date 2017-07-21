@@ -1,5 +1,3 @@
-require 'active_record/connection_adapters/postgresql_adapter'
-
 module PgParty
   module PostgreSQLSchemaStatements
     def create_master_partition(table_name, comment: nil, **options)
@@ -8,7 +6,7 @@ module PgParty
       id_type          = options.fetch(:id, :bigserial).to_sym
       primary_key      = _primary_key_for_partition(options[:primary_key])
 
-      # TODO: do we need to worry about SQL injection here?
+      # TODO: figure out out to avoid SQL injection...
       partition_clause = "PARTITION BY RANGE ((#{range_key}))"
 
       td = create_table_definition(
@@ -49,19 +47,17 @@ module PgParty
       range_key        = options.fetch(:range_key, 'created_at::date')
       child_table_name = "#{parent_table_name}_#{Digest::MD5.hexdigest(start_range.to_s + end_range.to_s)}"
 
-      # TODO: SQL injection?
       partition_clause = <<-SQL
-        PARTITION OF #{parent_table_name}
+        PARTITION OF #{quote_table_name(parent_table_name)}
         FOR VALUES FROM (#{quote(start_range)}) TO (#{quote(end_range)})
       SQL
 
       result = create_table(child_table_name, id: false, options: partition_clause)
 
       if primary_key
-        # TODO: SQL injection?
         execute(<<-SQL)
-          ALTER TABLE #{child_table_name}
-          ADD PRIMARY KEY (#{primary_key})
+          ALTER TABLE #{quote_table_name(child_table_name)}
+          ADD PRIMARY KEY (#{quote_column_name(primary_key)})
         SQL
       end
 
@@ -77,5 +73,3 @@ module PgParty
     end
   end
 end
-
-ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.send(:include, PgParty::PostgreSQLSchemaStatements)

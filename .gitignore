@@ -5,7 +5,7 @@
 /coverage/
 /doc/
 /pkg/
-/spec/reports/
+/spec/results/
 /tmp/
 /.ruby-version
 
