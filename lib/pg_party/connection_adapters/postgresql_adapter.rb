@@ -3,8 +3,8 @@ module PgParty
     module PostgreSQLAdapter
       def create_master_partition(table_name, comment: nil, **options)
         modified_options = options.except(:id, :primary_key, :range_key)
-        range_key        = options.fetch(:range_key, 'created_at::date')
-        id_type          = options.fetch(:id, :bigserial).to_sym
+        range_key        = options.fetch(:range_key, "created_at::date")
+        id_type          = options.fetch(:id, :bigserial)
         primary_key      = _primary_key_for_partition(options[:primary_key])
 
         # TODO: figure out how to avoid SQL injection...
@@ -19,9 +19,8 @@ module PgParty
         )
 
         if id_type == :uuid
-          # figure out how to find this uuid function
-          td.send(id_type, primary_key, null: false, default: 'gen_random_uuid()')
-        else
+          td.send(id_type, primary_key, null: false, default: _uuid_function)
+        elsif id_type
           td.send(id_type, primary_key, null: false)
         end
 
@@ -46,24 +45,24 @@ module PgParty
 
       def create_child_partition(parent_table_name, start_range:, end_range:, **options)
         primary_key      = _primary_key_for_partition(options[:primary_key])
-        range_key        = options.fetch(:range_key, 'created_at::date')
+        range_key        = options.fetch(:range_key, "created_at::date")
         child_table_name = "#{parent_table_name}_#{Digest::MD5.hexdigest(start_range.to_s + end_range.to_s)}"
 
         partition_clause = <<-SQL
-        PARTITION OF #{quote_table_name(parent_table_name)}
-        FOR VALUES FROM (#{quote(start_range)}) TO (#{quote(end_range)})
+          PARTITION OF #{quote_table_name(parent_table_name)}
+          FOR VALUES FROM (#{quote(start_range)}) TO (#{quote(end_range)})
         SQL
 
-        result = create_table(child_table_name, id: false, options: partition_clause)
+        create_table(child_table_name, id: false, options: partition_clause)
 
         if primary_key
           execute(<<-SQL)
-          ALTER TABLE #{quote_table_name(child_table_name)}
-          ADD PRIMARY KEY (#{quote_column_name(primary_key)})
+            ALTER TABLE #{quote_table_name(child_table_name)}
+            ADD PRIMARY KEY (#{quote_column_name(primary_key)})
           SQL
         end
 
-        result
+        child_table_name
       end
 
       def _primary_key_for_partition(primary_key)
@@ -72,6 +71,10 @@ module PgParty
 
         # TODO: better primary key lookup
         primary_key || :id
+      end
+
+      def _uuid_function
+        try(:supports_pgcrypto_uuid?) ? "gen_random_uuid()" : "uuid_generate_v4()"
       end
     end
   end
