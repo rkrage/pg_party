@@ -3,11 +3,15 @@ require "active_support"
 
 ActiveSupport.on_load(:active_record) do
   require "pg_party/connection_handling"
-  require "pg_party/model_helpers"
   require "pg_party/connection_adapters/abstract_adapter"
 
+  require "pg_party/model_methods"
+  require "pg_party/injected_model_methods"
+  require "pg_party/injected_range_model_methods"
+  require "pg_party/injected_list_model_methods"
+
   extend PgParty::ConnectionHandling
-  extend PgParty::ModelHelpers
+  extend PgParty::ModelMethods
 
   ActiveRecord::ConnectionAdapters::AbstractAdapter.class_eval do
     include PgParty::ConnectionAdapters::AbstractAdapter

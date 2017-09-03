@@ -1,10 +1,13 @@
 ENV["RAILS_ENV"] ||= "test"
 
 require "combustion"
+require "timecop"
+require "pry-byebug"
+
+Timecop.travel(Date.current + 12.hours)
 
 Combustion.initialize! :active_record
 
-require "pry-byebug"
 require "rspec/rails"
 require "rspec/its"
 require "database_cleaner"
@@ -31,5 +34,11 @@ RSpec.configure do |config|
     DatabaseCleaner.start
     example.run
     DatabaseCleaner.clean
+  end
+end
+
+RSpec::Matchers.define :be_a_uuid do
+  match do |value|
+    value =~ /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
   end
 end
