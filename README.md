@@ -1,5 +1,11 @@
 # PgParty
 
+[![Gem Version](https://badge.fury.io/rb/pg_party.png)][rubygems]
+[![Build Status](https://circleci.com/gh/rkrage/pg_party.png?&style=shield)][circle]
+
+[rubygems]: https://rubygems.org/gems/pg_party
+[circle]:   https://circleci.com/gh/rkrage/pg_party
+
 Active Record migrations and model helpers for creating and managing PostgreSQL 10 partitions!
 
 ## Installation

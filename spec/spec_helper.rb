@@ -11,6 +11,7 @@ Combustion.initialize! :active_record
 require "rspec/rails"
 require "rspec/its"
 require "database_cleaner"
+require "support/uuid_matcher"
 require "support/pg_dump_helper"
 
 RSpec.configure do |config|
@@ -34,11 +35,5 @@ RSpec.configure do |config|
     DatabaseCleaner.start
     example.run
     DatabaseCleaner.clean
-  end
-end
-
-RSpec::Matchers.define :be_a_uuid do
-  match do |value|
-    value =~ /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
   end
 end
