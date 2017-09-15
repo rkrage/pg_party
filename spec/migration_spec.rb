@@ -776,14 +776,143 @@ RSpec.describe ActiveRecord::ConnectionAdapters::AbstractAdapter do
   end
 
   describe "#attach_range_partition" do
-    # TODO: write tests
+    let(:parent_table_name) { "t_#{SecureRandom.hex(10)}" }
+    let(:child_table_name) { "t_#{SecureRandom.hex(10)}" }
+    let(:keyword_args) do
+      {
+        start_range: 1,
+        end_range: 10
+      }
+    end
+
+    subject(:attach_range_partition) { connection.attach_range_partition(parent_table_name, child_table_name, keyword_args) }
+
+    context "with non-postgres adapter" do
+      before { allow(ActiveRecord::Base).to receive(:connection).and_return(custom_adapter_instance) }
+
+      it "raises not implemented error" do
+        expect { attach_range_partition }.to raise_error(NotImplementedError, "#attach_range_partition is not implemented")
+      end
+    end
+
+    context "with postgres adapter" do
+      let(:create_table_statement) do
+        <<-SQL.squish
+          CREATE TABLE #{child_table_name} PARTITION OF #{parent_table_name}
+          FOR VALUES FROM ('1') TO ('10');
+        SQL
+      end
+
+      before do
+        connection.create_range_partition(parent_table_name, partition_key: :id)
+        connection.execute("CREATE TABLE #{child_table_name} (LIKE #{parent_table_name})")
+      end
+
+      after { connection.execute("DROP TABLE IF EXISTS #{parent_table_name} CASCADE") }
+
+      subject(:sql_dump) do
+        attach_range_partition
+        PgDumpHelper.dump_table_structure(child_table_name)
+      end
+
+      it "generates create table statement" do
+        expect(sql_dump).to include(create_table_statement)
+      end
+    end
   end
 
   describe "#attach_list_partition" do
-    # TODO: write tests
+    let(:parent_table_name) { "t_#{SecureRandom.hex(10)}" }
+    let(:child_table_name) { "t_#{SecureRandom.hex(10)}" }
+    let(:keyword_args) do
+      {
+        values: [1, 2]
+      }
+    end
+
+    subject(:attach_list_partition) { connection.attach_list_partition(parent_table_name, child_table_name, keyword_args) }
+
+    context "with non-postgres adapter" do
+      before { allow(ActiveRecord::Base).to receive(:connection).and_return(custom_adapter_instance) }
+
+      it "raises not implemented error" do
+        expect { attach_list_partition }.to raise_error(NotImplementedError, "#attach_list_partition is not implemented")
+      end
+    end
+
+    context "with postgres adapter" do
+      let(:create_table_statement) do
+        <<-SQL.squish
+          CREATE TABLE #{child_table_name} PARTITION OF #{parent_table_name}
+          FOR VALUES IN ('1', '2');
+        SQL
+      end
+
+      before do
+        connection.create_list_partition(parent_table_name, partition_key: :id)
+        connection.execute("CREATE TABLE #{child_table_name} (LIKE #{parent_table_name})")
+      end
+
+      after { connection.execute("DROP TABLE IF EXISTS #{parent_table_name} CASCADE") }
+
+      subject(:sql_dump) do
+        attach_list_partition
+        PgDumpHelper.dump_table_structure(child_table_name)
+      end
+
+      it "generates create table statement" do
+        expect(sql_dump).to include(create_table_statement)
+      end
+    end
   end
 
   describe "#detach_partition" do
-    # TODO: write tests
+    let(:parent_table_name) { "t_#{SecureRandom.hex(10)}" }
+    let(:child_table_name) { "t_#{SecureRandom.hex(10)}" }
+
+    subject(:detach_partition) { connection.detach_partition(parent_table_name, child_table_name) }
+
+    context "with non-postgres adapter" do
+      before { allow(ActiveRecord::Base).to receive(:connection).and_return(custom_adapter_instance) }
+
+      it "raises not implemented error" do
+        expect { detach_partition }.to raise_error(NotImplementedError, "#detach_partition is not implemented")
+      end
+    end
+
+    context "with postgres adapter" do
+      let(:create_table_statement) do
+        <<-SQL.squish
+          CREATE TABLE #{child_table_name} (
+              id bigint DEFAULT nextval('#{parent_table_name}_id_seq'::regclass) NOT NULL
+          );
+        SQL
+      end
+
+      before do
+        connection.create_list_partition(parent_table_name, partition_key: :id)
+
+        connection.create_list_partition_of(
+          parent_table_name,
+          partition_key: :id,
+          values: [1, 2],
+          name: child_table_name
+        )
+      end
+
+      after do
+        connection.execute("DROP TABLE IF EXISTS #{parent_table_name} CASCADE")
+        connection.execute("DROP TABLE IF EXISTS #{child_table_name} CASCADE")
+      end
+
+      subject(:sql_dump) do
+        detach_partition
+        PgDumpHelper.dump_table_structure(child_table_name)
+      end
+
+      it "generates create table statement" do
+        expect(sql_dump).to include(create_table_statement)
+      end
+    end
   end
 end

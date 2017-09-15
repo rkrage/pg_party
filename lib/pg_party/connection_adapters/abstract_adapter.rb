@@ -17,8 +17,12 @@ module PgParty
         raise NotImplementedError, "#create_list_partition_of is not implemented"
       end
 
-      def attach_partition(*args)
-        raise NotImplementedError, "#attach_partition is not implemented"
+      def attach_range_partition(*args)
+        raise NotImplementedError, "#attach_range_partition is not implemented"
+      end
+
+      def attach_list_partition(*args)
+        raise NotImplementedError, "#attach_list_partition is not implemented"
       end
 
       def detach_partition(*args)

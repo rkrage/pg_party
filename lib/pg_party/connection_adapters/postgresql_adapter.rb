@@ -13,7 +13,7 @@ module PgParty
 
       def create_range_partition_of(table_name, start_range:, end_range:, **options)
         if options[:name]
-          child_table_name = name
+          child_table_name = options[:name]
         else
           child_table_name = hashed_table_name(table_name, "#{start_range}#{end_range}")
         end
@@ -25,7 +25,7 @@ module PgParty
 
       def create_list_partition_of(table_name, values:, **options)
         if options[:name]
-          child_table_name = name
+          child_table_name = options[:name]
         else
           child_table_name = hashed_table_name(table_name, values.to_s)
         end
