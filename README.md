@@ -1,7 +1,7 @@
 # PgParty
 
-[![Gem Version](https://badge.fury.io/rb/pg_party.png)][rubygems]
-[![Build Status](https://circleci.com/gh/rkrage/pg_party.png?&style=shield)][circle]
+[![Gem Version](https://badge.fury.io/rb/pg_party.svg)][rubygems]
+[![Build Status](https://circleci.com/gh/rkrage/pg_party.svg?&style=shield)][circle]
 
 [rubygems]: https://rubygems.org/gems/pg_party
 [circle]:   https://circleci.com/gh/rkrage/pg_party

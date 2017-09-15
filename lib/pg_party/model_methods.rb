@@ -4,6 +4,7 @@ module PgParty
       @partition_key = key
       @partition_column, @partition_cast = key.to_s.split("::")
 
+      require "pg_party/injected_range_model_methods"
       extend InjectedRangeModelMethods
     end
 
@@ -11,6 +12,7 @@ module PgParty
       @partition_key = key
       @partition_column, @partition_cast = key.to_s.split("::")
 
+      require "pg_party/injected_list_model_methods"
       extend InjectedListModelMethods
     end
 

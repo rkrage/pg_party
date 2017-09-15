@@ -1,3 +1,5 @@
+require "pg_party/injected_model_methods"
+
 module PgParty
   module InjectedRangeModelMethods
     include InjectedModelMethods
