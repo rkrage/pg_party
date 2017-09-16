@@ -10,7 +10,7 @@ RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main 10" >> /
        postgresql-client-10 \
   && rm -rf /var/lib/apt/lists/*
 
-RUN gem install bundler
+RUN gem install bundler -v 1.15.2
 
 RUN mkdir /code
 
