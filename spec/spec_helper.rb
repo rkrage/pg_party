@@ -4,6 +4,10 @@ require "combustion"
 require "timecop"
 require "pry-byebug"
 
+# make sure injected modules are required
+require "pg_party/model/range_methods"
+require "pg_party/model/list_methods"
+
 Timecop.travel(Date.current + 12.hours)
 
 Combustion.initialize! :active_record
@@ -12,6 +16,7 @@ require "rspec/rails"
 require "rspec/its"
 require "database_cleaner"
 require "support/uuid_matcher"
+require "support/heredoc_matcher"
 require "support/pg_dump_helper"
 
 RSpec.configure do |config|

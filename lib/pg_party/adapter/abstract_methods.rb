@@ -1,6 +1,6 @@
 module PgParty
-  module ConnectionAdapters
-    module AbstractAdapter
+  module Adapter
+    module AbstractMethods
       def create_range_partition(*)
         raise NotImplementedError, "#create_range_partition is not implemented"
       end
