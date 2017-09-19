@@ -1,39 +1,79 @@
-version: 2.0
+shared_build_steps: &shared_build_steps
+  - checkout
+
+  - run:
+      name: Prepare and start containers
+      command: |
+        docker-compose build --build-arg CONTAINER_RUBY_VERSION=$CONTAINER_RUBY_VERSION code
+        docker-compose up -d
+        docker cp . project_code_1:/code
+
+  - run:
+      name: Install global gems
+      command: bin/de bundle
+
+  - run:
+      name: Install appraisal gems
+      command: bin/de appraisal
+
+  - run:
+      name: Run tests
+      command: bin/de appraisal rake ci
+
+  - run:
+      name: Attempt to copy test results from container
+      when: always
+      command: |
+        set +e
+        docker cp project_code_1:/code/spec/results /tmp
+        /bin/true
+
+  - store_test_results:
+      path: /tmp/results
+
+version: 2
 jobs:
-  build:
-    docker:
-      - image: tmaier/docker-compose
+  build-ruby-2.2.2:
+    machine:
+      image: circleci/classic:edge
 
-    steps:
-      - checkout
+    environment:
+      CONTAINER_RUBY_VERSION: 2.2.2
 
-      - setup_remote_docker
+    steps: *shared_build_steps
 
-      - run:
-          name: Prepare and start containers
-          command: |
-            docker-compose up -d
-            docker cp . project_code_1:/code
+  build-ruby-2.2.7:
+    machine:
+      image: circleci/classic:edge
 
-      - run:
-          name: Install global gems
-          command: bin/de bundle
+    environment:
+      CONTAINER_RUBY_VERSION: 2.2.7
 
-      - run:
-          name: Install appraisal gems
-          command: bin/de appraisal
+    steps: *shared_build_steps
 
-      - run:
-          name: Run tests
-          command: bin/de appraisal rake ci
+  build-ruby-2.3.4:
+    machine:
+      image: circleci/classic:edge
 
-      - run:
-          name: Attempt to copy test results from container
-          when: always
-          command: |
-            set +e
-            docker cp project_code_1:/code/spec/results /tmp
-            /bin/true
+    environment:
+      CONTAINER_RUBY_VERSION: 2.3.4
 
-      - store_test_results:
-          path: /tmp/results
+    steps: *shared_build_steps
+
+  build-ruby-2.4.2:
+    machine:
+      image: circleci/classic:edge
+
+    environment:
+      CONTAINER_RUBY_VERSION: 2.4.2
+
+    steps: *shared_build_steps
+
+workflows:
+  version: 2
+  build_matrix:
+    jobs:
+      - build-ruby-2.2.2
+      - build-ruby-2.2.7
+      - build-ruby-2.3.4
+      - build-ruby-2.4.2

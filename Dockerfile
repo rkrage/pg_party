@@ -1,4 +1,5 @@
-FROM ruby:2.2.2
+ARG CONTAINER_RUBY_VERSION=2.2.2
+FROM ruby:$CONTAINER_RUBY_VERSION
 
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main 10" >> /etc/apt/sources.list.d/pgdg.list \
   && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
