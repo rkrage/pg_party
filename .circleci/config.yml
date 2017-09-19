@@ -6,7 +6,6 @@ shared_build_steps: &shared_build_steps
       command: |
         docker-compose build --build-arg CONTAINER_RUBY_VERSION=$CONTAINER_RUBY_VERSION code
         docker-compose up -d
-        docker cp . project_code_1:/code
 
   - run:
       name: Install global gems
@@ -20,16 +19,8 @@ shared_build_steps: &shared_build_steps
       name: Run tests
       command: bin/de appraisal rake ci
 
-  - run:
-      name: Attempt to copy test results from container
-      when: always
-      command: |
-        set +e
-        docker cp project_code_1:/code/spec/results /tmp
-        /bin/true
-
   - store_test_results:
-      path: /tmp/results
+      path: spec/results
 
 version: 2
 jobs:
