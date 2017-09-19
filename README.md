@@ -2,9 +2,11 @@
 
 [![Gem Version](https://badge.fury.io/rb/pg_party.svg)][rubygems]
 [![Build Status](https://circleci.com/gh/rkrage/pg_party.svg?&style=shield)][circle]
+[![Code Climate](https://codeclimate.com/github/rkrage/pg_party/badges/gpa.svg)][climate]
 
 [rubygems]: https://rubygems.org/gems/pg_party
 [circle]:   https://circleci.com/gh/rkrage/pg_party
+[climate]:  https://codeclimate.com/github/rkrage/pg_party
 
 Active Record migrations and model helpers for creating and managing PostgreSQL 10 partitions!
 
