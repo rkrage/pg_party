@@ -1,6 +1,6 @@
 version: 2.0
 jobs:
-  build:
+  build-ruby-2.2.2:
     docker:
       - image: tmaier/docker-compose
 
@@ -12,6 +12,7 @@ jobs:
       - run:
           name: Prepare and start containers
           command: |
+            docker-compose build --build-arg RUBY_VERSION=2.2.2
             docker-compose up -d
             docker cp . project_code_1:/code
 
@@ -37,3 +38,48 @@ jobs:
 
       - store_test_results:
           path: /tmp/results
+  build-ruby-2.3.4:
+    docker:
+      - image: tmaier/docker-compose
+
+    steps:
+      - checkout
+
+      - setup_remote_docker
+
+      - run:
+          name: Prepare and start containers
+          command: |
+            docker-compose build --build-arg RUBY_VERSION=2.3.4
+            docker-compose up -d
+            docker cp . project_code_1:/code
+
+      - run:
+          name: Install global gems
+          command: bin/de bundle
+
+      - run:
+          name: Install appraisal gems
+          command: bin/de appraisal
+
+      - run:
+          name: Run tests
+          command: bin/de appraisal rake ci
+
+      - run:
+          name: Attempt to copy test results from container
+          when: always
+          command: |
+            set +e
+            docker cp project_code_1:/code/spec/results /tmp
+            /bin/true
+
+      - store_test_results:
+          path: /tmp/results
+
+workflows:
+	version: 2
+  build_matrix:
+    jobs:
+      - build-ruby-2.2.2
+      - build-ruby-2.3.4
