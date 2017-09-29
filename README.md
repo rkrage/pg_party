@@ -8,7 +8,14 @@
 [circle]:   https://circleci.com/gh/rkrage/pg_party
 [climate]:  https://codeclimate.com/github/rkrage/pg_party
 
-Active Record migrations and model helpers for creating and managing PostgreSQL 10 partitions!
+[Active Record](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10 partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
+
+Features:
+  - migration methods for partition specific database operations
+  - model methods for querying partitioned data
+  - model methods for creating adhoc partitions
+
+Note: PostgreSQL 10 is currently in beta. This gem should not be used in production environments (yet).
 
 ## Installation
 
@@ -28,11 +35,176 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Full API documentation is in progress.
+
+In the meantime, take a look at the [Combustion](https://github.com/pat/combustion) schema definition and integration specs:
+  - https://github.com/rkrage/pg_party/blob/master/spec/internal/db/schema.rb
+  - https://github.com/rkrage/pg_party/tree/master/spec/integration
+
+### Migration Examples
+
+Create range partition on `created_at::date` with two child partitions:
+
+```ruby
+class CreateSomeRangeRecord < ActiveRecord::Migration[5.1]
+  def up
+    current_date = Date.current
+
+    create_range_partition :some_range_records, partition_key: "created_at::date" do |t|
+      t.text :some_value
+      t.timestamps
+    end
+
+    create_range_partition_of \
+      :some_range_records,
+      partition_key: "created_at::date",
+      start_range: current_date,
+      end_range: current_date + 1.day
+
+     create_range_partition_of \
+       :some_range_records,
+       partition_key: "created_at::date",
+       start_range: current_date + 1.day,
+       end_range: current_date + 2.days
+  end
+end
+```
+
+Create list partition on `id` with two child partitions:
+
+```ruby
+class CreateSomeListRecord < ActiveRecord::Migration[5.1]
+  def up
+    create_list_partition :some_list_records, partition_key: :id do |t|
+      t.text :some_value
+      t.timestamps
+    end
+
+    create_list_partition_of \
+      :some_list_records,
+      partition_key: :id,
+      values: (1..100).to_a
+
+     create_list_partition_of \
+       :some_list_records,
+       partition_key: :id,
+       values: (100..200).to_a
+  end
+end
+```
+
+Attach an existing table to a range partition:
+
+```ruby
+class AttachRangePartition < ActiveRecord::Migration[5.1]
+  def up
+    attach_range_partition("parent_table", "child_table")
+  end
+end
+```
+
+Attach an existing table to a list partition:
+
+```ruby
+class AttachListPartition < ActiveRecord::Migration[5.1]
+  def up
+    attach_list_partition("parent_table", "child_table")
+  end
+end
+```
+
+Detach a child table from any partition:
+
+```ruby
+class DetachPartition < ActiveRecord::Migration[5.1]
+  def up
+    detach_partition("parent_table", "child_table")
+  end
+end
+```
+
+### Model Examples
+
+Define model that is backed by a range partition:
+
+```ruby
+class SomeRangeRecord < ApplicationRecord
+  range_partition_by "created_at::date"
+end
+ ```
+
+Define model that is backed by a list partition:
+
+```ruby
+class SomeListRecord < ApplicationRecord
+  list_partition_by :id
+end
+```
+
+Create child partition from range partition model:
+
+```ruby
+current_date = Date.current
+
+SomeRangeRecord.create_partition(start_range: current_date + 1.day, end_range: current_date + 2.days)
+```
+
+Create child partition from list partition model:
+
+```ruby
+SomeListRecord.create_partition(values: (200..300).to_a)
+```
+
+Query for records within partition range:
+
+```ruby
+SomeRangeRecord.partition_key_in("2017-01-01".to_date, "2017-02-01".to_date)
+```
+
+Query for records in partition list:
+
+```ruby
+SomeListRecord.partition_key_in(1, 2, 3, 4)
+```
+
+Query for records matching partition key:
+
+```ruby
+SomeRangeRecord.partition_key_eq(Date.current)
+
+SomeListRecord.partition_key_eq(100)
+```
+
+Query for records by partition name:
+
+```ruby
+# returns a collection of anonymous ActiveRecord::Base subclassed instances
+SomeRangeRecord.in_partition("some_range_records_partition_name")
+
+# returns a collection of anonymous ActiveRecord::Base subclassed instances
+SomeListRecord.in_partition("some_list_records_partition_name")
+```
 
 ## Development
 
-TODO: Write development instructions here
+The development / test environment relies heavily on [Docker](https://docs.docker.com).
+
+Start the containers in the background:
+
+    $ docker-compose up -d
+
+Install dependencies:
+
+    $ bin/de bundle
+    $ bin/de appraisal
+
+Run the tests:
+
+    $ bin/de rake
+
+Open a Pry console to play around with the sample Rails app:
+
+    $ bin/de console
 
 ## Contributing
 
