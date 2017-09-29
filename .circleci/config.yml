@@ -1,64 +1,56 @@
-shared_build_steps: &shared_build_steps
-  - checkout
+shared_config: &shared_config
+  machine:
+    image: circleci/classic:edge
 
-  - run:
-      name: Prepare and start containers
-      command: |
-        docker-compose build --build-arg CONTAINER_RUBY_VERSION=$CONTAINER_RUBY_VERSION code
-        docker-compose up -d
+  steps:
+    - checkout
 
-  - run:
-      name: Install global gems
-      command: bin/de bundle
+    - run:
+        name: Prepare and start containers
+        command: |
+          docker-compose build --build-arg CONTAINER_RUBY_VERSION=$CONTAINER_RUBY_VERSION code
+          docker-compose up -d
 
-  - run:
-      name: Install appraisal gems
-      command: bin/de appraisal
+    - run:
+        name: Install global gems
+        command: bin/de bundle
 
-  - run:
-      name: Run tests
-      command: bin/de appraisal rake ci
+    - run:
+        name: Install appraisal gems
+        command: bin/de appraisal
 
-  - store_test_results:
-      path: spec/results
+    - run:
+        name: Run tests
+        command: bin/de appraisal rake ci
+
+    - store_test_results:
+        path: spec/results
 
 version: 2
 jobs:
   build-ruby-2.2.2:
-    machine:
-      image: circleci/classic:edge
+    <<: *shared_config
 
     environment:
       CONTAINER_RUBY_VERSION: 2.2.2
 
-    steps: *shared_build_steps
-
   build-ruby-2.2.7:
-    machine:
-      image: circleci/classic:edge
+    <<: *shared_config
 
     environment:
       CONTAINER_RUBY_VERSION: 2.2.7
 
-    steps: *shared_build_steps
-
   build-ruby-2.3.4:
-    machine:
-      image: circleci/classic:edge
+    <<: *shared_config
 
     environment:
       CONTAINER_RUBY_VERSION: 2.3.4
 
-    steps: *shared_build_steps
-
   build-ruby-2.4.2:
-    machine:
-      image: circleci/classic:edge
+    <<: *shared_config
 
     environment:
       CONTAINER_RUBY_VERSION: 2.4.2
-
-    steps: *shared_build_steps
 
 workflows:
   version: 2
