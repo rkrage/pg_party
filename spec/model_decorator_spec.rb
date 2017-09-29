@@ -31,9 +31,20 @@ RSpec.describe PgParty::ModelDecorator do
     allow(arel_node).to receive(:lt).and_return(arel_node)
     allow(arel_node).to receive(:and).and_return(arel_node)
     allow(arel_node).to receive(:in).and_return(arel_node)
+
+    allow(ActiveRecord::Base).to receive(:all)
   end
 
   subject(:decorator) { described_class.new(model) }
+
+  describe "#in_partition" do
+    subject { decorator.in_partition("child") }
+
+    it "calls all on anonymous model" do
+      expect(ActiveRecord::Base).to receive(:all)
+      subject
+    end
+  end
 
   describe "#partition_key_eq" do
     subject { decorator.partition_key_eq(1) }

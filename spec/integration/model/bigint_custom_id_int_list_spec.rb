@@ -43,6 +43,26 @@ RSpec.describe BigintCustomIdIntList do
     end
   end
 
+  describe ".in_partition" do
+    let(:child_table_name) { "#{described_class.table_name}_a" }
+
+    let!(:record_one) { described_class.create(some_int: 1) }
+    let!(:record_two) { described_class.create(some_int: 2) }
+    let!(:record_three) { described_class.create(some_int: 4) }
+
+    subject { described_class.in_partition(child_table_name) }
+
+    context "when not chaining methods" do
+      it { is_expected.to contain_exactly(kind_of(described_class), kind_of(described_class)) }
+    end
+
+    context "when chaining methods" do
+      subject { described_class.in_partition(child_table_name).where(some_id: record_one.some_id) }
+
+      it { is_expected.to contain_exactly(kind_of(described_class)) }
+    end
+  end
+
   describe ".partition_key_in" do
     let(:values) { [1, 2] }
 

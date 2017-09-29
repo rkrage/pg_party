@@ -1,5 +1,9 @@
 module PgParty
   class ModelDecorator < SimpleDelegator
+    def in_partition(table_name)
+      child_class(table_name).all
+    end
+
     def partition_key_eq(value)
       where(partition_key_as_arel.eq(value))
     end
@@ -36,6 +40,12 @@ module PgParty
     end
 
     private
+
+    def child_class(table_name)
+      Class.new(__getobj__) do
+        self.table_name = table_name
+      end
+    end
 
     def partition_key_as_arel
       arel_column = arel_table[partition_column]

@@ -46,6 +46,26 @@ RSpec.describe BigintDateRange do
     end
   end
 
+  describe ".in_partition" do
+    let(:child_table_name) { "#{described_class.table_name}_a" }
+
+    let!(:record_one) { described_class.create(created_at: current_time) }
+    let!(:record_two) { described_class.create(created_at: current_time + 1.minute) }
+    let!(:record_three) { described_class.create(created_at: current_time + 1.day) }
+
+    subject { described_class.in_partition(child_table_name) }
+
+    context "when not chaining methods" do
+      it { is_expected.to contain_exactly(kind_of(described_class), kind_of(described_class)) }
+    end
+
+    context "when chaining methods" do
+      subject { described_class.in_partition(child_table_name).where(id: record_one.id) }
+
+      it { is_expected.to contain_exactly(kind_of(described_class)) }
+    end
+  end
+
   describe ".partition_key_in" do
     let(:start_range) { current_date }
     let(:end_range) { current_date + 1.day }

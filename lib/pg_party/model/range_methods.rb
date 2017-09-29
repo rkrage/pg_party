@@ -7,6 +7,10 @@ module PgParty
         PgParty::ModelDecorator.new(self).create_range_partition(*args)
       end
 
+      def in_partition(*args)
+        PgParty::ModelDecorator.new(self).in_partition(*args)
+      end
+
       def partition_key_in(*args)
         PgParty::ModelDecorator.new(self).range_partition_key_in(*args)
       end

@@ -21,8 +21,28 @@ RSpec.describe BigintBooleanList do
 
     context "when values overlap" do
       it "raises error" do
-        expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::DuplicateTable/)
+        expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
       end
+    end
+  end
+
+  describe ".in_partition" do
+    let(:child_table_name) { "#{described_class.table_name}_a" }
+
+    let!(:record_one) { described_class.create(some_bool: true) }
+    let!(:record_two) { described_class.create(some_bool: true) }
+    let!(:record_three) { described_class.create(some_bool: false) }
+
+    subject { described_class.in_partition(child_table_name) }
+
+    context "when not chaining methods" do
+      it { is_expected.to contain_exactly(kind_of(described_class), kind_of(described_class)) }
+    end
+
+    context "when chaining methods" do
+      subject { described_class.in_partition(child_table_name).where(id: record_one.id) }
+
+      it { is_expected.to contain_exactly(kind_of(described_class)) }
     end
   end
 
