@@ -54,13 +54,13 @@ RSpec.describe BigintBooleanList do
     end
   end
 
-  describe ".partition_key_matching" do
+  describe ".partition_key_eq" do
     let(:partition_key) { true }
 
     let!(:record_one) { described_class.create(some_bool: true) }
     let!(:record_two) { described_class.create(some_bool: false) }
 
-    subject { described_class.partition_key_matching(partition_key) }
+    subject { described_class.partition_key_eq(partition_key) }
 
     context "when partition key in first partition" do
       it { is_expected.to contain_exactly(record_one) }
