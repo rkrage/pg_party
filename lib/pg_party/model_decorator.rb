@@ -53,7 +53,7 @@ module PgParty
 
     def get_partitions
       connection.select_values(<<-SQL)
-        SELECT pg_inherits.inhrelid::regclass
+        SELECT pg_inherits.inhrelid::regclass::text
         FROM pg_tables
         INNER JOIN pg_inherits
           ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass

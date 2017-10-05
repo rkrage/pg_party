@@ -15,8 +15,6 @@ Features:
   - model methods for querying partitioned data
   - model methods for creating adhoc partitions
 
-Note: PostgreSQL 10 is currently in beta. This gem should not be used in production environments (yet).
-
 ## Installation
 
 Add this line to your application's Gemfile:
