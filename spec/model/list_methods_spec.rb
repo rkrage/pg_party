@@ -49,6 +49,21 @@ RSpec.describe PgParty::Model::ListMethods do
     end
   end
 
+  describe ".cached_partitions" do
+    subject { model.cached_partitions }
+
+    it { is_expected.to be_nil }
+  end
+
+  describe ".partitions" do
+    subject { model.partitions }
+
+    it "delegates to decorator" do
+      expect(decorator).to receive(:partitions)
+      subject
+    end
+  end
+
   describe ".create_partition" do
     let(:args) do
       {

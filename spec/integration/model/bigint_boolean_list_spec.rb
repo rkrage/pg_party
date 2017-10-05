@@ -2,6 +2,7 @@ require "spec_helper"
 
 RSpec.describe BigintBooleanList do
   let(:connection) { described_class.connection }
+  let(:table_name) { described_class.table_name }
 
   describe ".create" do
     let(:some_bool) { true }
@@ -12,6 +13,12 @@ RSpec.describe BigintBooleanList do
       its(:id) { is_expected.to be_an(Integer) }
       its(:some_bool) { is_expected.to eq(some_bool) }
     end
+  end
+
+  describe ".partitions" do
+    subject { described_class.partitions }
+
+    it { is_expected.to contain_exactly("#{table_name}_a", "#{table_name}_b") }
   end
 
   describe ".create_partition" do
@@ -27,7 +34,7 @@ RSpec.describe BigintBooleanList do
   end
 
   describe ".in_partition" do
-    let(:child_table_name) { "#{described_class.table_name}_a" }
+    let(:child_table_name) { "#{table_name}_a" }
 
     let!(:record_one) { described_class.create(some_bool: true) }
     let!(:record_two) { described_class.create(some_bool: true) }

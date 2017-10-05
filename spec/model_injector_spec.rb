@@ -27,6 +27,7 @@ RSpec.describe PgParty::ModelInjector do
       its(:partition_key) { is_expected.to eq("created_at::date") }
       its(:partition_column) { is_expected.to eq("created_at") }
       its(:partition_cast) { is_expected.to eq("date") }
+      its(:cached_partitions) { is_expected.to be_nil }
     end
   end
 
@@ -47,6 +48,7 @@ RSpec.describe PgParty::ModelInjector do
       its(:partition_key) { is_expected.to eq("created_at::date") }
       its(:partition_column) { is_expected.to eq("created_at") }
       its(:partition_cast) { is_expected.to eq("date") }
+      its(:cached_partitions) { is_expected.to be_nil }
     end
   end
 end

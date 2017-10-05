@@ -2,6 +2,7 @@ require "spec_helper"
 
 RSpec.describe BigintCustomIdIntRange do
   let(:connection) { described_class.connection }
+  let(:table_name) { described_class.table_name }
 
   describe ".create" do
     let(:some_int) { 5 }
@@ -22,17 +23,40 @@ RSpec.describe BigintCustomIdIntRange do
     end
   end
 
+  describe ".partitions" do
+    subject { described_class.partitions }
+
+    it { is_expected.to contain_exactly("#{table_name}_a", "#{table_name}_b") }
+  end
+
   describe ".create_partition" do
     let(:start_range) { 20 }
     let(:end_range) { 30 }
-    let(:child_table_name) { subject }
+    let(:child_table_name) { "#{table_name}_c" }
 
-    subject { described_class.create_partition(start_range: start_range, end_range: end_range) }
+    subject do
+      described_class.create_partition(
+        start_range: start_range,
+        end_range: end_range,
+        name: child_table_name
+      )
+    end
 
     context "when ranges do not overlap" do
+      before { described_class.partitions }
       after { connection.drop_table(child_table_name) }
 
-      it { is_expected.to include("bigint_custom_id_int_ranges_") }
+      it { is_expected.to eq(child_table_name) }
+
+      it "resets partition list" do
+        subject
+
+        expect(described_class.partitions).to contain_exactly(
+          "#{table_name}_a",
+          "#{table_name}_b",
+          "#{table_name}_c"
+        )
+      end
     end
 
     context "when ranges overlap" do

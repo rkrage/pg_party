@@ -4,6 +4,7 @@ RSpec.describe BigintDateRange do
   let(:current_date) { Date.current }
   let(:current_time) { Time.current }
   let(:connection) { described_class.connection }
+  let(:table_name) { described_class.table_name }
 
   describe ".create" do
     let(:created_at) { current_time }
@@ -24,17 +25,40 @@ RSpec.describe BigintDateRange do
     end
   end
 
+  describe ".partitions" do
+    subject { described_class.partitions }
+
+    it { is_expected.to contain_exactly("#{table_name}_a", "#{table_name}_b") }
+  end
+
   describe ".create_partition" do
     let(:start_range) { current_date + 2.days }
     let(:end_range) { current_date + 3.days }
-    let(:child_table_name) { subject }
+    let(:child_table_name) { "#{table_name}_c" }
 
-    subject { described_class.create_partition(start_range: start_range, end_range: end_range) }
+    subject do
+      described_class.create_partition(
+        start_range: start_range,
+        end_range: end_range,
+        name: child_table_name
+      )
+    end
 
     context "when ranges do not overlap" do
+      before { described_class.partitions }
       after { connection.drop_table(child_table_name) }
 
-      it { is_expected.to include("bigint_date_ranges_") }
+      it { is_expected.to eq(child_table_name) }
+
+      it "resets partition list" do
+        subject
+
+        expect(described_class.partitions).to contain_exactly(
+          "#{table_name}_a",
+          "#{table_name}_b",
+          "#{table_name}_c"
+        )
+      end
     end
 
     context "when ranges overlap" do
