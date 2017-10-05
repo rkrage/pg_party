@@ -2,6 +2,7 @@ require "spec_helper"
 
 RSpec.describe PgParty::ModelDecorator do
   let(:table_name) { :parent }
+  let(:partitions) { ["a", "b"] }
   let(:primary_key) { :id }
   let(:partition_key) { :id }
   let(:arel_node) { double }
@@ -9,19 +10,28 @@ RSpec.describe PgParty::ModelDecorator do
 
   let(:model) do
     Class.new(ActiveRecord::Base) do
-      attr_reader :partition_key
+      class_attribute \
+        :partition_key,
+        :partition_column,
+        :partition_cast,
+        :cached_partitions,
+        instance_accessor: false
     end
   end
 
   before do
-    allow(model).to receive(:partition_key).and_return(partition_key)
-    allow(model).to receive(:primary_key).and_return(primary_key)
-    allow(model).to receive(:table_name).and_return(table_name)
+    model.partition_key = partition_key
+    model.primary_key = primary_key
+    model.table_name = table_name
+    model.cached_partitions = partitions
+
     allow(model).to receive(:where)
     allow(model).to receive(:connection).and_return(adapter)
 
     allow(adapter).to receive(:create_range_partition_of)
     allow(adapter).to receive(:create_list_partition_of)
+    allow(adapter).to receive(:select_values).and_return(partitions)
+    allow(adapter).to receive(:quote) { |value| "'#{value}'" }
 
     # stubbing arel is complex, so this is tested in the integration specs
     allow(decorator).to receive(:partition_key_as_arel).and_return(arel_node)
@@ -114,20 +124,55 @@ RSpec.describe PgParty::ModelDecorator do
     end
   end
 
+  describe "#partitions" do
+    subject { decorator.partitions }
+
+    context "when cached_partitions nil" do
+      before { model.cached_partitions = nil }
+
+      it { is_expected.to eq(partitions) }
+
+      it "calls select_values on adapter" do
+        expect(adapter).to receive(:select_values).with(/'#{table_name}'/)
+        subject
+      end
+
+      it "sets cached_partitions" do
+        subject
+        expect(model.cached_partitions).to eq(partitions)
+      end
+
+    end
+
+    context "when cached_partitions present" do
+      it { is_expected.to eq(partitions) }
+
+      it "does not call select_values on adapter" do
+        expect(adapter).to_not receive(:select_values)
+        subject
+      end
+    end
+  end
+
   describe "#create_range_partition" do
     subject { decorator.create_range_partition(start_range: 1, end_range: 10, name: :child) }
 
     it "calls create_range_partition on adapter" do
       expect(adapter).to receive(:create_range_partition_of).with(
-        table_name,
+        table_name.to_s,
         start_range: 1,
         end_range: 10,
-        primary_key: primary_key,
+        primary_key: primary_key.to_s,
         partition_key: partition_key,
         name: :child
       )
 
       subject
+    end
+
+    it "resets cached_partitions" do
+      subject
+      expect(model.cached_partitions).to be_nil
     end
   end
 
@@ -136,14 +181,19 @@ RSpec.describe PgParty::ModelDecorator do
 
     it "calls create_range_partition on adapter" do
       expect(adapter).to receive(:create_list_partition_of).with(
-        table_name,
+        table_name.to_s,
         values: [1, 2, 3],
-        primary_key: primary_key,
+        primary_key: primary_key.to_s,
         partition_key: partition_key,
         name: :child
       )
 
       subject
+    end
+
+    it "resets cached_partitions" do
+      subject
+      expect(model.cached_partitions).to be_nil
     end
   end
 end

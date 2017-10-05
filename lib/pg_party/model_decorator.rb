@@ -18,6 +18,12 @@ module PgParty
       where(partition_key_as_arel.in(values.flatten))
     end
 
+    def partitions
+      return cached_partitions if cached_partitions
+
+      self.cached_partitions = get_partitions
+    end
+
     def create_range_partition(start_range:, end_range:, **options)
       modified_options = options.merge(
         start_range: start_range,
@@ -26,7 +32,9 @@ module PgParty
         partition_key: partition_key
       )
 
-      connection.create_range_partition_of(table_name, **modified_options)
+      connection.create_range_partition_of(table_name, **modified_options).tap do
+        self.cached_partitions = nil
+      end
     end
 
     def create_list_partition(values:, **options)
@@ -36,10 +44,22 @@ module PgParty
         partition_key: partition_key
       )
 
-      connection.create_list_partition_of(table_name, **modified_options)
+      connection.create_list_partition_of(table_name, **modified_options).tap do
+        self.cached_partitions = nil
+      end
     end
 
     private
+
+    def get_partitions
+      connection.select_values(<<-SQL)
+        SELECT pg_inherits.inhrelid::regclass
+        FROM pg_tables
+        INNER JOIN pg_inherits
+          ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
+        WHERE pg_tables.tablename = #{connection.quote(table_name)}
+      SQL
+    end
 
     def child_class(table_name)
       Class.new(__getobj__) do

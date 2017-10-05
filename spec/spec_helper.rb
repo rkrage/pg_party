@@ -26,6 +26,10 @@ RSpec.configure do |config|
   # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
 
+  config.mock_with :rspec do |c|
+    c.verify_partial_doubles = true
+  end
+
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end

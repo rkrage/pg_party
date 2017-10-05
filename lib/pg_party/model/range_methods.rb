@@ -3,6 +3,10 @@ require "pg_party/model_decorator"
 module PgParty
   module Model
     module RangeMethods
+      def partitions
+        PgParty::ModelDecorator.new(self).partitions
+      end
+
       def create_partition(*args)
         PgParty::ModelDecorator.new(self).create_range_partition(*args)
       end

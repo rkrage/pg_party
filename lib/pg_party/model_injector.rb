@@ -25,6 +25,7 @@ module PgParty
 
     def create_class_attributes
       @model.class_attribute(
+        :cached_partitions,
         :partition_key,
         :partition_column,
         :partition_cast,

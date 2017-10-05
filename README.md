@@ -8,7 +8,7 @@
 [circle]:   https://circleci.com/gh/rkrage/pg_party
 [climate]:  https://codeclimate.com/github/rkrage/pg_party
 
-[Active Record](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10 partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
+[ActiveRecord](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10 partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
 
 Features:
   - migration methods for partition specific database operations
@@ -98,7 +98,7 @@ Attach an existing table to a range partition:
 ```ruby
 class AttachRangePartition < ActiveRecord::Migration[5.1]
   def up
-    attach_range_partition("parent_table", "child_table")
+    attach_range_partition(:parent_table, :child_table)
   end
 end
 ```
@@ -108,7 +108,7 @@ Attach an existing table to a list partition:
 ```ruby
 class AttachListPartition < ActiveRecord::Migration[5.1]
   def up
-    attach_list_partition("parent_table", "child_table")
+    attach_list_partition(:parent_table, :child_table)
   end
 end
 ```
@@ -118,7 +118,7 @@ Detach a child table from any partition:
 ```ruby
 class DetachPartition < ActiveRecord::Migration[5.1]
   def up
-    detach_partition("parent_table", "child_table")
+    detach_partition(:parent_table, :child_table)
   end
 end
 ```
@@ -179,10 +179,10 @@ Query for records by partition name:
 
 ```ruby
 # returns a collection of anonymous ActiveRecord::Base subclassed instances
-SomeRangeRecord.in_partition("some_range_records_partition_name")
+SomeRangeRecord.in_partition(:some_range_records_partition_name)
 
 # returns a collection of anonymous ActiveRecord::Base subclassed instances
-SomeListRecord.in_partition("some_list_records_partition_name")
+SomeListRecord.in_partition(:some_list_records_partition_name)
 ```
 
 ## Development
@@ -200,7 +200,7 @@ Install dependencies:
 
 Run the tests:
 
-    $ bin/de rake
+    $ bin/de appraisal rake
 
 Open a Pry console to play around with the sample Rails app:
 
