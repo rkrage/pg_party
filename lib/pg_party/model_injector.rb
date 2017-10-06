@@ -8,23 +8,29 @@ module PgParty
     end
 
     def inject_range_methods
-      create_class_attributes
-
       require "pg_party/model/range_methods"
-      @model.extend(PgParty::Model::RangeMethods)
+      inject_methods_for(PgParty::Model::RangeMethods)
     end
 
     def inject_list_methods
-      create_class_attributes
-
       require "pg_party/model/list_methods"
-      @model.extend(PgParty::Model::ListMethods)
+      inject_methods_for(PgParty::Model::ListMethods)
     end
 
     private
 
+    def inject_methods_for(mod)
+      require "pg_party/model/shared_methods"
+
+      @model.extend(PgParty::Model::SharedMethods)
+      @model.extend(mod)
+
+      create_class_attributes
+    end
+
     def create_class_attributes
       @model.class_attribute(
+        :cached_partitions,
         :partition_key,
         :partition_column,
         :partition_cast,

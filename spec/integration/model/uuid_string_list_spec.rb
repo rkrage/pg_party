@@ -2,6 +2,7 @@ require "spec_helper"
 
 RSpec.describe UuidStringList do
   let(:connection) { described_class.connection }
+  let(:table_name) { described_class.table_name }
 
   describe ".create" do
     let(:some_string) { "a" }
@@ -22,16 +23,33 @@ RSpec.describe UuidStringList do
     end
   end
 
+  describe ".partitions" do
+    subject { described_class.partitions }
+
+    it { is_expected.to contain_exactly("#{table_name}_a", "#{table_name}_b") }
+  end
+
   describe ".create_partition" do
     let(:values) { ["e", "f"] }
-    let(:child_table_name) { subject }
+    let(:child_table_name) { "#{table_name}_c" }
 
-    subject { described_class.create_partition(values: values) }
+    subject { described_class.create_partition(values: values, name: child_table_name) }
 
     context "when values do not overlap" do
+      before { described_class.partitions }
       after { connection.drop_table(child_table_name) }
 
-      it { is_expected.to include("uuid_string_lists_") }
+      it { is_expected.to eq(child_table_name) }
+
+      it "resets partition list" do
+        subject
+
+        expect(described_class.partitions).to contain_exactly(
+          "#{table_name}_a",
+          "#{table_name}_b",
+          "#{table_name}_c"
+        )
+      end
     end
 
     context "when values overlap" do
