@@ -1,26 +1,17 @@
 require "pg_party/model_decorator"
+require "pg_party/model/shared_methods"
 
 module PgParty
   module Model
     module RangeMethods
-      def partitions
-        PgParty::ModelDecorator.new(self).partitions
-      end
+      include SharedMethods
 
       def create_partition(*args)
         PgParty::ModelDecorator.new(self).create_range_partition(*args)
       end
 
-      def in_partition(*args)
-        PgParty::ModelDecorator.new(self).in_partition(*args)
-      end
-
       def partition_key_in(*args)
         PgParty::ModelDecorator.new(self).range_partition_key_in(*args)
-      end
-
-      def partition_key_eq(*args)
-        PgParty::ModelDecorator.new(self).partition_key_eq(*args)
       end
     end
   end
