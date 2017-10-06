@@ -41,7 +41,7 @@ RSpec.describe BigintCustomIdIntList do
 
       it { is_expected.to eq(child_table_name) }
 
-      it "resets partition list" do
+      it "adds to partition list" do
         subject
 
         expect(described_class.partitions).to contain_exactly(

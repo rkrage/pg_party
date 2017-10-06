@@ -14,7 +14,6 @@ RSpec.describe PgParty::ModelDecorator do
         :partition_key,
         :partition_column,
         :partition_cast,
-        :cached_partitions,
         instance_accessor: false
     end
   end
@@ -23,7 +22,6 @@ RSpec.describe PgParty::ModelDecorator do
     model.partition_key = partition_key
     model.primary_key = primary_key
     model.table_name = table_name
-    model.cached_partitions = partitions
 
     allow(model).to receive(:where)
     allow(model).to receive(:connection).and_return(adapter)
@@ -127,30 +125,11 @@ RSpec.describe PgParty::ModelDecorator do
   describe "#partitions" do
     subject { decorator.partitions }
 
-    context "when cached_partitions nil" do
-      before { model.cached_partitions = nil }
+    it { is_expected.to eq(partitions) }
 
-      it { is_expected.to eq(partitions) }
-
-      it "calls select_values on adapter" do
-        expect(adapter).to receive(:select_values).with(/'#{table_name}'/)
-        subject
-      end
-
-      it "sets cached_partitions" do
-        subject
-        expect(model.cached_partitions).to eq(partitions)
-      end
-
-    end
-
-    context "when cached_partitions present" do
-      it { is_expected.to eq(partitions) }
-
-      it "does not call select_values on adapter" do
-        expect(adapter).to_not receive(:select_values)
-        subject
-      end
+    it "calls select_values on adapter" do
+      expect(adapter).to receive(:select_values).with(/'#{table_name}'/)
+      subject
     end
   end
 
@@ -169,11 +148,6 @@ RSpec.describe PgParty::ModelDecorator do
 
       subject
     end
-
-    it "resets cached_partitions" do
-      subject
-      expect(model.cached_partitions).to be_nil
-    end
   end
 
   describe "#create_list_partition" do
@@ -189,11 +163,6 @@ RSpec.describe PgParty::ModelDecorator do
       )
 
       subject
-    end
-
-    it "resets cached_partitions" do
-      subject
-      expect(model.cached_partitions).to be_nil
     end
   end
 end

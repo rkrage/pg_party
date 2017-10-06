@@ -19,9 +19,13 @@ module PgParty
     end
 
     def partitions
-      return cached_partitions if cached_partitions
-
-      self.cached_partitions = get_partitions
+      connection.select_values(<<-SQL)
+        SELECT pg_inherits.inhrelid::regclass::text
+        FROM pg_tables
+        INNER JOIN pg_inherits
+          ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
+        WHERE pg_tables.tablename = #{connection.quote(table_name)}
+      SQL
     end
 
     def create_range_partition(start_range:, end_range:, **options)
@@ -32,9 +36,7 @@ module PgParty
         partition_key: partition_key
       )
 
-      connection.create_range_partition_of(table_name, **modified_options).tap do
-        self.cached_partitions = nil
-      end
+      connection.create_range_partition_of(table_name, **modified_options)
     end
 
     def create_list_partition(values:, **options)
@@ -44,22 +46,10 @@ module PgParty
         partition_key: partition_key
       )
 
-      connection.create_list_partition_of(table_name, **modified_options).tap do
-        self.cached_partitions = nil
-      end
+      connection.create_list_partition_of(table_name, **modified_options)
     end
 
     private
-
-    def get_partitions
-      connection.select_values(<<-SQL)
-        SELECT pg_inherits.inhrelid::regclass::text
-        FROM pg_tables
-        INNER JOIN pg_inherits
-          ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
-        WHERE pg_tables.tablename = #{connection.quote(table_name)}
-      SQL
-    end
 
     def child_class(table_name)
       Class.new(__getobj__) do

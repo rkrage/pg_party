@@ -9,11 +9,13 @@ module PgParty
 
     def inject_range_methods
       require "pg_party/model/range_methods"
+
       inject_methods_for(PgParty::Model::RangeMethods)
     end
 
     def inject_list_methods
       require "pg_party/model/list_methods"
+
       inject_methods_for(PgParty::Model::ListMethods)
     end
 
@@ -30,7 +32,6 @@ module PgParty
 
     def create_class_attributes
       @model.class_attribute(
-        :cached_partitions,
         :partition_key,
         :partition_column,
         :partition_cast,

@@ -173,6 +173,14 @@ SomeRangeRecord.partition_key_eq(Date.current)
 SomeListRecord.partition_key_eq(100)
 ```
 
+List currently attached partitions:
+
+```ruby
+SomeRangeRecord.partitions
+
+SomeListRecord.partitions
+```
+
 Query for records by partition name:
 
 ```ruby
