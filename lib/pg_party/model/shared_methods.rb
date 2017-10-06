@@ -1,3 +1,5 @@
+require "pg_party/model_decorator"
+
 module PgParty
   module Model
     module SharedMethods
