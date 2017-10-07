@@ -188,10 +188,8 @@ SomeListRecord.partitions
 Query for records by partition name:
 
 ```ruby
-# returns a collection of anonymous ActiveRecord::Base subclassed instances
 SomeRangeRecord.in_partition(:some_range_records_partition_name)
 
-# returns a collection of anonymous ActiveRecord::Base subclassed instances
 SomeListRecord.in_partition(:some_list_records_partition_name)
 ```
 

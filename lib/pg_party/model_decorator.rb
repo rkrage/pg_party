@@ -54,6 +54,18 @@ module PgParty
     def child_class(table_name)
       Class.new(__getobj__) do
         self.table_name = table_name
+
+        # when returning records from a query, Rails
+        # allocates objects first, then initializes
+        def self.allocate
+          superclass.allocate
+        end
+
+        # not sure if this will ever get called,
+        # but probably a good idea to have
+        def self.new(*args, &blk)
+          superclass.new(*args, &blk)
+        end
       end
     end
 

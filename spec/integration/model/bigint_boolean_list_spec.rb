@@ -43,13 +43,13 @@ RSpec.describe BigintBooleanList do
     subject { described_class.in_partition(child_table_name) }
 
     context "when not chaining methods" do
-      it { is_expected.to contain_exactly(kind_of(described_class), kind_of(described_class)) }
+      it { is_expected.to contain_exactly(record_one, record_two) }
     end
 
     context "when chaining methods" do
       subject { described_class.in_partition(child_table_name).where(id: record_one.id) }
 
-      it { is_expected.to contain_exactly(kind_of(described_class)) }
+      it { is_expected.to contain_exactly(record_one) }
     end
   end
 
