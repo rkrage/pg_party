@@ -11,9 +11,13 @@
 [ActiveRecord](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10 partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
 
 Features:
-  - migration methods for partition specific database operations
-  - model methods for querying partitioned data
-  - model methods for creating adhoc partitions
+  - Migration methods for partition specific database operations
+  - Model methods for querying partitioned data
+  - Model methods for creating adhoc partitions
+
+Limitations:
+  - Partition tables are not represented correctly in `db/schema.rb` — please use the `:sql` schema format
+  - Only single column partition keys supported (e.g., `column`, `column::cast`)
 
 ## Installation
 
