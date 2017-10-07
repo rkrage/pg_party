@@ -22,6 +22,17 @@ RSpec.describe PgParty::Model::SharedMethods do
     end
   end
 
+  describe ".in_partition" do
+    let(:partition) { "partition" }
+
+    subject { model.in_partition(partition) }
+
+    it "delegates to decorator" do
+      expect(decorator).to receive(:in_partition).with(partition)
+      subject
+    end
+  end
+
   describe ".partition_key_eq" do
     let(:value) { Date.current }
 
