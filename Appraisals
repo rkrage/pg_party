@@ -1,7 +1,7 @@
 appraise "ar-5.0" do
-  gem "activerecord", "~> 5.0.3"
+  gem "rails", "~> 5.0.0"
 end
 
 appraise "ar-5.1" do
-  gem "rails", "5.1.1"
+  gem "rails", "~> 5.1.0"
 end
