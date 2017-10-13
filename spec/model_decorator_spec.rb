@@ -1,12 +1,16 @@
 require "spec_helper"
 
 RSpec.describe PgParty::ModelDecorator do
-  let(:table_name) { :parent }
+  let(:table_name) { "parent" }
+  let(:model_name) { "foo" }
   let(:partitions) { ["a", "b"] }
   let(:primary_key) { :id }
   let(:partition_key) { :id }
   let(:arel_node) { double }
   let(:adapter) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) }
+  let(:schema_cache) { instance_double(ActiveRecord::ConnectionAdapters::SchemaCache) }
+  let(:child_class) { class_double(ActiveRecord::Base) }
+  let(:base_class) { model }
 
   let(:model) do
     Class.new(ActiveRecord::Base) do
@@ -20,19 +24,26 @@ RSpec.describe PgParty::ModelDecorator do
 
   before do
     model.partition_key = partition_key
-    model.primary_key = primary_key
     model.table_name = table_name
+    model.primary_key = primary_key
 
     allow(model).to receive(:where)
     allow(model).to receive(:connection).and_return(adapter)
+    allow(model).to receive(:get_primary_key)
+    allow(model).to receive(:base_class).and_return(base_class)
+    allow(model).to receive(:name).and_return(model_name)
 
     allow(adapter).to receive(:create_range_partition_of)
     allow(adapter).to receive(:create_list_partition_of)
     allow(adapter).to receive(:select_values).and_return(partitions)
     allow(adapter).to receive(:quote) { |value| "'#{value}'" }
+    allow(adapter).to receive(:schema_cache).and_return(schema_cache)
+
+    allow(schema_cache).to receive(:data_source_exists?)
 
     # stubbing arel is complex, so this is tested in the integration specs
     allow(decorator).to receive(:partition_key_as_arel).and_return(arel_node)
+    allow(decorator).to receive(:child_class).and_return(child_class)
 
     allow(arel_node).to receive(:eq).and_return(arel_node)
     allow(arel_node).to receive(:gteq).and_return(arel_node)
@@ -40,16 +51,66 @@ RSpec.describe PgParty::ModelDecorator do
     allow(arel_node).to receive(:and).and_return(arel_node)
     allow(arel_node).to receive(:in).and_return(arel_node)
 
-    allow(ActiveRecord::Base).to receive(:all)
+    allow(child_class).to receive(:all)
+    allow(child_class).to receive(:get_primary_key)
   end
 
   subject(:decorator) { described_class.new(model) }
+
+  describe "#partition_primary_key" do
+    subject { decorator.partition_primary_key }
+
+    context "when base_class is a different class" do
+      let(:base_class) { class_double(ActiveRecord::Base, primary_key: nil) }
+
+      it "calls primary_key on base_class" do
+        expect(base_class).to receive(:primary_key).with(no_args)
+        subject
+      end
+    end
+
+    context "when partitions present" do
+      it "calls get_primary_key on anonymous model" do
+        expect(child_class).to receive(:get_primary_key).with("foo")
+        subject
+      end
+    end
+
+    context "when partitions not present" do
+      let(:partitions) { [] }
+
+      it "calls get_primary_key on model" do
+        expect(model).to receive(:get_primary_key).with("foo")
+        subject
+      end
+    end
+  end
+
+  describe "#partition_table_exists?" do
+    subject { decorator.partition_table_exists? }
+
+    context "when partitions present" do
+      it "calls data_source_exists? with partition table name" do
+        expect(schema_cache).to receive(:data_source_exists?).with("a")
+        subject
+      end
+    end
+
+    context "when partitions not present" do
+      let(:partitions) { [] }
+
+      it "calls data_source_exists? with table name" do
+        expect(schema_cache).to receive(:data_source_exists?).with("parent")
+        subject
+      end
+    end
+  end
 
   describe "#in_partition" do
     subject { decorator.in_partition("child") }
 
     it "calls all on anonymous model" do
-      expect(ActiveRecord::Base).to receive(:all)
+      expect(child_class).to receive(:all).with(no_args)
       subject
     end
   end

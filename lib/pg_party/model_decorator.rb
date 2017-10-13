@@ -1,5 +1,21 @@
 module PgParty
   class ModelDecorator < SimpleDelegator
+    def partition_primary_key
+      if self != base_class
+        base_class.primary_key
+      elsif partition = partitions.first
+        child_class(partition).get_primary_key(base_class.name)
+      else
+        get_primary_key(base_class.name)
+      end
+    end
+
+    def partition_table_exists?
+      target_table = partitions.first || table_name
+
+      connection.schema_cache.data_source_exists?(target_table)
+    end
+
     def in_partition(table_name)
       child_class(table_name).all
     end

@@ -5,6 +5,7 @@ require "timecop"
 require "pry-byebug"
 
 # make sure injected modules are required
+require "pg_party/model/shared_methods"
 require "pg_party/model/range_methods"
 require "pg_party/model/list_methods"
 
