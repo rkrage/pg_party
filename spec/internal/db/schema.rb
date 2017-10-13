@@ -3,7 +3,7 @@ ActiveRecord::Schema.define do
   enable_extension "pgcrypto"
 
   create_range_partition :bigint_date_ranges, partition_key: "created_at::date" do |t|
-    t.timestamps
+    t.timestamps null: false
   end
 
   create_range_partition_of :bigint_date_ranges,

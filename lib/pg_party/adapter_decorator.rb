@@ -75,15 +75,20 @@ module PgParty
       modified_options[:id]      = false
       modified_options[:options] = "PARTITION BY #{type.to_s.upcase} ((#{quote_partition_key(partition_key)}))"
 
-      create_table(table_name, modified_options) do |td|
+      result = create_table(table_name, modified_options) do |td|
         if id == :uuid
-          td.send(id, primary_key, null: false, default: uuid_function)
+          td.column(primary_key, id, null: false, default: uuid_function)
         elsif id
-          td.send(id, primary_key, null: false)
+          td.column(primary_key, id, null: false)
         end
 
         yield(td) if block_given?
       end
+
+      # Rails 4 has a bug where uuid columns are always nullable
+      change_column_null(table_name, primary_key, false) if id == :uuid
+
+      result
     end
 
     def create_partition_of(table_name, child_table_name, constraint_clause, **options)
@@ -93,12 +98,11 @@ module PgParty
 
       raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
 
-      partition_clause = <<-SQL
+      execute(<<-SQL)
+        CREATE TABLE #{quote_table_name(child_table_name)}
         PARTITION OF #{quote_table_name(table_name)}
         FOR VALUES #{constraint_clause}
       SQL
-
-      create_table(child_table_name, id: false, options: partition_clause)
 
       if primary_key
         execute(<<-SQL)
@@ -108,7 +112,13 @@ module PgParty
       end
 
       if index && partition_key && primary_key != partition_key
-        add_index(child_table_name, "((#{quote_partition_key(partition_key)}))")
+        index_name = index_name(child_table_name, partition_key)
+
+        execute(<<-SQL)
+          CREATE INDEX #{quote_table_name(index_name)}
+          ON #{quote_table_name(child_table_name)}
+          USING btree ((#{quote_partition_key(partition_key)}))
+        SQL
       end
 
       child_table_name
@@ -127,7 +137,11 @@ module PgParty
     end
 
     def supports_partitions?
-      postgresql_version >= 100000
+      __getobj__.send(:postgresql_version) >= 100000
+    end
+
+    def index_name(table_name, partition_key)
+      "index_#{table_name}_on_#{partition_key.to_s.split("::").join("_")}"
     end
   end
 end

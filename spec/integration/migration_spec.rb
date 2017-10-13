@@ -7,9 +7,9 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   let(:start_range) { current_date }
   let(:end_range) { current_date + 1.month }
   let(:values) { [1, 2, 3] }
-  let(:timestamps_block) { ->(t) { t.timestamps } }
+  let(:timestamps_block) { ->(t) { t.timestamps null: false } }
   let(:uuid_function) do
-    if adapter.respond_to?(:supports_pgcrypto_uuid?)
+    if Rails.gem_version >= Gem::Version.new("5.1")
       "gen_random_uuid()"
     else
       "uuid_generate_v4()"
