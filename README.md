@@ -3,10 +3,12 @@
 [![Gem Version](https://badge.fury.io/rb/pg_party.svg)][rubygems]
 [![Build Status](https://circleci.com/gh/rkrage/pg_party.svg?&style=shield)][circle]
 [![Code Climate](https://codeclimate.com/github/rkrage/pg_party/badges/gpa.svg)][climate]
+[![Dependency Status](https://gemnasium.com/badges/github.com/rkrage/pg_party.svg)][gemnasium]
 
-[rubygems]: https://rubygems.org/gems/pg_party
-[circle]:   https://circleci.com/gh/rkrage/pg_party
-[climate]:  https://codeclimate.com/github/rkrage/pg_party
+[rubygems]:  https://rubygems.org/gems/pg_party
+[circle]:    https://circleci.com/gh/rkrage/pg_party
+[climate]:   https://codeclimate.com/github/rkrage/pg_party
+[gemnasium]: https://gemnasium.com/github.com/rkrage/pg_party
 
 [ActiveRecord](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10 partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
 
