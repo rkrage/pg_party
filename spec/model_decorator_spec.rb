@@ -11,6 +11,13 @@ RSpec.describe PgParty::ModelDecorator do
   let(:schema_cache) { instance_double(ActiveRecord::ConnectionAdapters::SchemaCache) }
   let(:child_class) { class_double(ActiveRecord::Base) }
   let(:base_class) { model }
+  let(:table_exists_method) do
+    if Rails.gem_version >= Gem::Version.new("5.0")
+      "data_source_exists?"
+    else
+      "table_exists?"
+    end
+  end
 
   let(:model) do
     Class.new(ActiveRecord::Base) do
@@ -19,6 +26,10 @@ RSpec.describe PgParty::ModelDecorator do
         :partition_column,
         :partition_cast,
         instance_accessor: false
+
+      def self.define_attribute_methods
+        # needed to stub rails 4.2 models
+      end
     end
   end
 
@@ -39,7 +50,7 @@ RSpec.describe PgParty::ModelDecorator do
     allow(adapter).to receive(:quote) { |value| "'#{value}'" }
     allow(adapter).to receive(:schema_cache).and_return(schema_cache)
 
-    allow(schema_cache).to receive(:data_source_exists?)
+    allow(schema_cache).to receive(table_exists_method)
 
     # stubbing arel is complex, so this is tested in the integration specs
     allow(decorator).to receive(:partition_key_as_arel).and_return(arel_node)
@@ -90,8 +101,8 @@ RSpec.describe PgParty::ModelDecorator do
     subject { decorator.partition_table_exists? }
 
     context "when partitions present" do
-      it "calls data_source_exists? with partition table name" do
-        expect(schema_cache).to receive(:data_source_exists?).with("a")
+      it "calls table exists method with partition table name" do
+        expect(schema_cache).to receive(table_exists_method).with("a")
         subject
       end
     end
@@ -99,8 +110,8 @@ RSpec.describe PgParty::ModelDecorator do
     context "when partitions not present" do
       let(:partitions) { [] }
 
-      it "calls data_source_exists? with table name" do
-        expect(schema_cache).to receive(:data_source_exists?).with("parent")
+      it "calls table exists method with table name" do
+        expect(schema_cache).to receive(table_exists_method).with("parent")
         subject
       end
     end

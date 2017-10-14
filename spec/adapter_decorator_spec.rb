@@ -4,8 +4,8 @@ RSpec.describe PgParty::AdapterDecorator do
   let(:adapter) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) }
   let(:table_definition) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition) }
   let(:pg_version) { 100000 }
-  let(:expected_uuid_function) do
-    if adapter.respond_to?(:supports_pgcrypto_uuid?)
+  let(:uuid_function) do
+    if Rails.gem_version >= Gem::Version.new("5.1")
       "gen_random_uuid()"
     else
       "uuid_generate_v4()"
@@ -15,18 +15,16 @@ RSpec.describe PgParty::AdapterDecorator do
   before do
     allow(adapter).to receive(:postgresql_version).and_return(pg_version)
     allow(adapter).to receive(:execute)
+    allow(adapter).to receive(:change_column_null)
     allow(adapter).to receive(:quote_table_name) { |name| "\"#{name}\"" }
     allow(adapter).to receive(:quote_column_name) { |name| "\"#{name}\"" }
     allow(adapter).to receive(:quote) { |value| "'#{value}'" }
-    allow(adapter).to receive(:add_index)
 
-    if adapter.respond_to?(:supports_pgcrypto_uuid?)
+    if uuid_function == "gen_random_uuid()"
       allow(adapter).to receive(:supports_pgcrypto_uuid?).and_return(true)
     end
 
-    allow(table_definition).to receive(:bigserial)
-    allow(table_definition).to receive(:serial)
-    allow(table_definition).to receive(:uuid)
+    allow(table_definition).to receive(:column)
     allow(table_definition).to receive(:integer)
     allow(table_definition).to receive(:timestamps)
   end
@@ -65,8 +63,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls bigserial on table definition" do
-        expect(table_definition).to receive(:bigserial).with(:id, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:id, :bigserial, null: false)
         subject
       end
     end
@@ -92,8 +90,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls serial on table definition" do
-        expect(table_definition).to receive(:serial).with(:id, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:id, :serial, null: false)
         subject
       end
     end
@@ -111,11 +109,17 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls uuid on table definition" do
-        expect(table_definition).to receive(:uuid).with(
+      it "calls change_column_null" do
+        expect(adapter).to receive(:change_column_null).with(:table_name, :id, false)
+        subject
+      end
+
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(
           :id,
+          :uuid,
           null: false,
-          default: expected_uuid_function
+          default: uuid_function
         )
 
         subject
@@ -139,8 +143,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "does not call bigserial on table definition" do
-        expect(table_definition).to_not receive(:bigserial)
+      it "does not call column on table definition" do
+        expect(table_definition).to_not receive(:column)
         subject
       end
 
@@ -163,8 +167,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls bigserial on table definition" do
-        expect(table_definition).to receive(:bigserial).with(:uid, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:uid, :bigserial, null: false)
         subject
       end
     end
@@ -172,7 +176,7 @@ RSpec.describe PgParty::AdapterDecorator do
     context "with casted partition key" do
       subject do
         decorator.create_range_partition(:table_name, partition_key: "created_at::date") do |t|
-          t.timestamps
+          t.timestamps null: false
         end
       end
 
@@ -186,13 +190,13 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls bigserial on table definition" do
-        expect(table_definition).to receive(:bigserial).with(:id, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:id, :bigserial, null: false)
         subject
       end
 
       it "calls timestamps on table definition" do
-        expect(table_definition).to receive(:timestamps).with(no_args)
+        expect(table_definition).to receive(:timestamps).with(null: false)
         subject
       end
     end
@@ -214,8 +218,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls bigserial on table definition" do
-        expect(table_definition).to receive(:bigserial).with(:id, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:id, :bigserial, null: false)
         subject
       end
     end
@@ -241,8 +245,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls serial on table definition" do
-        expect(table_definition).to receive(:serial).with(:id, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:id, :serial, null: false)
         subject
       end
     end
@@ -260,11 +264,17 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls uuid on table definition" do
-        expect(table_definition).to receive(:uuid).with(
+      it "calls change_column_nulln" do
+        expect(adapter).to receive(:change_column_null).with(:table_name, :id, false)
+        subject
+      end
+
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(
           :id,
+          :uuid,
           null: false,
-          default: expected_uuid_function
+          default: uuid_function
         )
 
         subject
@@ -288,8 +298,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "does not call bigserial on table definition" do
-        expect(table_definition).to_not receive(:bigserial)
+      it "does not call column on table definition" do
+        expect(table_definition).to_not receive(:column)
         subject
       end
 
@@ -312,8 +322,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls bigserial on table definition" do
-        expect(table_definition).to receive(:bigserial).with(:uid, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:uid, :bigserial, null: false)
         subject
       end
     end
@@ -321,7 +331,7 @@ RSpec.describe PgParty::AdapterDecorator do
     context "with casted partition key" do
       subject do
         decorator.create_list_partition(:table_name, partition_key: "created_at::date") do |t|
-          t.timestamps
+          t.timestamps null: false
         end
       end
 
@@ -335,30 +345,39 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls bigserial on table definition" do
-        expect(table_definition).to receive(:bigserial).with(:id, null: false)
+      it "calls column on table definition" do
+        expect(table_definition).to receive(:column).with(:id, :bigserial, null: false)
         subject
       end
 
       it "calls timestamps on table definition" do
-        expect(table_definition).to receive(:timestamps).with(no_args)
+        expect(table_definition).to receive(:timestamps).with(null: false)
         subject
       end
     end
   end
 
   describe "#create_range_partition_of" do
-    let(:partition_clause) do
+    let(:create_table_sql) do
       <<-SQL
+        CREATE TABLE "child"
         PARTITION OF "parent"
         FOR VALUES FROM ('1') TO ('10')
       SQL
     end
 
-    let(:create_primary_key) do
+    let(:create_primary_key_sql) do
       <<-SQL
         ALTER TABLE "child"
         ADD PRIMARY KEY ("id")
+      SQL
+    end
+
+    let(:create_index_sql) do
+      <<-SQL
+        CREATE INDEX "index_child_on_key"
+        ON "child"
+        USING btree (("key"))
       SQL
     end
 
@@ -377,23 +396,18 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          :child,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
         subject
       end
 
-      it "calls execute" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key))
+      it "calls execute to add primary key" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
         subject
       end
 
-      it "calls add index" do
-        expect(adapter).to receive(:add_index).with(:child, "((\"key\"))")
+      it "calls execute to add index" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_index_sql))
         subject
       end
     end
@@ -427,23 +441,18 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          :child,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
         subject
       end
 
-      it "calls execute" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key))
+      it "calls execute to add primary key" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
         subject
       end
 
-      it "does not call add index" do
-        expect(adapter).to_not receive(:add_index)
+      it "does not call execute to add index" do
+        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
     end
@@ -461,23 +470,18 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          :child,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
         subject
       end
 
-      it "calls execute" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key))
+      it "calls execute to add primary key" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
         subject
       end
 
-      it "does not call add index" do
-        expect(adapter).to_not receive(:add_index)
+      it "does not call execute to add index" do
+        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
     end
@@ -494,40 +498,44 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to match(/^parent_\w{7}$/) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          /^parent_\w{7}$/,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(/CREATE TABLE/)
         subject
       end
 
-      it "does not call execute" do
-        expect(adapter).to_not receive(:execute)
+      it "does not call execute to add primary key" do
+        expect(adapter).to_not receive(:execute).with(/ALTER TABLE/)
         subject
       end
 
-      it "does not call add index" do
-        expect(adapter).to_not receive(:add_index)
+      it "does not call execute to add index" do
+        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
     end
   end
 
   describe "#create_list_partition_of" do
-    let(:partition_clause) do
+    let(:create_table_sql) do
       <<-SQL
+        CREATE TABLE "child"
         PARTITION OF "parent"
         FOR VALUES IN ('1','2','3')
       SQL
     end
 
-    let(:create_primary_key) do
+    let(:create_primary_key_sql) do
       <<-SQL
         ALTER TABLE "child"
         ADD PRIMARY KEY ("id")
+      SQL
+    end
+
+    let(:create_index_sql) do
+      <<-SQL
+        CREATE INDEX "index_child_on_key"
+        ON "child"
+        USING btree (("key"))
       SQL
     end
 
@@ -545,23 +553,18 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          :child,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
         subject
       end
 
-      it "calls execute" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key))
+      it "calls execute to add primary key" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
         subject
       end
 
-      it "calls add index" do
-        expect(adapter).to receive(:add_index).with(:child, "((\"key\"))")
+      it "calls execute to add index" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_index_sql))
         subject
       end
     end
@@ -592,23 +595,18 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          :child,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
         subject
       end
 
-      it "calls execute" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key))
+      it "calls execute to add primary key" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
         subject
       end
 
-      it "does not call add index" do
-        expect(adapter).to_not receive(:add_index)
+      it "does not call execute to add index" do
+        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
     end
@@ -625,23 +623,18 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          :child,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
         subject
       end
 
-      it "calls execute" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key))
+      it "calls execute to add primary key" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
         subject
       end
 
-      it "does not call add index" do
-        expect(adapter).to_not receive(:add_index)
+      it "does not call execute to add index" do
+        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
     end
@@ -657,23 +650,18 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to match(/^parent_\w{7}$/) }
 
-      it "calls create table" do
-        expect(adapter).to receive(:create_table).with(
-          /^parent_\w{7}$/,
-          id: false,
-          options: heredoc_matching(partition_clause)
-        )
-
+      it "calls execute to create table" do
+        expect(adapter).to receive(:execute).with(/CREATE TABLE/)
         subject
       end
 
-      it "does not call execute" do
-        expect(adapter).to_not receive(:execute)
+      it "does not call execute to add primary key" do
+        expect(adapter).to_not receive(:execute).with(/ALTER TABLE/)
         subject
       end
 
-      it "does not call add index" do
-        expect(adapter).to_not receive(:add_index)
+      it "does not call execute to add index" do
+        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
     end

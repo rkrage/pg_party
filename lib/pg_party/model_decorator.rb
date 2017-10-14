@@ -13,7 +13,7 @@ module PgParty
     def partition_table_exists?
       target_table = partitions.first || table_name
 
-      connection.schema_cache.data_source_exists?(target_table)
+      connection.schema_cache.send(table_exists_method, target_table)
     end
 
     def in_partition(table_name)
@@ -66,6 +66,12 @@ module PgParty
     end
 
     private
+
+    def table_exists_method
+      [:data_source_exists?, :table_exists?].detect do |meth|
+        connection.schema_cache.respond_to?(meth)
+      end
+    end
 
     def child_class(table_name)
       Class.new(__getobj__) do
