@@ -264,7 +264,7 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls change_column_nulln" do
+      it "calls change_column_null" do
         expect(adapter).to receive(:change_column_null).with(:table_name, :id, false)
         subject
       end
