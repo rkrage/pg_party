@@ -4,6 +4,8 @@ require "rspec/core/rake_task"
 RSpec::Core::RakeTask.new(:spec)
 
 RSpec::Core::RakeTask.new(:ci) do |t|
+  ENV["CODE_COVERAGE"] = "true"
+
   gemfile = File.basename(ENV.fetch("BUNDLE_GEMFILE", ""), ".gemfile")
 
   if gemfile.empty? || gemfile == "Gemfile"

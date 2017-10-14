@@ -9,6 +9,9 @@ RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main 10" >> /
       postgresql-client && \
     rm -rf /var/lib/apt/lists/*
 
+RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-reporter && \
+    chmod +x /usr/local/bin/cc-reporter
+
 RUN gem install bundler -v 1.15.2
 
 RUN mkdir /code
