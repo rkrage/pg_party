@@ -104,7 +104,7 @@ Attach an existing table to a range partition:
 ```ruby
 class AttachRangePartition < ActiveRecord::Migration[5.1]
   def up
-    attach_range_partition(:parent_table, :child_table)
+    attach_range_partition :parent_table, :child_table
   end
 end
 ```
@@ -114,7 +114,7 @@ Attach an existing table to a list partition:
 ```ruby
 class AttachListPartition < ActiveRecord::Migration[5.1]
   def up
-    attach_list_partition(:parent_table, :child_table)
+    attach_list_partition :parent_table, :child_table
   end
 end
 ```
@@ -124,7 +124,7 @@ Detach a child table from any partition:
 ```ruby
 class DetachPartition < ActiveRecord::Migration[5.1]
   def up
-    detach_partition(:parent_table, :child_table)
+    detach_partition :parent_table, :child_table
   end
 end
 ```
