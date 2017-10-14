@@ -16,9 +16,15 @@ Combustion.initialize! :active_record
 require "rspec/rails"
 require "rspec/its"
 require "database_cleaner"
+require "simplecov"
 require "support/uuid_matcher"
 require "support/heredoc_matcher"
 require "support/pg_dump_helper"
+
+if ENV["CODE_COVERAGE"] == "true"
+  SimpleCov.command_name Rails.gem_version.to_s
+  SimpleCov.start
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

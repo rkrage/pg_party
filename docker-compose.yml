@@ -5,6 +5,8 @@ services:
   code:
     build: .
     image: pg_party
+    environment:
+      - CC_TEST_REPORTER_ID
     links:
       - postgres
     volumes:

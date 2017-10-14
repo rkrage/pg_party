@@ -20,11 +20,32 @@ shared_config: &shared_config
         command: bin/de appraisal
 
     - run:
+        name: Notify CC that tests are about to run
+        command: |
+          set +e
+          [ "$UPLOAD_COVERAGE" = "true" ] &&
+          bin/de cc-reporter before-build
+          /bin/true
+
+    - run:
         name: Run tests
         command: bin/de appraisal rake ci
 
     - store_test_results:
         path: spec/results
+
+    - store_artifacts:
+        path: coverage
+
+    - run:
+        name: Attempting to upload coverage report
+        when: always
+        command: |
+          set +e
+          [ "$UPLOAD_COVERAGE" = "true" ] &&
+          [ -d "coverage" ] &&
+          bin/de cc-reporter after-build -t simplecov
+          /bin/true
 
 version: 2
 jobs:
@@ -51,6 +72,7 @@ jobs:
 
     environment:
       CONTAINER_RUBY_VERSION: 2.4.2
+      UPLOAD_COVERAGE: true
 
 workflows:
   version: 2
