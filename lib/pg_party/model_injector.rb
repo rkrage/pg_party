@@ -35,7 +35,8 @@ module PgParty
         :partition_key,
         :partition_column,
         :partition_cast,
-        instance_accessor: false
+        instance_accessor: false,
+        instance_predicate: false
       )
 
       @model.partition_key = @key
