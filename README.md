@@ -189,7 +189,7 @@ SomeRangeRecord.partitions
 SomeListRecord.partitions
 ```
 
-Query for records by partition name:
+Retrieve ActiveRecord model class scoped to a child partition:
 
 ```ruby
 SomeRangeRecord.in_partition(:some_range_records_partition_name)

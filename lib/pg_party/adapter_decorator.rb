@@ -140,8 +140,8 @@ module PgParty
       __getobj__.send(:postgresql_version) >= 100000
     end
 
-    def index_name(table_name, partition_key)
-      "index_#{table_name}_on_#{partition_key.to_s.split("::").join("_")}"
+    def index_name(table_name, key)
+      "index_#{table_name}_on_#{key.to_s.split("::").join("_")}"
     end
   end
 end

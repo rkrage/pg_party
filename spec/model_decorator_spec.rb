@@ -54,7 +54,7 @@ RSpec.describe PgParty::ModelDecorator do
 
     # stubbing arel is complex, so this is tested in the integration specs
     allow(decorator).to receive(:partition_key_as_arel).and_return(arel_node)
-    allow(decorator).to receive(:child_class).and_return(child_class)
+    allow(Class).to receive(:new).with(model).and_return(child_class)
 
     allow(arel_node).to receive(:eq).and_return(arel_node)
     allow(arel_node).to receive(:gteq).and_return(arel_node)
@@ -120,8 +120,8 @@ RSpec.describe PgParty::ModelDecorator do
   describe "#in_partition" do
     subject { decorator.in_partition("child") }
 
-    it "calls all on anonymous model" do
-      expect(child_class).to receive(:all).with(no_args)
+    it "calls new on class" do
+      expect(Class).to receive(:new).with(model)
       subject
     end
   end
