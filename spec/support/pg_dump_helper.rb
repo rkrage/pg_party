@@ -4,7 +4,7 @@ class PgDumpHelper
   end
 
   def dump_table_structure
-    `#{pg_env_string} pg_dump -s -x -O -d #{config[:database]} -t #{@table_name}`.squish
+    `#{pg_env_string} pg_dump -s -x -O -d #{config[:database]} -t #{@table_name}`
   end
 
   private
