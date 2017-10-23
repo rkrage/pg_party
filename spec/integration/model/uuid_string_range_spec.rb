@@ -69,22 +69,31 @@ RSpec.describe UuidStringRange do
   end
 
   describe ".in_partition" do
-    let(:child_table_name) { "#{described_class.table_name}_a" }
-
-    let!(:record_one) { described_class.create(some_string: "d") }
-    let!(:record_two) { described_class.create(some_string: "f") }
-    let!(:record_three) { described_class.create(some_string: "x") }
+    let(:child_table_name) { "#{table_name}_a" }
 
     subject { described_class.in_partition(child_table_name) }
 
-    context "when not chaining methods" do
-      it { is_expected.to contain_exactly(record_one, record_two) }
-    end
+    its(:table_name) { is_expected.to eq(child_table_name) }
+    its(:name)       { is_expected.to eq(described_class.name) }
+    its(:new)        { is_expected.to be_an_instance_of(described_class) }
+    its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
-    context "when chaining methods" do
-      subject { described_class.in_partition(child_table_name).where(id: record_one.id) }
+    describe "query methods" do
+      let!(:record_one) { described_class.create(some_string: "d") }
+      let!(:record_two) { described_class.create(some_string: "f") }
+      let!(:record_three) { described_class.create(some_string: "x") }
 
-      it { is_expected.to contain_exactly(record_one) }
+      describe ".all" do
+        subject { described_class.in_partition(child_table_name).all }
+
+        it { is_expected.to contain_exactly(record_one, record_two) }
+      end
+
+      describe ".where" do
+        subject { described_class.in_partition(child_table_name).where(id: record_one.id) }
+
+        it { is_expected.to contain_exactly(record_one) }
+      end
     end
   end
 

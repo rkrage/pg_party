@@ -69,22 +69,31 @@ RSpec.describe BigintCustomIdIntRange do
   end
 
   describe ".in_partition" do
-    let(:child_table_name) { "#{described_class.table_name}_a" }
-
-    let!(:record_one) { described_class.create(some_int: 0) }
-    let!(:record_two) { described_class.create(some_int: 9) }
-    let!(:record_three) { described_class.create(some_int: 19) }
+    let(:child_table_name) { "#{table_name}_a" }
 
     subject { described_class.in_partition(child_table_name) }
 
-    context "when not chaining methods" do
-      it { is_expected.to contain_exactly(record_one, record_two) }
-    end
+    its(:table_name) { is_expected.to eq(child_table_name) }
+    its(:name)       { is_expected.to eq(described_class.name) }
+    its(:new)        { is_expected.to be_an_instance_of(described_class) }
+    its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
-    context "when chaining methods" do
-      subject { described_class.in_partition(child_table_name).where(some_id: record_one.some_id) }
+    describe "query methods" do
+      let!(:record_one) { described_class.create(some_int: 0) }
+      let!(:record_two) { described_class.create(some_int: 9) }
+      let!(:record_three) { described_class.create(some_int: 19) }
 
-      it { is_expected.to contain_exactly(record_one) }
+      describe ".all" do
+        subject { described_class.in_partition(child_table_name).all }
+
+        it { is_expected.to contain_exactly(record_one, record_two) }
+      end
+
+      describe ".where" do
+        subject { described_class.in_partition(child_table_name).where(some_id: record_one.some_id) }
+
+        it { is_expected.to contain_exactly(record_one) }
+      end
     end
   end
 

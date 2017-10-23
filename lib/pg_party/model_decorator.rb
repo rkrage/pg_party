@@ -3,8 +3,8 @@ module PgParty
     def partition_primary_key
       if self != base_class
         base_class.primary_key
-      elsif partition = partitions.first
-        child_class(partition).get_primary_key(base_class.name)
+      elsif partition_name = partitions.first
+        in_partition(partition_name).get_primary_key(base_class.name)
       else
         get_primary_key(base_class.name)
       end
@@ -17,7 +17,26 @@ module PgParty
     end
 
     def in_partition(table_name)
-      child_class(table_name).all
+      Class.new(__getobj__) do
+        self.table_name = table_name
+
+        # to avoid argument errors when calling model_name
+        def self.name
+          superclass.name
+        end
+
+        # when returning records from a query, Rails
+        # allocates objects first, then initializes
+        def self.allocate
+          superclass.allocate
+        end
+
+        # creating and persisting new records from a child partition
+        # will ultimately insert into the parent partition table
+        def self.new(*args, &blk)
+          superclass.new(*args, &blk)
+        end
+      end
     end
 
     def partition_key_eq(value)
@@ -70,24 +89,6 @@ module PgParty
     def table_exists_method
       [:data_source_exists?, :table_exists?].detect do |meth|
         connection.schema_cache.respond_to?(meth)
-      end
-    end
-
-    def child_class(table_name)
-      Class.new(__getobj__) do
-        self.table_name = table_name
-
-        # when returning records from a query, Rails
-        # allocates objects first, then initializes
-        def self.allocate
-          superclass.allocate
-        end
-
-        # not sure if this will ever get called,
-        # but probably a good idea to have
-        def self.new(*args, &blk)
-          superclass.new(*args, &blk)
-        end
       end
     end
 
