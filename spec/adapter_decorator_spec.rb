@@ -27,6 +27,8 @@ RSpec.describe PgParty::AdapterDecorator do
     allow(table_definition).to receive(:column)
     allow(table_definition).to receive(:integer)
     allow(table_definition).to receive(:timestamps)
+
+    allow(PgParty::Cache).to receive(:clear_partitions!)
   end
 
   subject(:decorator) { described_class.new(adapter) }
@@ -410,6 +412,11 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:execute).with(heredoc_matching(create_index_sql))
         subject
       end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
+        subject
+      end
     end
 
     context "with composite primary key" do
@@ -455,6 +462,11 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
+        subject
+      end
     end
 
     context "with name and primary key as partition key" do
@@ -484,6 +496,11 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
+        subject
+      end
     end
 
     context "without name and primary key" do
@@ -510,6 +527,11 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it "does not call execute to add index" do
         expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
+        subject
+      end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
         subject
       end
     end
@@ -567,6 +589,11 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:execute).with(heredoc_matching(create_index_sql))
         subject
       end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
+        subject
+      end
     end
 
     context "with composite primary key" do
@@ -609,6 +636,11 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
+        subject
+      end
     end
 
     context "with name and primary key as partition key" do
@@ -635,6 +667,11 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it "does not call execute to add index" do
         expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
+        subject
+      end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
         subject
       end
     end
@@ -664,6 +701,11 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
         subject
       end
+
+      it "calls clear_partitions! on cache" do
+        expect(PgParty::Cache).to receive(:clear_partitions!)
+        subject
+      end
     end
   end
 
@@ -680,6 +722,11 @@ RSpec.describe PgParty::AdapterDecorator do
 
     it "calls execute with correct SQL" do
       expect(adapter).to receive(:execute).with(heredoc_matching(expected_sql))
+      subject
+    end
+
+    it "calls clear_partitions! on cache" do
+      expect(PgParty::Cache).to receive(:clear_partitions!)
       subject
     end
   end
@@ -699,6 +746,11 @@ RSpec.describe PgParty::AdapterDecorator do
       expect(adapter).to receive(:execute).with(heredoc_matching(expected_sql))
       subject
     end
+
+    it "calls clear_partitions! on cache" do
+      expect(PgParty::Cache).to receive(:clear_partitions!)
+      subject
+    end
   end
 
   describe "#detach_partition" do
@@ -713,6 +765,11 @@ RSpec.describe PgParty::AdapterDecorator do
 
     it "calls execute with correct SQL" do
       expect(adapter).to receive(:execute).with(heredoc_matching(expected_sql))
+      subject
+    end
+
+    it "calls clear_partitions! on cache" do
+      expect(PgParty::Cache).to receive(:clear_partitions!)
       subject
     end
   end

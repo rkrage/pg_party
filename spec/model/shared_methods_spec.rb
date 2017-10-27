@@ -25,26 +25,9 @@ RSpec.describe PgParty::Model::SharedMethods do
   describe ".partition_table_exists?" do
     subject { model.table_exists? }
 
-    context "when class instance variable set" do
-      before { model.instance_variable_set(:@table_exists, true) }
-
-      it { is_expected.to eq(true) }
-
-      it "does not delegate to decorator" do
-        expect(decorator).to_not receive(:partition_table_exists?)
-        subject
-      end
-    end
-
-    context "when class instance variable not set" do
-      before { allow(decorator).to receive(:partition_table_exists?).and_return(true) }
-
-      it { is_expected.to eq(true) }
-
-      it "delegates to decorator" do
-        expect(decorator).to receive(:partition_table_exists?)
-        subject
-      end
+    it "delegates to decorator" do
+      expect(decorator).to receive(:partition_table_exists?)
+      subject
     end
   end
 

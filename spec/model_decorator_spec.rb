@@ -64,6 +64,9 @@ RSpec.describe PgParty::ModelDecorator do
 
     allow(child_class).to receive(:all)
     allow(child_class).to receive(:get_primary_key)
+
+    allow(PgParty::Cache).to receive(:fetch_model).and_wrap_original { |_, *_, &blk| blk.call }
+    allow(PgParty::Cache).to receive(:fetch_partitions).and_wrap_original { |_, *_, &blk| blk.call }
   end
 
   subject(:decorator) { described_class.new(model) }
@@ -119,6 +122,11 @@ RSpec.describe PgParty::ModelDecorator do
 
   describe "#in_partition" do
     subject { decorator.in_partition("child") }
+
+    it "calls fetch_model on cache" do
+      expect(PgParty::Cache).to receive(:fetch_model).with("parent", "child")
+      subject
+    end
 
     it "calls new on class" do
       expect(Class).to receive(:new).with(model)
@@ -198,6 +206,11 @@ RSpec.describe PgParty::ModelDecorator do
     subject { decorator.partitions }
 
     it { is_expected.to eq(partitions) }
+
+    it "calls fetch_partitions on cache" do
+      expect(PgParty::Cache).to receive(:fetch_partitions).with("parent")
+      subject
+    end
 
     it "calls select_values on adapter" do
       expect(adapter).to receive(:select_values).with(/'#{table_name}'/)
