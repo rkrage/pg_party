@@ -48,7 +48,7 @@ module PgParty
         FOR VALUES FROM (#{quote(start_range)}) TO (#{quote(end_range)})
       SQL
 
-      PgParty::Cache.clear_partitions!
+      PgParty::Cache.clear!
     end
 
     def attach_list_partition(parent_table_name, child_table_name, values:)
@@ -58,7 +58,7 @@ module PgParty
         FOR VALUES IN (#{Array.wrap(values).map(&method(:quote)).join(",")})
       SQL
 
-      PgParty::Cache.clear_partitions!
+      PgParty::Cache.clear!
     end
 
     def detach_partition(parent_table_name, child_table_name)
@@ -67,7 +67,7 @@ module PgParty
         DETACH PARTITION #{quote_table_name(child_table_name)}
       SQL
 
-      PgParty::Cache.clear_partitions!
+      PgParty::Cache.clear!
     end
 
     private
@@ -128,7 +128,7 @@ module PgParty
         SQL
       end
 
-      PgParty::Cache.clear_partitions!
+      PgParty::Cache.clear!
 
       child_table_name
     end

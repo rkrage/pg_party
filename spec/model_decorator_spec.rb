@@ -65,8 +65,8 @@ RSpec.describe PgParty::ModelDecorator do
     allow(child_class).to receive(:all)
     allow(child_class).to receive(:get_primary_key)
 
-    allow(PgParty::Cache).to receive(:fetch_model).and_wrap_original { |_, *_, &blk| blk.call }
-    allow(PgParty::Cache).to receive(:fetch_partitions).and_wrap_original { |_, *_, &blk| blk.call }
+    allow(PgParty::Cache).to receive(:fetch_model).and_wrap_original { |*_, &blk| blk.call }
+    allow(PgParty::Cache).to receive(:fetch_partitions).and_wrap_original { |*_, &blk| blk.call }
   end
 
   subject(:decorator) { described_class.new(model) }

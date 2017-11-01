@@ -28,7 +28,7 @@ RSpec.describe PgParty::AdapterDecorator do
     allow(table_definition).to receive(:integer)
     allow(table_definition).to receive(:timestamps)
 
-    allow(PgParty::Cache).to receive(:clear_partitions!)
+    allow(PgParty::Cache).to receive(:clear!)
   end
 
   subject(:decorator) { described_class.new(adapter) }
@@ -413,8 +413,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -463,8 +463,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -497,8 +497,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -530,8 +530,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -590,8 +590,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -637,8 +637,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -670,8 +670,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -702,8 +702,8 @@ RSpec.describe PgParty::AdapterDecorator do
         subject
       end
 
-      it "calls clear_partitions! on cache" do
-        expect(PgParty::Cache).to receive(:clear_partitions!)
+      it "calls clear! on cache" do
+        expect(PgParty::Cache).to receive(:clear!)
         subject
       end
     end
@@ -725,8 +725,8 @@ RSpec.describe PgParty::AdapterDecorator do
       subject
     end
 
-    it "calls clear_partitions! on cache" do
-      expect(PgParty::Cache).to receive(:clear_partitions!)
+    it "calls clear! on cache" do
+      expect(PgParty::Cache).to receive(:clear!)
       subject
     end
   end
@@ -747,8 +747,8 @@ RSpec.describe PgParty::AdapterDecorator do
       subject
     end
 
-    it "calls clear_partitions! on cache" do
-      expect(PgParty::Cache).to receive(:clear_partitions!)
+    it "calls clear! on cache" do
+      expect(PgParty::Cache).to receive(:clear!)
       subject
     end
   end
@@ -768,8 +768,8 @@ RSpec.describe PgParty::AdapterDecorator do
       subject
     end
 
-    it "calls clear_partitions! on cache" do
-      expect(PgParty::Cache).to receive(:clear_partitions!)
+    it "calls clear! on cache" do
+      expect(PgParty::Cache).to receive(:clear!)
       subject
     end
   end
