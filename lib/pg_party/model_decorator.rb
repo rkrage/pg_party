@@ -1,3 +1,5 @@
+require "pg_party/cache"
+
 module PgParty
   class ModelDecorator < SimpleDelegator
     def partition_primary_key
@@ -16,25 +18,27 @@ module PgParty
       connection.schema_cache.send(table_exists_method, target_table)
     end
 
-    def in_partition(table_name)
-      Class.new(__getobj__) do
-        self.table_name = table_name
+    def in_partition(child_table_name)
+      PgParty::Cache.fetch_model(table_name, child_table_name) do
+        Class.new(__getobj__) do
+          self.table_name = child_table_name
 
-        # to avoid argument errors when calling model_name
-        def self.name
-          superclass.name
-        end
+          # to avoid argument errors when calling model_name
+          def self.name
+            superclass.name
+          end
 
-        # when returning records from a query, Rails
-        # allocates objects first, then initializes
-        def self.allocate
-          superclass.allocate
-        end
+          # when returning records from a query, Rails
+          # allocates objects first, then initializes
+          def self.allocate
+            superclass.allocate
+          end
 
-        # creating and persisting new records from a child partition
-        # will ultimately insert into the parent partition table
-        def self.new(*args, &blk)
-          superclass.new(*args, &blk)
+          # creating and persisting new records from a child partition
+          # will ultimately insert into the parent partition table
+          def self.new(*args, &blk)
+            superclass.new(*args, &blk)
+          end
         end
       end
     end
@@ -54,13 +58,15 @@ module PgParty
     end
 
     def partitions
-      connection.select_values(<<-SQL)
-        SELECT pg_inherits.inhrelid::regclass::text
-        FROM pg_tables
-        INNER JOIN pg_inherits
-          ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
-        WHERE pg_tables.tablename = #{connection.quote(table_name)}
-      SQL
+      PgParty::Cache.fetch_partitions(table_name) do
+        connection.select_values(<<-SQL)
+          SELECT pg_inherits.inhrelid::regclass::text
+          FROM pg_tables
+          INNER JOIN pg_inherits
+            ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
+          WHERE pg_tables.tablename = #{connection.quote(table_name)}
+        SQL
+      end
     end
 
     def create_range_partition(start_range:, end_range:, **options)

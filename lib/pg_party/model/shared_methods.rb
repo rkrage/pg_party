@@ -8,9 +8,7 @@ module PgParty
       end
 
       def table_exists?
-        return @table_exists if defined?(@table_exists)
-
-        @table_exists = PgParty::ModelDecorator.new(self).partition_table_exists?
+        PgParty::ModelDecorator.new(self).partition_table_exists?
       end
 
       def partitions

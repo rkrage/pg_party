@@ -1,4 +1,5 @@
 require "digest"
+require "pg_party/cache"
 
 module PgParty
   class AdapterDecorator < SimpleDelegator
@@ -46,6 +47,8 @@ module PgParty
         ATTACH PARTITION #{quote_table_name(child_table_name)}
         FOR VALUES FROM (#{quote(start_range)}) TO (#{quote(end_range)})
       SQL
+
+      PgParty::Cache.clear!
     end
 
     def attach_list_partition(parent_table_name, child_table_name, values:)
@@ -54,6 +57,8 @@ module PgParty
         ATTACH PARTITION #{quote_table_name(child_table_name)}
         FOR VALUES IN (#{Array.wrap(values).map(&method(:quote)).join(",")})
       SQL
+
+      PgParty::Cache.clear!
     end
 
     def detach_partition(parent_table_name, child_table_name)
@@ -61,6 +66,8 @@ module PgParty
         ALTER TABLE #{quote_table_name(parent_table_name)}
         DETACH PARTITION #{quote_table_name(child_table_name)}
       SQL
+
+      PgParty::Cache.clear!
     end
 
     private
@@ -120,6 +127,8 @@ module PgParty
           USING btree ((#{quote_partition_key(partition_key)}))
         SQL
       end
+
+      PgParty::Cache.clear!
 
       child_table_name
     end
