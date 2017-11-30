@@ -11,15 +11,15 @@ module PgParty
         nil
       end
 
-      def fetch_model(parent_table, child_table, &block)
+      def fetch_model(key, child_table, &block)
         LOCK.synchronize do
-          store[parent_table.to_sym][:models][child_table.to_sym] ||= block.call
+          store[key][:models][child_table.to_sym] ||= block.call
         end
       end
 
-      def fetch_partitions(table_name, &block)
+      def fetch_partitions(key, &block)
         LOCK.synchronize do
-          store[table_name.to_sym][:partitions] ||= block.call
+          store[key][:partitions] ||= block.call
         end
       end
 
@@ -27,7 +27,7 @@ module PgParty
 
       def store
         # automatically initialize a new hash when
-        # accessing a table name that doesn't exist
+        # accessing an object id that doesn't exist
         @store ||= Hash.new { |h, k| h[k] = { models: {}, partitions: nil } }
       end
     end

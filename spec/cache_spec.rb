@@ -4,8 +4,8 @@ RSpec.describe PgParty::Cache do
   let(:block) { ->{ :new_value } }
 
   subject(:cache) { described_class }
-  subject(:fetch_model) { cache.fetch_model(:parent, :child, &block) }
-  subject(:fetch_partitions) { cache.fetch_partitions(:parent, &block) }
+  subject(:fetch_model) { cache.fetch_model(12345678901, :child, &block) }
+  subject(:fetch_partitions) { cache.fetch_partitions(12345678901, &block) }
 
   around do |example|
     cache.clear!
@@ -15,8 +15,8 @@ RSpec.describe PgParty::Cache do
 
   describe ".clear!" do
     before do
-      cache.fetch_partitions(:parent) { :old_value }
-      cache.fetch_model(:parent, :child) { :old_value }
+      cache.fetch_partitions(12345678901) { :old_value }
+      cache.fetch_model(12345678901, :child) { :old_value }
     end
 
     subject { cache.clear! }
@@ -48,7 +48,7 @@ RSpec.describe PgParty::Cache do
 
     context "when key exists" do
       before do
-        cache.fetch_model(:parent, :child) { :old_value }
+        cache.fetch_model(12345678901, :child) { :old_value }
       end
 
       it { is_expected.to eq(:old_value) }
@@ -74,7 +74,7 @@ RSpec.describe PgParty::Cache do
 
     context "when key exists" do
       before do
-        cache.fetch_partitions(:parent) { :old_value }
+        cache.fetch_partitions(12345678901) { :old_value }
       end
 
       it { is_expected.to eq(:old_value) }

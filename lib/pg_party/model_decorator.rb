@@ -19,7 +19,7 @@ module PgParty
     end
 
     def in_partition(child_table_name)
-      PgParty::Cache.fetch_model(table_name, child_table_name) do
+      PgParty::Cache.fetch_model(cache_key, child_table_name) do
         Class.new(__getobj__) do
           self.table_name = child_table_name
 
@@ -58,7 +58,7 @@ module PgParty
     end
 
     def partitions
-      PgParty::Cache.fetch_partitions(table_name) do
+      PgParty::Cache.fetch_partitions(cache_key) do
         connection.select_values(<<-SQL)
           SELECT pg_inherits.inhrelid::regclass::text
           FROM pg_tables
@@ -91,6 +91,10 @@ module PgParty
     end
 
     private
+
+    def cache_key
+      __getobj__.object_id
+    end
 
     def table_exists_method
       [:data_source_exists?, :table_exists?].detect do |meth|

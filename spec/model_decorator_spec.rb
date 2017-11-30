@@ -124,7 +124,7 @@ RSpec.describe PgParty::ModelDecorator do
     subject { decorator.in_partition("child") }
 
     it "calls fetch_model on cache" do
-      expect(PgParty::Cache).to receive(:fetch_model).with("parent", "child")
+      expect(PgParty::Cache).to receive(:fetch_model).with(kind_of(Numeric), "child")
       subject
     end
 
@@ -208,7 +208,7 @@ RSpec.describe PgParty::ModelDecorator do
     it { is_expected.to eq(partitions) }
 
     it "calls fetch_partitions on cache" do
-      expect(PgParty::Cache).to receive(:fetch_partitions).with("parent")
+      expect(PgParty::Cache).to receive(:fetch_partitions).with(kind_of(Numeric))
       subject
     end
 
