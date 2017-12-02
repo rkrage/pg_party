@@ -2,15 +2,15 @@
 
 [![Gem Version](https://badge.fury.io/rb/pg_party.svg)][rubygems]
 [![Build Status](https://circleci.com/gh/rkrage/pg_party.svg?&style=shield)][circle]
-[![Code Climate](https://codeclimate.com/github/rkrage/pg_party/badges/gpa.svg)][climate]
-[![Code Coverage](https://codeclimate.com/github/rkrage/pg_party/badges/coverage.svg)][coverage]
 [![Dependency Status](https://gemnasium.com/badges/github.com/rkrage/pg_party.svg)][gemnasium]
+[![Maintainability](https://api.codeclimate.com/v1/badges/c409453d2283dd440227/maintainability)][cc_maintainability]
+[![Test Coverage](https://api.codeclimate.com/v1/badges/c409453d2283dd440227/test_coverage)][cc_coverage]
 
-[rubygems]:  https://rubygems.org/gems/pg_party
-[circle]:    https://circleci.com/gh/rkrage/pg_party
-[climate]:   https://codeclimate.com/github/rkrage/pg_party
-[coverage]:  https://codeclimate.com/github/rkrage/pg_party/coverage
-[gemnasium]: https://gemnasium.com/github.com/rkrage/pg_party
+[rubygems]:           https://rubygems.org/gems/pg_party
+[circle]:             https://circleci.com/gh/rkrage/pg_party/tree/master
+[gemnasium]:          https://gemnasium.com/github.com/rkrage/pg_party
+[cc_maintainability]: https://codeclimate.com/github/rkrage/pg_party/maintainability
+[cc_coverage]:        https://codeclimate.com/github/rkrage/pg_party/test_coverage
 
 [ActiveRecord](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10 partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
 
