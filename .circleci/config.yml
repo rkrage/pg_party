@@ -55,23 +55,11 @@ jobs:
     environment:
       CONTAINER_RUBY_VERSION: 2.2.2
 
-  build-ruby-2.2.7:
+  build-ruby-2.5.0:
     <<: *shared_config
 
     environment:
-      CONTAINER_RUBY_VERSION: 2.2.7
-
-  build-ruby-2.3.4:
-    <<: *shared_config
-
-    environment:
-      CONTAINER_RUBY_VERSION: 2.3.4
-
-  build-ruby-2.4.2:
-    <<: *shared_config
-
-    environment:
-      CONTAINER_RUBY_VERSION: 2.4.2
+      CONTAINER_RUBY_VERSION: 2.5.0
       UPLOAD_COVERAGE: true
 
 workflows:
@@ -79,6 +67,4 @@ workflows:
   build_matrix:
     jobs:
       - build-ruby-2.2.2
-      - build-ruby-2.2.7
-      - build-ruby-2.3.4
-      - build-ruby-2.4.2
+      - build-ruby-2.5.0

@@ -104,7 +104,13 @@ Attach an existing table to a range partition:
 ```ruby
 class AttachRangePartition < ActiveRecord::Migration[5.1]
   def up
-    attach_range_partition :parent_table, :child_table
+    current_date = Date.current
+
+    attach_range_partition \
+      :some_range_records,
+      :some_existing_table,
+      start_range: current_date,
+      end_range: current_date + 1.day
   end
 end
 ```
@@ -114,7 +120,10 @@ Attach an existing table to a list partition:
 ```ruby
 class AttachListPartition < ActiveRecord::Migration[5.1]
   def up
-    attach_list_partition :parent_table, :child_table
+    attach_list_partition \
+      :some_list_records,
+      :some_existing_table,
+      values: (200..300).to_a
   end
 end
 ```
