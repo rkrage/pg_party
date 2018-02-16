@@ -5,6 +5,7 @@ require "spec_helper"
 RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   let(:table_name) { "t_#{SecureRandom.hex(6)}" }
   let(:child_table_name) { "t_#{SecureRandom.hex(6)}" }
+  let(:table_like_name) { "t_#{SecureRandom.hex(6)}" }
   let(:current_date) { Date.current }
   let(:start_range) { current_date }
   let(:end_range) { current_date + 1.month }
@@ -27,6 +28,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     adapter.execute("DROP TABLE IF EXISTS #{table_name} CASCADE")
     adapter.execute("DROP TABLE IF EXISTS #{child_table_name} CASCADE")
+    adapter.execute("DROP TABLE IF EXISTS #{table_like_name} CASCADE")
   end
 
   subject(:adapter) { ActiveRecord::Base.connection }
@@ -73,6 +75,18 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       partition_key: "#{table_name}_id",
       values: values
     )
+  end
+
+  subject(:create_range_table_like) do
+    create_range_partition_of
+
+    adapter.create_table_like(child_table_name, table_like_name)
+  end
+
+  subject(:create_list_table_like) do
+    create_list_partition_of
+
+    adapter.create_table_like(child_table_name, table_like_name)
   end
 
   subject(:attach_range_partition) do
@@ -213,6 +227,72 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     it { is_expected.to include_heredoc(create_table_sql) }
     it { is_expected.to include_heredoc(primary_key_sql) }
     it { is_expected.to_not include("CREATE INDEX") }
+  end
+
+  describe "#create_table_like" do
+    context "range partition" do
+      let(:create_table_sql) do
+        <<-SQL
+          CREATE TABLE #{table_like_name} (
+            custom_id uuid DEFAULT #{uuid_function} NOT NULL,
+            created_at timestamp without time zone NOT NULL,
+            updated_at timestamp without time zone NOT NULL
+          );
+        SQL
+      end
+
+      let(:primary_key_sql) do
+        <<-SQL
+          ALTER TABLE ONLY #{table_like_name}
+          ADD CONSTRAINT #{table_like_name}_pkey
+          PRIMARY KEY (custom_id);
+        SQL
+      end
+
+      let(:index_sql) do
+        <<-SQL
+          CREATE INDEX #{table_like_name}_created_at_idx
+          ON #{table_like_name}
+          USING btree (((created_at)::date));
+        SQL
+      end
+
+      subject do
+        create_range_table_like
+        PgDumpHelper.dump_table_structure(table_like_name)
+      end
+
+      it { is_expected.to include_heredoc(create_table_sql) }
+      it { is_expected.to include_heredoc(primary_key_sql) }
+      it { is_expected.to include_heredoc(index_sql) }
+    end
+
+    context "list partition" do
+      let(:create_table_sql) do
+        <<-SQL
+          CREATE TABLE #{table_like_name} (
+            #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
+          );
+        SQL
+      end
+
+      let(:primary_key_sql) do
+        <<-SQL
+          ALTER TABLE ONLY #{table_like_name}
+          ADD CONSTRAINT #{table_like_name}_pkey
+          PRIMARY KEY (#{table_name}_id);
+        SQL
+      end
+
+      subject do
+        create_list_table_like
+        PgDumpHelper.dump_table_structure(table_like_name)
+      end
+
+      it { is_expected.to include_heredoc(create_table_sql) }
+      it { is_expected.to include_heredoc(primary_key_sql) }
+      it { is_expected.to_not include("CREATE INDEX") }
+    end
   end
 
   describe "#attach_range_partition" do

@@ -52,6 +52,15 @@ RSpec.describe PgParty::Adapter::PostgreSQLMethods do
     end
   end
 
+  describe "#create_table_like" do
+    subject { adapter.create_table_like(:table_a, :table_b) }
+
+    it "delegates to decorator" do
+      expect(decorator).to receive(:create_table_like).with(:table_a, :table_b)
+      subject
+    end
+  end
+
   describe "#attach_range_partition" do
     subject { adapter.attach_range_partition(:parent, :child, start_range: 1, end_range: 10) }
 

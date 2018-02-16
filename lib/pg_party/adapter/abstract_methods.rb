@@ -19,6 +19,10 @@ module PgParty
         raise "#create_list_partition_of is not implemented"
       end
 
+      def create_table_like(*)
+        raise "#create_table_like is not implemented"
+      end
+
       def attach_range_partition(*)
         raise "#attach_range_partition is not implemented"
       end

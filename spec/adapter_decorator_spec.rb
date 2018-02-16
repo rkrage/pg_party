@@ -712,6 +712,23 @@ RSpec.describe PgParty::AdapterDecorator do
     end
   end
 
+  describe "#create_table_like" do
+    let(:create_table_sql) do
+      <<-SQL
+        CREATE TABLE "table_b" (
+          LIKE "table_a" INCLUDING ALL
+        )
+      SQL
+    end
+
+    subject { decorator.create_table_like(:table_a, :table_b) }
+
+    it "calls execute with the correct SQL" do
+      expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+      subject
+    end
+  end
+
   describe "#attach_range_partition" do
     let(:expected_sql) do
       <<-SQL

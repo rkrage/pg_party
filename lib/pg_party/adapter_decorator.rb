@@ -20,34 +20,30 @@ module PgParty
     end
 
     def create_range_partition_of(table_name, start_range:, end_range:, **options)
-      if options[:name]
-        child_table_name = options[:name]
-      else
-        child_table_name = hashed_table_name(table_name, "#{start_range}#{end_range}")
-      end
-
       constraint_clause = "FROM (#{quote_collection(start_range)}) TO (#{quote_collection(end_range)})"
 
-      create_partition_of(table_name, child_table_name, constraint_clause, **options)
+      create_partition_of(table_name, constraint_clause, **options)
     end
 
     def create_list_partition_of(table_name, values:, **options)
-      if options[:name]
-        child_table_name = options[:name]
-      else
-        child_table_name = hashed_table_name(table_name, values.to_s)
-      end
-
       constraint_clause = "IN (#{quote_collection(values)})"
 
-      create_partition_of(table_name, child_table_name, constraint_clause, **options)
+      create_partition_of(table_name, constraint_clause, **options)
+    end
+
+    def create_table_like(table_name, new_table_name)
+      execute(<<-SQL)
+        CREATE TABLE #{quote_table_name(new_table_name)} (
+          LIKE #{quote_table_name(table_name)} INCLUDING ALL
+        )
+      SQL
     end
 
     def attach_range_partition(parent_table_name, child_table_name, start_range:, end_range:)
       execute(<<-SQL)
         ALTER TABLE #{quote_table_name(parent_table_name)}
         ATTACH PARTITION #{quote_table_name(child_table_name)}
-        FOR VALUES FROM (#{quote(start_range)}) TO (#{quote(end_range)})
+        FOR VALUES FROM (#{quote_collection(start_range)}) TO (#{quote_collection(end_range)})
       SQL
 
       PgParty::Cache.clear!
@@ -57,7 +53,7 @@ module PgParty
       execute(<<-SQL)
         ALTER TABLE #{quote_table_name(parent_table_name)}
         ATTACH PARTITION #{quote_table_name(child_table_name)}
-        FOR VALUES IN (#{Array.wrap(values).map(&method(:quote)).join(",")})
+        FOR VALUES IN (#{quote_collection(values)})
       SQL
 
       PgParty::Cache.clear!
@@ -100,10 +96,11 @@ module PgParty
       result
     end
 
-    def create_partition_of(table_name, child_table_name, constraint_clause, **options)
-      primary_key   = options.fetch(:primary_key) { primary_key_for_table(table_name) }
-      index         = options.fetch(:index, true)
-      partition_key = options[:partition_key]
+    def create_partition_of(table_name, constraint_clause, **options)
+      primary_key      = options.fetch(:primary_key) { primary_key_for_table(table_name) }
+      child_table_name = options.fetch(:name) { hashed_table_name(table_name, constraint_clause) }
+      index            = options.fetch(:index, true)
+      partition_key    = options[:partition_key]
 
       raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
 
