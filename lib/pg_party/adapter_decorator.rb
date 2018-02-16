@@ -133,6 +133,18 @@ module PgParty
       child_table_name
     end
 
+    # Rails 5.2 now returns boolean literals
+    # This causes partition creation to fail when the constraint clause includes a boolean
+    # Might be a PostgreSQL bug, but for now let's revert to the old quoting behavior
+    def quote(value)
+      case value
+      when true then "'t'"
+      when false then "'f'"
+      else
+        __getobj__.quote(value)
+      end
+    end
+
     def quote_partition_key(key)
       key.to_s.split("::").map(&method(:quote_column_name)).join("::")
     end
