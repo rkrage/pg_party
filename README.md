@@ -99,6 +99,28 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
 end
 ```
 
+Indexes are not added to the partitioned (parent) table, they are added on partition tables:
+
+```ruby
+class CreateSomeListRecord < ActiveRecord::Migration[5.1]
+  def up
+    create_list_partition :some_list_records, partition_key: :id do |t|
+      t.integer :some_foreign_id
+      t.text :some_value
+      t.timestamps
+    end
+
+    partition_table = create_list_partition_of \
+      :some_list_records,
+      partition_key: :id,
+      values: (1..100).to_a
+
+    add_index partition_table, :some_foreign_id
+  end
+end
+```
+
+
 Attach an existing table to a range partition:
 
 ```ruby
