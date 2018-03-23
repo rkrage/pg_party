@@ -4,13 +4,17 @@ class PgDumpHelper
   end
 
   def dump_table_structure
-    `#{pg_env_string} pg_dump -s -x -O -d #{config[:database]} -t #{@table_name}`
+    pg_dump.gsub("#{schema_name}.", "")
   end
 
   private
 
   def initialize(options)
-    @table_name = options[:table_name]
+    @table_name = "#{schema_name}.#{options[:table_name]}"
+  end
+
+  def pg_dump
+    `#{pg_env_string} pg_dump -s -x -O -d #{config[:database]} -t #{@table_name}`
   end
 
   def pg_env_string
@@ -24,5 +28,9 @@ class PgDumpHelper
 
   def config
     @config ||= ActiveRecord::Base.connection_config
+  end
+
+  def schema_name
+    config[:schema_search_path]
   end
 end
