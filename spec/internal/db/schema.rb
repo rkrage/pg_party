@@ -1,4 +1,6 @@
 ActiveRecord::Schema.define do
+  execute("CREATE SCHEMA e9651f34")
+
   enable_extension "uuid-ossp"
   enable_extension "pgcrypto"
 

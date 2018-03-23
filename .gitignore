@@ -9,6 +9,7 @@
 /spec/results/
 /tmp/
 /.ruby-version
+/*.gem
 
 # rspec failure tracking
 .rspec_status

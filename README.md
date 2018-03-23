@@ -99,7 +99,7 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
 end
 ```
 
-If a partitioned table requires an index on a column other than the partition key, an explicit add_index operation is required for each child partition:
+If a partitioned table requires an index on a column other than the partition key, an explicit `add_index` operation is required for each child partition:
 
 ```ruby
 class CreateSomeListRecord < ActiveRecord::Migration[5.1]
@@ -119,13 +119,13 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
     # Partition with user-specified table name
     create_list_partition_of \
       :some_list_records,
-      name: 'some_list_records_101_200',
+      name: :some_list_records_100_199,
       partition_key: :id,
-      values: (101..200).to_a
+      values: (100..200).to_a
 
     # indexes for newly created partition tables
     add_index partition_table, :some_foreign_id
-    add_index 'some_list_records_101_200', :some_foreign_id
+    add_index :some_list_records_100_199, :some_foreign_id
   end
 end
 ```
