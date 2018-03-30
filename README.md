@@ -94,7 +94,7 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
      create_list_partition_of \
        :some_list_records,
        partition_key: :id,
-       values: (100..200).to_a
+       values: (101..200).to_a
   end
 end
 ```
@@ -119,13 +119,13 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
     # Partition with user-specified table name
     create_list_partition_of \
       :some_list_records,
-      name: :some_list_records_100_199,
+      name: :some_list_records_101_200,
       partition_key: :id,
-      values: (100..200).to_a
+      values: (101..200).to_a
 
     # indexes for newly created partition tables
     add_index partition_table, :some_foreign_id
-    add_index :some_list_records_100_199, :some_foreign_id
+    add_index :some_list_records_101_200, :some_foreign_id
   end
 end
 ```
@@ -185,7 +185,7 @@ class AttachListPartition < ActiveRecord::Migration[5.1]
     attach_list_partition \
       :some_list_records,
       :some_existing_table,
-      values: (200..300).to_a
+      values: (201..300).to_a
   end
 end
 ```
