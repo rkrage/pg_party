@@ -94,7 +94,7 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
      create_list_partition_of \
        :some_list_records,
        partition_key: :id,
-       values: (100..200).to_a
+       values: (101..200).to_a
   end
 end
 ```
