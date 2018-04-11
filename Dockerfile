@@ -5,7 +5,7 @@ RUN export DEBIAN_CODENAME=$(cat /etc/os-release | grep "VERSION=" | cut -d "(" 
     echo "deb http://apt.postgresql.org/pub/repos/apt/ $DEBIAN_CODENAME-pgdg main 10" >> /etc/apt/sources.list.d/pgdg.list && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
     apt-get update && \
-    apt-get install -qq -y --fix-missing --force-yes --no-install-recommends \
+    apt-get install -qq -y --fix-missing --no-install-recommends \
       less \
       postgresql-client && \
     rm -rf /var/lib/apt/lists/*
