@@ -13,7 +13,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     subject { adapter.create_range_partition("args") }
 
     it "raises not implemented error" do
-      expect { subject }.to raise_error(NotImplementedError, "#create_range_partition is not implemented")
+      expect { subject }.to raise_error(RuntimeError, "#create_range_partition is not implemented")
     end
   end
 
@@ -21,7 +21,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     subject { adapter.create_list_partition("args") }
 
     it "raises not implemented error" do
-      expect { subject }.to raise_error(NotImplementedError, "#create_list_partition is not implemented")
+      expect { subject }.to raise_error(RuntimeError, "#create_list_partition is not implemented")
     end
   end
 
@@ -29,7 +29,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     subject { adapter.create_range_partition_of("args") }
 
     it "raises not implemented error" do
-      expect { subject }.to raise_error(NotImplementedError, "#create_range_partition_of is not implemented")
+      expect { subject }.to raise_error(RuntimeError, "#create_range_partition_of is not implemented")
     end
   end
 
@@ -37,7 +37,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     subject { adapter.create_list_partition_of("args") }
 
     it "raises not implemented error" do
-      expect { subject }.to raise_error(NotImplementedError, "#create_list_partition_of is not implemented")
+      expect { subject }.to raise_error(RuntimeError, "#create_list_partition_of is not implemented")
     end
   end
 
@@ -45,7 +45,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     subject { adapter.attach_range_partition("args") }
 
     it "raises not implemented error" do
-      expect { subject }.to raise_error(NotImplementedError, "#attach_range_partition is not implemented")
+      expect { subject }.to raise_error(RuntimeError, "#attach_range_partition is not implemented")
     end
   end
 
@@ -53,7 +53,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     subject { adapter.attach_list_partition("args") }
 
     it "raises not implemented error" do
-      expect { subject }.to raise_error(NotImplementedError, "#attach_list_partition is not implemented")
+      expect { subject }.to raise_error(RuntimeError, "#attach_list_partition is not implemented")
     end
   end
 
@@ -61,7 +61,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     subject { adapter.detach_partition("args") }
 
     it "raises not implemented error" do
-      expect { subject }.to raise_error(NotImplementedError, "#detach_partition is not implemented")
+      expect { subject }.to raise_error(RuntimeError, "#detach_partition is not implemented")
     end
   end
 end

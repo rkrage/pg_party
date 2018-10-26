@@ -59,7 +59,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY RANGE ((\"id\"))"
+          options: "PARTITION BY RANGE (\"id\")"
         )
 
         subject
@@ -86,7 +86,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY RANGE ((\"id\"))"
+          options: "PARTITION BY RANGE (\"id\")"
         )
 
         subject
@@ -105,7 +105,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY RANGE ((\"id\"))"
+          options: "PARTITION BY RANGE (\"id\")"
         )
 
         subject
@@ -139,7 +139,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY RANGE ((\"some_column\"))"
+          options: "PARTITION BY RANGE (\"some_column\")"
         )
 
         subject
@@ -163,7 +163,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY RANGE ((\"uid\"))"
+          options: "PARTITION BY RANGE (\"uid\")"
         )
 
         subject
@@ -175,9 +175,9 @@ RSpec.describe PgParty::AdapterDecorator do
       end
     end
 
-    context "with casted partition key" do
+    context "with complex partition key" do
       subject do
-        decorator.create_range_partition(:table_name, partition_key: "created_at::date") do |t|
+        decorator.create_range_partition(:table_name, partition_key: ->{ "(created_at::date)" }) do |t|
           t.timestamps null: false
         end
       end
@@ -186,7 +186,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY RANGE ((\"created_at\"::\"date\"))"
+          options: "PARTITION BY RANGE ((created_at::date))"
         )
 
         subject
@@ -214,7 +214,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY LIST ((\"id\"))"
+          options: "PARTITION BY LIST (\"id\")"
         )
 
         subject
@@ -241,7 +241,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY LIST ((\"id\"))"
+          options: "PARTITION BY LIST (\"id\")"
         )
 
         subject
@@ -260,7 +260,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY LIST ((\"id\"))"
+          options: "PARTITION BY LIST (\"id\")"
         )
 
         subject
@@ -294,7 +294,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY LIST ((\"some_column\"))"
+          options: "PARTITION BY LIST (\"some_column\")"
         )
 
         subject
@@ -318,7 +318,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY LIST ((\"uid\"))"
+          options: "PARTITION BY LIST (\"uid\")"
         )
 
         subject
@@ -330,9 +330,9 @@ RSpec.describe PgParty::AdapterDecorator do
       end
     end
 
-    context "with casted partition key" do
+    context "with complex partition key" do
       subject do
-        decorator.create_list_partition(:table_name, partition_key: "created_at::date") do |t|
+        decorator.create_list_partition(:table_name, partition_key: ->{ "(created_at::date)"}) do |t|
           t.timestamps null: false
         end
       end
@@ -341,7 +341,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect(adapter).to receive(:create_table).with(
           :table_name,
           id: false,
-          options: "PARTITION BY LIST ((\"created_at\"::\"date\"))"
+          options: "PARTITION BY LIST ((created_at::date))"
         )
 
         subject
@@ -377,9 +377,9 @@ RSpec.describe PgParty::AdapterDecorator do
 
     let(:create_index_sql) do
       <<-SQL
-        CREATE INDEX "index_child_on_key"
+        CREATE INDEX "index_child_on_partition_key"
         ON "child"
-        USING btree (("key"))
+        USING btree ("key")
       SQL
     end
 
@@ -555,9 +555,9 @@ RSpec.describe PgParty::AdapterDecorator do
 
     let(:create_index_sql) do
       <<-SQL
-        CREATE INDEX "index_child_on_key"
+        CREATE INDEX "index_child_on_partition_key"
         ON "child"
-        USING btree (("key"))
+        USING btree ("key")
       SQL
     end
 

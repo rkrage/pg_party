@@ -12,7 +12,7 @@
 [cc_maintainability]: https://codeclimate.com/github/rkrage/pg_party/maintainability
 [cc_coverage]:        https://codeclimate.com/github/rkrage/pg_party/test_coverage
 
-[ActiveRecord](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10 partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
+[ActiveRecord](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10+ partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
 
 Features:
   - Migration methods for partition specific database operations
@@ -21,7 +21,7 @@ Features:
 
 Limitations:
   - Partition tables are not represented correctly in `db/schema.rb` — please use the `:sql` schema format
-  - Only single column partition keys supported (e.g., `column`, `column::cast`)
+  - For complex partition keys (e.g. `created_at::date`), the `partition_key_eq` and `partition_key_in` query methods will not be available
 
 ## Installation
 
@@ -43,7 +43,7 @@ Or install it yourself as:
 
 Full API documentation is in progress.
 
-In the meantime, take a look at the [Combustion](https://github.com/pat/combustion) schema definition and integration specs:
+In the meantime, take a look at the Combustion schema definition and integration specs:
   - https://github.com/rkrage/pg_party/blob/master/spec/internal/db/schema.rb
   - https://github.com/rkrage/pg_party/tree/master/spec/integration
 
@@ -56,20 +56,22 @@ class CreateSomeRangeRecord < ActiveRecord::Migration[5.1]
   def up
     current_date = Date.current
 
-    create_range_partition :some_range_records, partition_key: "created_at::date" do |t|
+    # NOTE: proc is only required for complex partition keys
+
+    create_range_partition :some_range_records, partition_key: ->{ "(created_at::date)" } do |t|
       t.text :some_value
       t.timestamps
     end
 
     create_range_partition_of \
       :some_range_records,
-      partition_key: "created_at::date",
+      partition_key: ->{ "(created_at::date)" },
       start_range: current_date,
       end_range: current_date + 1.day
 
      create_range_partition_of \
        :some_range_records,
-       partition_key: "created_at::date",
+       partition_key: ->{ "(created_at::date)" },
        start_range: current_date + 1.day,
        end_range: current_date + 2.days
   end
@@ -175,7 +177,9 @@ Define model that is backed by a range partition:
 
 ```ruby
 class SomeRangeRecord < ApplicationRecord
-  range_partition_by "created_at::date"
+  # NOTE: proc is only required for complex partition keys
+
+  range_partition_by ->{ "(created_at::date)" }
 end
  ```
 

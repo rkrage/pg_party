@@ -3,8 +3,6 @@ module PgParty
     def initialize(model, key)
       @model = model
       @key = key
-
-      @column, @cast = key.to_s.split("::")
     end
 
     def inject_range_methods
@@ -33,15 +31,18 @@ module PgParty
     def create_class_attributes
       @model.class_attribute(
         :partition_key,
-        :partition_column,
-        :partition_cast,
+        :complex_partition_key,
         instance_accessor: false,
         instance_predicate: false
       )
 
-      @model.partition_key = @key
-      @model.partition_column = @column
-      @model.partition_cast = @cast
+      if @key.is_a?(Proc)
+        @model.partition_key = @key.call
+        @model.complex_partition_key = true
+      else
+        @model.partition_key = @key
+        @model.complex_partition_key = false
+      end
     end
   end
 end

@@ -24,7 +24,7 @@ module PgParty
         child_table_name = hashed_table_name(table_name, "#{start_range}#{end_range}")
       end
 
-      constraint_clause = "FROM (#{quote(start_range)}) TO (#{quote(end_range)})"
+      constraint_clause = "FROM #{quote_range_constraint(start_range)} TO #{quote_range_constraint(end_range)}"
 
       create_partition_of(table_name, child_table_name, constraint_clause, **options)
     end
@@ -36,7 +36,7 @@ module PgParty
         child_table_name = hashed_table_name(table_name, values.to_s)
       end
 
-      constraint_clause = "IN (#{Array.wrap(values).map(&method(:quote)).join(",")})"
+      constraint_clause = "IN (#{Array.wrap(values).map(&method(:quote_list_constraint)).join(",")})"
 
       create_partition_of(table_name, child_table_name, constraint_clause, **options)
     end
@@ -80,7 +80,7 @@ module PgParty
       raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
 
       modified_options[:id]      = false
-      modified_options[:options] = "PARTITION BY #{type.to_s.upcase} ((#{quote_partition_key(partition_key)}))"
+      modified_options[:options] = "PARTITION BY #{type.to_s.upcase} (#{quote_partition_key(partition_key)})"
 
       result = create_table(table_name, modified_options) do |td|
         if id == :uuid
@@ -105,6 +105,9 @@ module PgParty
 
       raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
 
+      quoted_primary_key = quote_column_name(primary_key) if primary_key
+      quoted_partition_key = quote_partition_key(partition_key) if partition_key
+
       execute(<<-SQL)
         CREATE TABLE #{quote_table_name(child_table_name)}
         PARTITION OF #{quote_table_name(table_name)}
@@ -114,17 +117,15 @@ module PgParty
       if primary_key
         execute(<<-SQL)
           ALTER TABLE #{quote_table_name(child_table_name)}
-          ADD PRIMARY KEY (#{quote_column_name(primary_key)})
+          ADD PRIMARY KEY (#{quoted_primary_key})
         SQL
       end
 
-      if index && partition_key && primary_key != partition_key
-        index_name = index_name(child_table_name, partition_key)
-
+      if index && quoted_partition_key && quoted_partition_key != quoted_primary_key
         execute(<<-SQL)
-          CREATE INDEX #{quote_table_name(index_name)}
+          CREATE INDEX #{quote_table_name(index_name(child_table_name))}
           ON #{quote_table_name(child_table_name)}
-          USING btree ((#{quote_partition_key(partition_key)}))
+          USING btree (#{quoted_partition_key})
         SQL
       end
 
@@ -146,7 +147,23 @@ module PgParty
     end
 
     def quote_partition_key(key)
-      key.to_s.split("::").map(&method(:quote_column_name)).join("::")
+      if key.is_a?(Proc)
+        key.call.to_s # very difficult to determine how to sanitize a complex expression
+      else
+        quote_column_name(key)
+      end
+    end
+
+    def quote_range_constraint(value)
+      "(#{Array.wrap(value).map(&method(:quote)).join(",")})"
+    end
+
+    def quote_list_constraint(value)
+      if value.is_a?(Array)
+        "(#{value.map(&method(:quote)).join(",")})"
+      else
+        quote(value)
+      end
     end
 
     def uuid_function
@@ -161,8 +178,8 @@ module PgParty
       __getobj__.send(:postgresql_version) >= 100000
     end
 
-    def index_name(table_name, key)
-      "index_#{table_name}_on_#{key.to_s.split("::").join("_")}"
+    def index_name(table_name)
+      "index_#{table_name}_on_partition_key"
     end
   end
 end

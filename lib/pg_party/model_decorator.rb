@@ -44,16 +44,22 @@ module PgParty
     end
 
     def partition_key_eq(value)
+      partition_key_check_for(:partition_key_eq)
+
       where(partition_key_as_arel.eq(value))
     end
 
     def range_partition_key_in(start_range, end_range)
+      partition_key_check_for(:partition_key_in)
+
       node = partition_key_as_arel
 
       where(node.gteq(start_range).and(node.lt(end_range)))
     end
 
     def list_partition_key_in(*values)
+      partition_key_check_for(:partition_key_in)
+
       where(partition_key_as_arel.in(values.flatten))
     end
 
@@ -74,7 +80,7 @@ module PgParty
         start_range: start_range,
         end_range: end_range,
         primary_key: primary_key,
-        partition_key: partition_key
+        partition_key: partition_key_for_migration
       )
 
       connection.create_range_partition_of(table_name, **modified_options)
@@ -84,13 +90,17 @@ module PgParty
       modified_options = options.merge(
         values: values,
         primary_key: primary_key,
-        partition_key: partition_key
+        partition_key: partition_key_for_migration
       )
 
       connection.create_list_partition_of(table_name, **modified_options)
     end
 
     private
+
+    def partition_key_check_for(name)
+      raise "##{name} not available for complex partition keys" if complex_partition_key
+    end
 
     def cache_key
       __getobj__.object_id
@@ -103,14 +113,14 @@ module PgParty
     end
 
     def partition_key_as_arel
-      arel_column = arel_table[partition_column]
+      arel_table[partition_key]
+    end
 
-      if partition_cast
-        quoted_cast = connection.quote_column_name(partition_cast)
-
-        Arel::Nodes::NamedFunction.new("CAST", [arel_column.as(quoted_cast)])
+    def partition_key_for_migration
+      if complex_partition_key
+        ->{ partition_key }
       else
-        arel_column
+        partition_key
       end
     end
   end
