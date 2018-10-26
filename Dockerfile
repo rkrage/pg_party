@@ -1,13 +1,15 @@
 ARG CONTAINER_RUBY_VERSION=2.2.2
 FROM ruby:$CONTAINER_RUBY_VERSION
 
+ARG CONTAINER_PG_VERSION=11
+
 RUN export DEBIAN_CODENAME=$(cat /etc/os-release | grep "VERSION=" | cut -d "(" -f2 | cut -d ")" -f1) && \
-    echo "deb http://apt.postgresql.org/pub/repos/apt/ $DEBIAN_CODENAME-pgdg main 10" >> /etc/apt/sources.list.d/pgdg.list && \
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ $DEBIAN_CODENAME-pgdg main $CONTAINER_PG_VERSION" >> /etc/apt/sources.list.d/pgdg.list && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
     apt-get update && \
-    apt-get install -qq -y --fix-missing --no-install-recommends \
+    apt-get install -y --fix-missing --no-install-recommends \
       less \
-      postgresql-client && \
+      postgresql-client-$CONTAINER_PG_VERSION && \
     rm -rf /var/lib/apt/lists/*
 
 RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-reporter && \

@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   postgres:
-    image: postgres:10
+    image: postgres:${CONTAINER_PG_VERSION:-11}
   code:
     build: .
     image: pg_party
