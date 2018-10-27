@@ -2,13 +2,11 @@
 
 [![Gem Version](https://badge.fury.io/rb/pg_party.svg)][rubygems]
 [![Build Status](https://circleci.com/gh/rkrage/pg_party.svg?&style=shield)][circle]
-[![Dependency Status](https://gemnasium.com/badges/github.com/rkrage/pg_party.svg)][gemnasium]
 [![Maintainability](https://api.codeclimate.com/v1/badges/c409453d2283dd440227/maintainability)][cc_maintainability]
 [![Test Coverage](https://api.codeclimate.com/v1/badges/c409453d2283dd440227/test_coverage)][cc_coverage]
 
 [rubygems]:           https://rubygems.org/gems/pg_party
 [circle]:             https://circleci.com/gh/rkrage/pg_party/tree/master
-[gemnasium]:          https://gemnasium.com/github.com/rkrage/pg_party
 [cc_maintainability]: https://codeclimate.com/github/rkrage/pg_party/maintainability
 [cc_coverage]:        https://codeclimate.com/github/rkrage/pg_party/test_coverage
 
