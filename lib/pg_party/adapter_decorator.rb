@@ -24,7 +24,7 @@ module PgParty
         child_table_name = hashed_table_name(table_name, "#{start_range}#{end_range}")
       end
 
-      constraint_clause = "FROM #{quote_range_constraint(start_range)} TO #{quote_range_constraint(end_range)}"
+      constraint_clause = "FROM (#{quote_collection(start_range)}) TO (#{quote_collection(end_range)})"
 
       create_partition_of(table_name, child_table_name, constraint_clause, **options)
     end
@@ -36,7 +36,7 @@ module PgParty
         child_table_name = hashed_table_name(table_name, values.to_s)
       end
 
-      constraint_clause = "IN (#{Array.wrap(values).map(&method(:quote_list_constraint)).join(",")})"
+      constraint_clause = "IN (#{quote_collection(values)})"
 
       create_partition_of(table_name, child_table_name, constraint_clause, **options)
     end
@@ -154,16 +154,8 @@ module PgParty
       end
     end
 
-    def quote_range_constraint(value)
-      "(#{Array.wrap(value).map(&method(:quote)).join(",")})"
-    end
-
-    def quote_list_constraint(value)
-      if value.is_a?(Array)
-        "(#{value.map(&method(:quote)).join(",")})"
-      else
-        quote(value)
-      end
+    def quote_collection(values)
+      Array.wrap(values).map(&method(:quote)).join(",")
     end
 
     def uuid_function
