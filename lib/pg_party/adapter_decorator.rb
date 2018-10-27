@@ -77,7 +77,7 @@ module PgParty
     def create_partition(table_name, type, partition_key, **options)
       modified_options = options.except(:id, :primary_key)
       id               = options.fetch(:id, :bigserial)
-      primary_key      = options.fetch(:primary_key, :id)
+      primary_key      = options.fetch(:primary_key) { primary_key_for_table(table_name) }
 
       raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
 
@@ -101,7 +101,7 @@ module PgParty
     end
 
     def create_partition_of(table_name, child_table_name, constraint_clause, **options)
-      primary_key   = options.fetch(:primary_key, :id)
+      primary_key   = options.fetch(:primary_key) { primary_key_for_table(table_name) }
       index         = options.fetch(:index, true)
       partition_key = options[:partition_key]
 
@@ -146,6 +146,10 @@ module PgParty
       else
         __getobj__.quote(value)
       end
+    end
+
+    def primary_key_for_table(table_name)
+      ActiveRecord::Base.get_primary_key(table_name.to_s.singularize).to_sym
     end
 
     def quote_partition_key(key)

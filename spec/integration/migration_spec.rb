@@ -3,8 +3,8 @@
 require "spec_helper"
 
 RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
-  let(:table_name) { "t_#{SecureRandom.hex}" }
-  let(:child_table_name) { "t_#{SecureRandom.hex}" }
+  let(:table_name) { "t_#{SecureRandom.hex(6)}" }
+  let(:child_table_name) { "t_#{SecureRandom.hex(6)}" }
   let(:current_date) { Date.current }
   let(:start_range) { current_date }
   let(:end_range) { current_date + 1.month }
@@ -18,7 +18,13 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
   end
 
+  before do
+    ActiveRecord::Base.primary_key_prefix_type = :table_name_with_underscore
+  end
+
   after do
+    ActiveRecord::Base.primary_key_prefix_type = nil
+
     adapter.execute("DROP TABLE IF EXISTS #{table_name} CASCADE")
     adapter.execute("DROP TABLE IF EXISTS #{child_table_name} CASCADE")
   end
@@ -38,8 +44,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   subject(:create_list_partition) do
     adapter.create_list_partition(
       table_name,
-      partition_key: :custom_id,
-      primary_key: :custom_id,
+      partition_key: "#{table_name}_id",
       id: :serial
     )
   end
@@ -65,8 +70,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       table_name,
       name: child_table_name,
       index: true,
-      primary_key: :custom_id,
-      partition_key: :custom_id,
+      partition_key: "#{table_name}_id",
       values: values
     )
   end
@@ -127,16 +131,16 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     let(:create_table_sql) do
       <<-SQL
         CREATE TABLE #{table_name} (
-          custom_id integer NOT NULL
-        ) PARTITION BY LIST (custom_id);
+          #{table_name}_id integer NOT NULL
+        ) PARTITION BY LIST (#{table_name}_id);
       SQL
     end
 
     let(:incrementing_id_sql) do
       <<-SQL
         ALTER TABLE ONLY #{table_name}
-        ALTER COLUMN custom_id
-        SET DEFAULT nextval('#{table_name}_custom_id_seq'::regclass);
+        ALTER COLUMN #{table_name}_id
+        SET DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass);
       SQL
     end
 
@@ -197,7 +201,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       <<-SQL
         ALTER TABLE ONLY #{child_table_name}
         ADD CONSTRAINT #{child_table_name}_pkey
-        PRIMARY KEY (custom_id);
+        PRIMARY KEY (#{table_name}_id);
       SQL
     end
 
