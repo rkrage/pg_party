@@ -7,9 +7,7 @@ shared_config: &shared_config
 
     - run:
         name: Prepare and start containers
-        command: |
-          docker-compose build --build-arg CONTAINER_RUBY_VERSION=$CONTAINER_RUBY_VERSION --build-arg CONTAINER_PG_VERSION=$CONTAINER_PG_VERSION code
-          docker-compose up -d
+        command: docker-compose up -d
 
     - run:
         name: Install global gems

@@ -1,7 +1,7 @@
-ARG CONTAINER_RUBY_VERSION=2.2.2
+ARG CONTAINER_RUBY_VERSION
 FROM ruby:$CONTAINER_RUBY_VERSION
 
-ARG CONTAINER_PG_VERSION=11
+ARG CONTAINER_PG_VERSION
 
 RUN export DEBIAN_CODENAME=$(cat /etc/os-release | grep "VERSION=" | cut -d "(" -f2 | cut -d ")" -f1) && \
     echo "deb http://apt.postgresql.org/pub/repos/apt/ $DEBIAN_CODENAME-pgdg main $CONTAINER_PG_VERSION" >> /etc/apt/sources.list.d/pgdg.list && \
