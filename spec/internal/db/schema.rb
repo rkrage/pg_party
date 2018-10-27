@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 ActiveRecord::Schema.define do
   execute("CREATE SCHEMA e9651f34")
 

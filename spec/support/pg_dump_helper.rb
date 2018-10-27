@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PgDumpHelper
   def self.dump_table_structure(table_name)
     new(table_name: table_name).dump_table_structure

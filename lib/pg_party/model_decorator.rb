@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "pg_party/cache"
 
 module PgParty

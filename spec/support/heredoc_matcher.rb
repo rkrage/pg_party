@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec::Matchers.define :match_heredoc do |expected|
   match do |actual|
     actual.squish == expected.squish
