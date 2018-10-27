@@ -21,6 +21,7 @@ RSpec.describe PgParty::AdapterDecorator do
     allow(adapter).to receive(:quote_table_name) { |name| "\"#{name}\"" }
     allow(adapter).to receive(:quote_column_name) { |name| "\"#{name}\"" }
     allow(adapter).to receive(:quote) { |value| "'#{value}'" }
+    allow(ActiveRecord::Base).to receive(:get_primary_key).and_return("id")
 
     if uuid_function == "gen_random_uuid()"
       allow(adapter).to receive(:supports_pgcrypto_uuid?).and_return(true)
