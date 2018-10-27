@@ -1,9 +1,13 @@
 version: "3.3"
 services:
   postgres:
-    image: postgres:${CONTAINER_PG_VERSION:-11}
+    image: postgres:${CONTAINER_PG_VERSION:-10}
   code:
-    build: .
+    build:
+      context: .
+      args:
+        - CONTAINER_PG_VERSION=${CONTAINER_PG_VERSION:-10}
+        - CONTAINER_RUBY_VERSION=${CONTAINER_RUBY_VERSION:-2.2.2}
     image: pg_party
     environment:
       - CC_TEST_REPORTER_ID

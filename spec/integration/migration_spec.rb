@@ -26,7 +26,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   subject(:create_range_partition) do
     adapter.create_range_partition(
       table_name,
-      partition_key: "created_at::date",
+      partition_key: ->{ "(created_at::date)" },
       primary_key: :custom_id,
       id: :uuid,
       &timestamps_block
@@ -50,7 +50,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       name: child_table_name,
       index: true,
       primary_key: :custom_id,
-      partition_key: "created_at::date",
+      partition_key: ->{ "(created_at::date)" },
       start_range: start_range,
       end_range: end_range
     )
@@ -166,7 +166,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     let(:index_sql) do
       <<-SQL
-        CREATE INDEX index_#{child_table_name}_on_created_at_date
+        CREATE INDEX index_#{child_table_name}_on_partition_key
         ON #{child_table_name}
         USING btree (((created_at)::date));
       SQL

@@ -8,17 +8,17 @@ ActiveSupport.on_load(:active_record) do
 
   require "pg_party/adapter/abstract_methods"
 
-  ActiveRecord::ConnectionAdapters::AbstractAdapter.class_eval do
-    include PgParty::Adapter::AbstractMethods
-  end
-  
+  ActiveRecord::ConnectionAdapters::AbstractAdapter.include(
+    PgParty::Adapter::AbstractMethods
+  )
+
   begin
     require "active_record/connection_adapters/postgresql_adapter"
     require "pg_party/adapter/postgresql_methods"
 
-    ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.class_eval do
-      include PgParty::Adapter::PostgreSQLMethods
-    end
+    ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.include(
+      PgParty::Adapter::PostgreSQLMethods
+    )
   rescue LoadError
     # migration methods will not be available
   end

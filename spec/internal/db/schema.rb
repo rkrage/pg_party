@@ -4,21 +4,37 @@ ActiveRecord::Schema.define do
   enable_extension "uuid-ossp"
   enable_extension "pgcrypto"
 
-  create_range_partition :bigint_date_ranges, partition_key: "created_at::date" do |t|
+  create_range_partition :bigint_date_ranges, partition_key: ->{ "(created_at::date)" } do |t|
     t.timestamps null: false
   end
 
   create_range_partition_of :bigint_date_ranges,
     name: :bigint_date_ranges_a,
-    partition_key: "created_at::date",
+    partition_key: ->{ "(created_at::date)" },
     start_range: Date.today,
     end_range: Date.tomorrow
 
   create_range_partition_of :bigint_date_ranges,
     name: :bigint_date_ranges_b,
-    partition_key: "created_at::date",
+    partition_key: ->{ "(created_at::date)" },
     start_range: Date.tomorrow,
     end_range: Date.tomorrow + 1
+
+  create_range_partition :bigint_month_ranges, partition_key: ->{ "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" } do |t|
+    t.timestamps null: false
+  end
+
+  create_range_partition_of :bigint_month_ranges,
+    name: :bigint_month_ranges_a,
+    partition_key: ->{ "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" },
+    start_range: [Date.today.year, Date.today.month],
+    end_range: [(Date.today + 1.month).year, (Date.today + 1.month).month]
+
+  create_range_partition_of :bigint_month_ranges,
+    name: :bigint_month_ranges_b,
+    partition_key: ->{ "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" },
+    start_range: [(Date.today + 1.month).year, (Date.today + 1.month).month],
+    end_range: [(Date.today + 2.months).year, (Date.today + 2.months).month]
 
   create_range_partition :bigint_custom_id_int_ranges, primary_key: :some_id, partition_key: :some_int do |t|
     t.integer :some_int, null: false

@@ -6,6 +6,7 @@ RSpec.describe PgParty::ModelDecorator do
   let(:partitions) { ["a", "b"] }
   let(:primary_key) { :id }
   let(:partition_key) { :id }
+  let(:complex_partition_key) { false }
   let(:arel_node) { double }
   let(:adapter) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) }
   let(:schema_cache) { instance_double(ActiveRecord::ConnectionAdapters::SchemaCache) }
@@ -23,8 +24,7 @@ RSpec.describe PgParty::ModelDecorator do
     Class.new(ActiveRecord::Base) do
       class_attribute \
         :partition_key,
-        :partition_column,
-        :partition_cast,
+        :complex_partition_key,
         instance_accessor: false
 
       def self.define_attribute_methods
@@ -35,6 +35,7 @@ RSpec.describe PgParty::ModelDecorator do
 
   before do
     model.partition_key = partition_key
+    model.complex_partition_key = complex_partition_key
     model.table_name = table_name
     model.primary_key = primary_key
 
@@ -146,6 +147,14 @@ RSpec.describe PgParty::ModelDecorator do
       expect(model).to receive(:where).with(arel_node)
       subject
     end
+
+    context "when complex_partition_key is true" do
+      let(:complex_partition_key) { true }
+
+      it "raises error" do
+        expect { subject }.to raise_error(RuntimeError, "#partition_key_eq not available for complex partition keys")
+      end
+    end
   end
 
   describe "#range_partition_key_in" do
@@ -169,6 +178,14 @@ RSpec.describe PgParty::ModelDecorator do
     it "calls where with arel node" do
       expect(model).to receive(:where).with(arel_node)
       subject
+    end
+
+    context "when complex_partition_key is true" do
+      let(:complex_partition_key) { true }
+
+      it "raises error" do
+        expect { subject }.to raise_error(RuntimeError, "#partition_key_in not available for complex partition keys")
+      end
     end
   end
 
@@ -198,6 +215,16 @@ RSpec.describe PgParty::ModelDecorator do
       it "calls where with arel node" do
         expect(model).to receive(:where).with(arel_node)
         subject
+      end
+    end
+
+    context "when complex_partition_key is true" do
+      let(:complex_partition_key) { true }
+
+      subject { decorator.list_partition_key_in([1, 2]) }
+
+      it "raises error" do
+        expect { subject }.to raise_error(RuntimeError, "#partition_key_in not available for complex partition keys")
       end
     end
   end
@@ -233,12 +260,29 @@ RSpec.describe PgParty::ModelDecorator do
 
       subject
     end
+
+    context "when complex_partition_key is true" do
+      let(:complex_partition_key) { true }
+
+      it "calls create_range_partition on adapter with proc partition_key" do
+        expect(adapter).to receive(:create_range_partition_of).with(
+          table_name.to_s,
+          start_range: 1,
+          end_range: 10,
+          primary_key: primary_key.to_s,
+          partition_key: kind_of(Proc),
+          name: :child
+        )
+
+        subject
+      end
+    end
   end
 
   describe "#create_list_partition" do
     subject { decorator.create_list_partition(values: [1, 2, 3], name: :child) }
 
-    it "calls create_range_partition on adapter" do
+    it "calls create_list_partition on adapter" do
       expect(adapter).to receive(:create_list_partition_of).with(
         table_name.to_s,
         values: [1, 2, 3],
@@ -248,6 +292,22 @@ RSpec.describe PgParty::ModelDecorator do
       )
 
       subject
+    end
+
+    context "when complex_partition_key is true" do
+      let(:complex_partition_key) { true }
+
+      it "calls create_list_partition on adapter with proc partition key" do
+        expect(adapter).to receive(:create_list_partition_of).with(
+          table_name.to_s,
+          values: [1, 2, 3],
+          primary_key: primary_key.to_s,
+          partition_key: kind_of(Proc),
+          name: :child
+        )
+
+        subject
+      end
     end
   end
 end

@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe BigintDateRange do
+RSpec.describe BigintMonthRange do
   let(:current_date) { Date.current }
   let(:current_time) { Time.current }
   let(:connection) { described_class.connection }
@@ -17,7 +17,7 @@ RSpec.describe BigintDateRange do
     end
 
     context "when partition key outside range" do
-      let(:created_at) { current_time - 10.days }
+      let(:created_at) { current_time - 1.month }
 
       it "raises error" do
         expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::CheckViolation/)
@@ -32,8 +32,10 @@ RSpec.describe BigintDateRange do
   end
 
   describe ".create_partition" do
-    let(:start_range) { current_date + 2.days }
-    let(:end_range) { current_date + 3.days }
+    let(:start_date) { current_date + 2.months }
+    let(:end_date) { current_date + 3.months }
+    let(:start_range) { [start_date.year, start_date.month] }
+    let(:end_range) { [end_date.year, end_date.month] }
     let(:child_table_name) { "#{table_name}_c" }
 
     subject do
@@ -62,7 +64,7 @@ RSpec.describe BigintDateRange do
     end
 
     context "when ranges overlap" do
-      let(:start_range) { current_date }
+      let(:start_date) { current_date - 1.month }
 
       it "raises error" do
         expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
@@ -82,8 +84,8 @@ RSpec.describe BigintDateRange do
 
     describe "query methods" do
       let!(:record_one) { described_class.create(created_at: current_time) }
-      let!(:record_two) { described_class.create(created_at: current_time + 1.minute) }
-      let!(:record_three) { described_class.create(created_at: current_time + 1.day) }
+      let!(:record_two) { described_class.create(created_at: current_time.end_of_month) }
+      let!(:record_three) { described_class.create(created_at: (current_time + 1.month).end_of_month) }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
