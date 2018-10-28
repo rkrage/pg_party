@@ -21,6 +21,10 @@ module PgParty
         PgParty::AdapterDecorator.new(self).create_list_partition_of(*args)
       end
 
+      def create_table_like(*args)
+        PgParty::AdapterDecorator.new(self).create_table_like(*args)
+      end
+
       def attach_range_partition(*args)
         PgParty::AdapterDecorator.new(self).attach_range_partition(*args)
       end

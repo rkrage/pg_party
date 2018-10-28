@@ -43,6 +43,14 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     end
   end
 
+  describe "#create_table_like" do
+    subject { adapter.create_table_like("args") }
+
+    it "raises not implemented error" do
+      expect { subject }.to raise_error(RuntimeError, "#create_table_like is not implemented")
+    end
+  end
+
   describe "#attach_range_partition" do
     subject { adapter.attach_range_partition("args") }
 
