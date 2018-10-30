@@ -6,6 +6,7 @@ RSpec.describe PgParty::AdapterDecorator do
   let(:adapter) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) }
   let(:table_definition) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition) }
   let(:pg_version) { 100000 }
+  let(:primary_key) { :id }
   let(:uuid_function) do
     if Rails.gem_version >= Gem::Version.new("5.1")
       "gen_random_uuid()"
@@ -21,6 +22,7 @@ RSpec.describe PgParty::AdapterDecorator do
     allow(adapter).to receive(:quote_table_name) { |name| "\"#{name}\"" }
     allow(adapter).to receive(:quote_column_name) { |name| "\"#{name}\"" }
     allow(adapter).to receive(:quote) { |value| "'#{value}'" }
+    allow(adapter).to receive(:primary_key).and_return(primary_key)
     allow(ActiveRecord::Base).to receive(:get_primary_key).and_return("id")
 
     if uuid_function == "gen_random_uuid()"
@@ -612,6 +614,7 @@ RSpec.describe PgParty::AdapterDecorator do
         expect { subject }.to raise_error(ArgumentError, "composite primary key not supported")
       end
     end
+
     context "with name and partition key and index false" do
       subject do
         decorator.create_list_partition_of(
@@ -721,11 +724,77 @@ RSpec.describe PgParty::AdapterDecorator do
       SQL
     end
 
+    let(:create_primary_key_sql) do
+      <<-SQL
+        ALTER TABLE "table_b"
+        ADD PRIMARY KEY ("id")
+      SQL
+    end
+
     subject { decorator.create_table_like(:table_a, :table_b) }
 
-    it "calls execute with the correct SQL" do
-      expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
-      subject
+    context "when parent table has primary key" do
+      it "creates table with the correct SQL" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+        subject
+      end
+
+      it "does not create primary key" do
+        expect(adapter).to_not receive(:execute).with(/ALTER TABLE/)
+        subject
+      end
+    end
+
+    context "when parent table does not have primary key" do
+      let(:primary_key) { nil }
+
+      it "creates table with the correct SQL" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+        subject
+      end
+
+      it "creates primary key with the correct SQL" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
+        subject
+      end
+    end
+
+    context "when parent table does not have primary key and false primary key provided" do
+      let(:primary_key) { nil }
+
+      subject { decorator.create_table_like(:table_a, :table_b, primary_key: false) }
+
+      it "creates table with the correct SQL" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+        subject
+      end
+
+      it "does not create primary key" do
+        expect(adapter).to_not receive(:execute).with(/ALTER TABLE/)
+        subject
+      end
+    end
+
+    context "when parent table does not have primary key and custom key provided" do
+      let(:primary_key) { nil }
+      let(:create_primary_key_sql) do
+        <<-SQL
+          ALTER TABLE "table_b"
+          ADD PRIMARY KEY ("custom_id")
+        SQL
+      end
+
+      subject { decorator.create_table_like(:table_a, :table_b, primary_key: :custom_id) }
+
+      it "creates table with the correct SQL" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+        subject
+      end
+
+      it "creates primary key with the correct SQL" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
+        subject
+      end
     end
   end
 

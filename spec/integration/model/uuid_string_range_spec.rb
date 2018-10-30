@@ -9,7 +9,7 @@ RSpec.describe UuidStringRange do
   describe ".create" do
     let(:some_string) { "c" }
 
-    subject { described_class.create(some_string: some_string) }
+    subject { described_class.create!(some_string: some_string) }
 
     context "when partition key in range" do
       its(:id) { is_expected.to be_a_uuid }
@@ -81,9 +81,9 @@ RSpec.describe UuidStringRange do
     its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
     describe "query methods" do
-      let!(:record_one) { described_class.create(some_string: "d") }
-      let!(:record_two) { described_class.create(some_string: "f") }
-      let!(:record_three) { described_class.create(some_string: "x") }
+      let!(:record_one) { described_class.create!(some_string: "d") }
+      let!(:record_two) { described_class.create!(some_string: "f") }
+      let!(:record_three) { described_class.create!(some_string: "x") }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
@@ -103,9 +103,9 @@ RSpec.describe UuidStringRange do
     let(:start_range) { "a" }
     let(:end_range) { "l" }
 
-    let!(:record_one) { described_class.create(some_string: "d") }
-    let!(:record_two) { described_class.create(some_string: "f") }
-    let!(:record_three) { described_class.create(some_string: "x") }
+    let!(:record_one) { described_class.create!(some_string: "d") }
+    let!(:record_two) { described_class.create!(some_string: "f") }
+    let!(:record_three) { described_class.create!(some_string: "x") }
 
     subject { described_class.partition_key_in(start_range, end_range) }
 
@@ -129,8 +129,8 @@ RSpec.describe UuidStringRange do
   describe ".partition_key_eq" do
     let(:partition_key) { "d" }
 
-    let!(:record_one) { described_class.create(some_string: "d") }
-    let!(:record_two) { described_class.create(some_string: "x") }
+    let!(:record_one) { described_class.create!(some_string: "d") }
+    let!(:record_two) { described_class.create!(some_string: "x") }
 
     subject { described_class.partition_key_eq(partition_key) }
 

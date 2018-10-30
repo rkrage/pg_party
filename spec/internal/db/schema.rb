@@ -27,16 +27,38 @@ ActiveRecord::Schema.define do
 
   create_range_partition :bigint_month_ranges, partition_key: ->{ "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" } do |t|
     t.timestamps null: false
+    t.integer :some_indexed_column
   end
 
-  create_range_partition_of \
+  # Postgres doesn't support adding indexes to a partition table,
+  # so let's define a template table to use when creating child partitions
+  create_table_like :bigint_month_ranges, :bigint_month_ranges_template
+
+  add_index :bigint_month_ranges_template, :some_indexed_column
+
+  # Rails 5+ supports expressions when creating indexes:
+  #
+  # add_index \
+  #   :bigint_month_ranges_template,
+  #   "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)",
+  #   name: :bigint_month_ranges_created_at_month
+  #
+  # Rails 4.2 does not, so we're forced to use raw SQL:
+  execute(<<-SQL)
+    CREATE INDEX bigint_month_ranges_template_created_at
+    ON bigint_month_ranges_template
+    USING btree (EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at))
+  SQL
+
+  # create child partitions from template table, copying over all indexes
+  create_table_like :bigint_month_ranges_template, :bigint_month_ranges_a
+  create_table_like :bigint_month_ranges_template, :bigint_month_ranges_b
+
+  attach_range_partition \
     :bigint_month_ranges,
-    name: :bigint_month_ranges_a,
-    partition_key: ->{ "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" },
+    :bigint_month_ranges_a,
     start_range: [Date.today.year, Date.today.month],
     end_range: [(Date.today + 1.month).year, (Date.today + 1.month).month]
-
-  create_table_like :bigint_month_ranges_a, :bigint_month_ranges_b
 
   attach_range_partition \
     :bigint_month_ranges,

@@ -31,11 +31,21 @@ module PgParty
       create_partition_of(table_name, constraint_clause, **options)
     end
 
-    def create_table_like(table_name, new_table_name)
+    def create_table_like(table_name, new_table_name, **options)
+      primary_key = options.fetch(:primary_key) { calculate_primary_key(table_name) }
+
       execute(<<-SQL)
         CREATE TABLE #{quote_table_name(new_table_name)} (
           LIKE #{quote_table_name(table_name)} INCLUDING ALL
         )
+      SQL
+
+      return if !primary_key
+      return if has_primary_key?(new_table_name)
+
+      execute(<<-SQL)
+        ALTER TABLE #{quote_table_name(new_table_name)}
+        ADD PRIMARY KEY (#{quote_column_name(primary_key)})
       SQL
     end
 
@@ -73,7 +83,7 @@ module PgParty
     def create_partition(table_name, type, partition_key, **options)
       modified_options = options.except(:id, :primary_key)
       id               = options.fetch(:id, :bigserial)
-      primary_key      = options.fetch(:primary_key) { primary_key_for_table(table_name) }
+      primary_key      = options.fetch(:primary_key) { calculate_primary_key(table_name) }
 
       raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
 
@@ -97,7 +107,7 @@ module PgParty
     end
 
     def create_partition_of(table_name, constraint_clause, **options)
-      primary_key      = options.fetch(:primary_key) { primary_key_for_table(table_name) }
+      primary_key      = options.fetch(:primary_key) { calculate_primary_key(table_name) }
       child_table_name = options.fetch(:name) { hashed_table_name(table_name, constraint_clause) }
       index            = options.fetch(:index, true)
       partition_key    = options[:partition_key]
@@ -145,7 +155,11 @@ module PgParty
       end
     end
 
-    def primary_key_for_table(table_name)
+    def has_primary_key?(table_name)
+      primary_key(table_name).present?
+    end
+
+    def calculate_primary_key(table_name)
       ActiveRecord::Base.get_primary_key(table_name.to_s.singularize).to_sym
     end
 

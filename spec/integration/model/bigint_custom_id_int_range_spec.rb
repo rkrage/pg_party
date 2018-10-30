@@ -9,7 +9,7 @@ RSpec.describe BigintCustomIdIntRange do
   describe ".create" do
     let(:some_int) { 5 }
 
-    subject { described_class.create(some_int: some_int) }
+    subject { described_class.create!(some_int: some_int) }
 
     context "when partition key in range" do
       its(:id) { is_expected.to be_a(Integer) }
@@ -81,9 +81,9 @@ RSpec.describe BigintCustomIdIntRange do
     its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
     describe "query methods" do
-      let!(:record_one) { described_class.create(some_int: 0) }
-      let!(:record_two) { described_class.create(some_int: 9) }
-      let!(:record_three) { described_class.create(some_int: 19) }
+      let!(:record_one) { described_class.create!(some_int: 0) }
+      let!(:record_two) { described_class.create!(some_int: 9) }
+      let!(:record_three) { described_class.create!(some_int: 19) }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
@@ -103,9 +103,9 @@ RSpec.describe BigintCustomIdIntRange do
     let(:start_range) { 0 }
     let(:end_range) { 10 }
 
-    let!(:record_one) { described_class.create(some_int: 0) }
-    let!(:record_two) { described_class.create(some_int: 9) }
-    let!(:record_three) { described_class.create(some_int: 19) }
+    let!(:record_one) { described_class.create!(some_int: 0) }
+    let!(:record_two) { described_class.create!(some_int: 9) }
+    let!(:record_three) { described_class.create!(some_int: 19) }
 
     subject { described_class.partition_key_in(start_range, end_range) }
 
@@ -129,8 +129,8 @@ RSpec.describe BigintCustomIdIntRange do
   describe ".partition_key_eq" do
     let(:partition_key) { 0 }
 
-    let!(:record_one) { described_class.create(some_int: 0) }
-    let!(:record_two) { described_class.create(some_int: 10) }
+    let!(:record_one) { described_class.create!(some_int: 0) }
+    let!(:record_two) { described_class.create!(some_int: 10) }
 
     subject { described_class.partition_key_eq(partition_key) }
 

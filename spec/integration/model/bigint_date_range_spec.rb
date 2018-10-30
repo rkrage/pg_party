@@ -11,7 +11,7 @@ RSpec.describe BigintDateRange do
   describe ".create" do
     let(:created_at) { current_time }
 
-    subject { described_class.create(created_at: created_at) }
+    subject { described_class.create!(created_at: created_at) }
 
     context "when partition key in range" do
       its(:id) { is_expected.to be_an(Integer) }
@@ -83,9 +83,9 @@ RSpec.describe BigintDateRange do
     its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
     describe "query methods" do
-      let!(:record_one) { described_class.create(created_at: current_time) }
-      let!(:record_two) { described_class.create(created_at: current_time + 1.minute) }
-      let!(:record_three) { described_class.create(created_at: current_time + 1.day) }
+      let!(:record_one) { described_class.create!(created_at: current_time) }
+      let!(:record_two) { described_class.create!(created_at: current_time + 1.minute) }
+      let!(:record_three) { described_class.create!(created_at: current_time + 1.day) }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
