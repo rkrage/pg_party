@@ -13,15 +13,12 @@ ActiveRecord::Schema.define do
   create_range_partition_of \
     :bigint_date_ranges,
     name: :bigint_date_ranges_a,
-    partition_key: ->{ "(created_at::date)" },
     start_range: Date.today,
     end_range: Date.tomorrow
 
-  create_table_like :bigint_date_ranges_a, :bigint_date_ranges_b
-
-  attach_range_partition \
+  create_range_partition_of \
     :bigint_date_ranges,
-    :bigint_date_ranges_b,
+    name: :bigint_date_ranges_b,
     start_range: Date.tomorrow,
     end_range: Date.tomorrow + 1
 
@@ -29,10 +26,6 @@ ActiveRecord::Schema.define do
     t.timestamps null: false
     t.integer :some_indexed_column
   end
-
-  # Postgres doesn't support adding indexes to a partition table,
-  # so let's define a template table to use when creating child partitions
-  create_table_like :bigint_month_ranges, :bigint_month_ranges_template
 
   add_index :bigint_month_ranges_template, :some_indexed_column
 
@@ -50,19 +43,15 @@ ActiveRecord::Schema.define do
     USING btree (EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at))
   SQL
 
-  # create child partitions from template table, copying over all indexes
-  create_table_like :bigint_month_ranges_template, :bigint_month_ranges_a
-  create_table_like :bigint_month_ranges_template, :bigint_month_ranges_b
-
-  attach_range_partition \
+  create_range_partition_of \
     :bigint_month_ranges,
-    :bigint_month_ranges_a,
+    name: :bigint_month_ranges_a,
     start_range: [Date.today.year, Date.today.month],
     end_range: [(Date.today + 1.month).year, (Date.today + 1.month).month]
 
-  attach_range_partition \
+  create_range_partition_of \
     :bigint_month_ranges,
-    :bigint_month_ranges_b,
+    name: :bigint_month_ranges_b,
     start_range: [(Date.today + 1.month).year, (Date.today + 1.month).month],
     end_range: [(Date.today + 2.months).year, (Date.today + 2.months).month]
 
@@ -73,16 +62,12 @@ ActiveRecord::Schema.define do
   create_range_partition_of \
     :bigint_custom_id_int_ranges,
     name: :bigint_custom_id_int_ranges_a,
-    primary_key: :some_id,
-    partition_key: :some_int,
     start_range: 0,
     end_range: 10
 
-  create_table_like :bigint_custom_id_int_ranges_a, :bigint_custom_id_int_ranges_b
-
-  attach_range_partition \
+  create_range_partition_of \
     :bigint_custom_id_int_ranges,
-    :bigint_custom_id_int_ranges_b,
+    name: :bigint_custom_id_int_ranges_b,
     start_range: 10,
     end_range: 20
 
@@ -93,33 +78,27 @@ ActiveRecord::Schema.define do
   create_range_partition_of \
     :uuid_string_ranges,
     name: :uuid_string_ranges_a,
-    partition_key: :some_string,
     start_range: "a",
     end_range: "l"
 
-  create_table_like :uuid_string_ranges_a, :uuid_string_ranges_b
-
-  attach_range_partition \
+  create_range_partition_of \
     :uuid_string_ranges,
-    :uuid_string_ranges_b,
+    name: :uuid_string_ranges_b,
     start_range: "l",
     end_range: "z"
 
-  create_list_partition :bigint_boolean_lists, partition_key: :some_bool do |t|
+  create_list_partition :bigint_boolean_lists, partition_key: :some_bool, template: false do |t|
     t.boolean :some_bool, default: true, null: false
   end
 
   create_list_partition_of \
     :bigint_boolean_lists,
     name: :bigint_boolean_lists_a,
-    partition_key: :some_bool,
     values: true
 
-  create_table_like :bigint_boolean_lists_a, :bigint_boolean_lists_b
-
-  attach_list_partition \
+  create_list_partition_of \
     :bigint_boolean_lists,
-    :bigint_boolean_lists_b,
+    name: :bigint_boolean_lists_b,
     values: false
 
   create_list_partition :bigint_custom_id_int_lists, primary_key: :some_id, partition_key: :some_int do |t|
@@ -129,15 +108,11 @@ ActiveRecord::Schema.define do
   create_list_partition_of \
     :bigint_custom_id_int_lists,
     name: :bigint_custom_id_int_lists_a,
-    primary_key: :some_id,
-    partition_key: :some_int,
     values: [1, 2]
 
-  create_table_like :bigint_custom_id_int_lists_a, :bigint_custom_id_int_lists_b
-
-  attach_list_partition \
+  create_list_partition_of \
     :bigint_custom_id_int_lists,
-    :bigint_custom_id_int_lists_b,
+    name: :bigint_custom_id_int_lists_b,
     values: [3, 4]
 
   create_list_partition :uuid_string_lists, id: :uuid, partition_key: :some_string do |t|
@@ -147,13 +122,10 @@ ActiveRecord::Schema.define do
   create_list_partition_of \
     :uuid_string_lists,
     name: :uuid_string_lists_a,
-    partiton_key: :some_string,
     values: ["a", "b"]
 
-  create_table_like :uuid_string_lists_a, :uuid_string_lists_b
-
-  attach_list_partition \
+  create_list_partition_of \
     :uuid_string_lists,
-    :uuid_string_lists_b,
+    name: :uuid_string_lists_b,
     values: ["c", "d"]
 end

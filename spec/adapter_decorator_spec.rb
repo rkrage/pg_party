@@ -7,6 +7,7 @@ RSpec.describe PgParty::AdapterDecorator do
   let(:table_definition) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQL::TableDefinition) }
   let(:pg_version) { 100000 }
   let(:primary_key) { :id }
+  let(:template_table_exists) { true }
   let(:uuid_function) do
     if Rails.gem_version >= Gem::Version.new("5.1")
       "gen_random_uuid()"
@@ -24,6 +25,7 @@ RSpec.describe PgParty::AdapterDecorator do
     allow(adapter).to receive(:quote) { |value| "'#{value}'" }
     allow(adapter).to receive(:primary_key).and_return(primary_key)
     allow(ActiveRecord::Base).to receive(:get_primary_key).and_return("id")
+    allow(PgParty::SchemaHelper).to receive(:table_exists?).and_return(template_table_exists)
 
     if uuid_function == "gen_random_uuid()"
       allow(adapter).to receive(:supports_pgcrypto_uuid?).and_return(true)
@@ -365,37 +367,22 @@ RSpec.describe PgParty::AdapterDecorator do
   end
 
   describe "#create_range_partition_of" do
-    let(:create_table_sql) do
+    let(:attach_partition_sql) do
       <<-SQL
-        CREATE TABLE "child"
-        PARTITION OF "parent"
+        ALTER TABLE "parent"
+        ATTACH PARTITION "child"
         FOR VALUES FROM ('1') TO ('10')
       SQL
     end
 
-    let(:create_primary_key_sql) do
-      <<-SQL
-        ALTER TABLE "child"
-        ADD PRIMARY KEY ("id")
-      SQL
-    end
+    before { allow(decorator).to receive(:create_table_like) }
 
-    let(:create_index_sql) do
-      <<-SQL
-        CREATE INDEX "index_child_on_partition_key"
-        ON "child"
-        USING btree ("key")
-      SQL
-    end
-
-    before { allow(adapter).to receive(:create_table) }
-
-    context "with name and partition key" do
+    context "with name, primary key, and template table present" do
       subject do
         decorator.create_range_partition_of(
           :parent,
           name: :child,
-          partition_key: :key,
+          primary_key: :some_pk, # this is ignored - it's assumed that the template table already has a pk
           start_range: 1,
           end_range: 10
         )
@@ -403,49 +390,22 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+      it "calls create_table_like with template table" do
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
         subject
       end
 
-      it "calls execute to add primary key" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
-        subject
-      end
-
-      it "calls execute to add index" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_index_sql))
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
         subject
       end
     end
 
-    context "with composite primary key" do
-      subject do
-        decorator.create_range_partition_of(
-          :parent,
-          primary_key: [:id, :id2],
-          start_range: 1,
-          end_range: 10
-        )
-      end
-
-      it "raise argument error" do
-        expect { subject }.to raise_error(ArgumentError, "composite primary key not supported")
-      end
-    end
-
-    context "with name and partition key and index false" do
+    context "with name and template table present" do
       subject do
         decorator.create_range_partition_of(
           :parent,
           name: :child,
-          partition_key: :key,
-          index: false,
           start_range: 1,
           end_range: 10
         )
@@ -453,33 +413,47 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+      it "calls create_table_like with template table" do
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
         subject
       end
 
-      it "calls execute to add primary key" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
-        subject
-      end
-
-      it "does not call execute to add index" do
-        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
         subject
       end
     end
 
-    context "with name and primary key as partition key" do
+    context "with template table present" do
+      subject do
+        decorator.create_range_partition_of(
+          :parent,
+          start_range: 1,
+          end_range: 10
+        )
+      end
+
+      it { is_expected.to match(/^parent_/) }
+
+      it "calls create_table_like with template table" do
+        expect(decorator).to receive(:create_table_like).with("parent_template", /^parent_/)
+        subject
+      end
+
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(/ATTACH PARTITION/)
+        subject
+      end
+    end
+
+    context "with name, primary key, and template table not present" do
+      let(:template_table_exists) { false }
+
       subject do
         decorator.create_range_partition_of(
           :parent,
           name: :child,
-          partition_key: :id,
+          primary_key: :some_pk,
           start_range: 1,
           end_range: 10
         )
@@ -487,229 +461,212 @@ RSpec.describe PgParty::AdapterDecorator do
 
       it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+      it "calls create_table_like with parent table" do
+        expect(decorator).to receive(:create_table_like).with(:parent, :child, primary_key: :some_pk)
         subject
       end
 
-      it "calls execute to add primary key" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
-        subject
-      end
-
-      it "does not call execute to add index" do
-        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
         subject
       end
     end
 
-    context "without name and primary key" do
+    context "with name and template table not present" do
+      let(:template_table_exists) { false }
+
       subject do
         decorator.create_range_partition_of(
           :parent,
-          primary_key: false,
+          name: :child,
           start_range: 1,
           end_range: 10
         )
       end
 
-      it { is_expected.to match(/^parent_\w{7}$/) }
+      it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(/CREATE TABLE/)
+      it "calls create_table_like with parent table" do
+        expect(decorator).to receive(:create_table_like).with(:parent, :child, primary_key: :id)
         subject
       end
 
-      it "does not call execute to add primary key" do
-        expect(adapter).to_not receive(:execute).with(/ALTER TABLE/)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
+        subject
+      end
+    end
+
+    context "with template table not present" do
+      let(:template_table_exists) { false }
+
+      subject do
+        decorator.create_range_partition_of(
+          :parent,
+          start_range: 1,
+          end_range: 10
+        )
+      end
+
+      it { is_expected.to match(/^parent_/) }
+
+      it "calls create_table_like with parent table" do
+        expect(decorator).to receive(:create_table_like).with(:parent, /^parent_/, primary_key: :id)
         subject
       end
 
-      it "does not call execute to add index" do
-        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(/ATTACH PARTITION/)
         subject
       end
     end
   end
 
   describe "#create_list_partition_of" do
-    let(:create_table_sql) do
+    let(:attach_partition_sql) do
       <<-SQL
-        CREATE TABLE "child"
-        PARTITION OF "parent"
+        ALTER TABLE "parent"
+        ATTACH PARTITION "child"
         FOR VALUES IN ('1','2','3')
       SQL
     end
 
-    let(:create_primary_key_sql) do
-      <<-SQL
-        ALTER TABLE "child"
-        ADD PRIMARY KEY ("id")
-      SQL
-    end
+    before { allow(decorator).to receive(:create_table_like) }
 
-    let(:create_index_sql) do
-      <<-SQL
-        CREATE INDEX "index_child_on_partition_key"
-        ON "child"
-        USING btree ("key")
-      SQL
-    end
-
-    before { allow(adapter).to receive(:create_table) }
-
-    context "with name and partition key" do
+    context "with name, primary key, and template table present" do
       subject do
         decorator.create_list_partition_of(
           :parent,
           name: :child,
-          partition_key: :key,
+          primary_key: :some_pk, # this is ignored - it's assumed that the template table already has a pk
           values: [1, 2, 3]
         )
       end
 
       it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+      it "calls create_table_like with template table" do
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
         subject
       end
 
-      it "calls execute to add primary key" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
-        subject
-      end
-
-      it "calls execute to add index" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_index_sql))
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
         subject
       end
     end
 
-    context "with composite primary key" do
-      subject do
-        decorator.create_list_partition_of(
-          :parent,
-          primary_key: [:id, :id2],
-          values: [1, 2, 3]
-        )
-      end
-
-      it "raise argument error" do
-        expect { subject }.to raise_error(ArgumentError, "composite primary key not supported")
-      end
-    end
-
-    context "with name and partition key and index false" do
+    context "with name and template table present" do
       subject do
         decorator.create_list_partition_of(
           :parent,
           name: :child,
-          partition_key: :key,
-          index: false,
           values: [1, 2, 3]
         )
       end
 
       it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+      it "calls create_table_like with template table" do
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
         subject
       end
 
-      it "calls execute to add primary key" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
-        subject
-      end
-
-      it "does not call execute to add index" do
-        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
         subject
       end
     end
 
-    context "with name and primary key as partition key" do
+    context "with template table present" do
+      subject do
+        decorator.create_list_partition_of(
+          :parent,
+          values: [1, 2, 3]
+        )
+      end
+
+      it { is_expected.to match(/^parent_/) }
+
+      it "calls create_table_like with template table" do
+        expect(decorator).to receive(:create_table_like).with("parent_template", /^parent_/)
+        subject
+      end
+
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(/ATTACH PARTITION/)
+        subject
+      end
+    end
+
+    context "with name, primary key, and template table not present" do
+      let(:template_table_exists) { false }
+
       subject do
         decorator.create_list_partition_of(
           :parent,
           name: :child,
-          partition_key: :id,
+          primary_key: :some_pk,
           values: [1, 2, 3]
         )
       end
 
       it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_table_sql))
+      it "calls create_table_like with parent table" do
+        expect(decorator).to receive(:create_table_like).with(:parent, :child, primary_key: :some_pk)
         subject
       end
 
-      it "calls execute to add primary key" do
-        expect(adapter).to receive(:execute).with(heredoc_matching(create_primary_key_sql))
-        subject
-      end
-
-      it "does not call execute to add index" do
-        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
         subject
       end
     end
 
-    context "without name and primary key" do
+    context "with name and template table not present" do
+      let(:template_table_exists) { false }
+
       subject do
         decorator.create_list_partition_of(
           :parent,
-          primary_key: false,
+          name: :child,
           values: [1, 2, 3]
         )
       end
 
-      it { is_expected.to match(/^parent_\w{7}$/) }
+      it { is_expected.to eq(:child) }
 
-      it "calls execute to create table" do
-        expect(adapter).to receive(:execute).with(/CREATE TABLE/)
+      it "calls create_table_like with parent table" do
+        expect(decorator).to receive(:create_table_like).with(:parent, :child, primary_key: :id)
         subject
       end
 
-      it "does not call execute to add primary key" do
-        expect(adapter).to_not receive(:execute).with(/ALTER TABLE/)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(heredoc_matching(attach_partition_sql))
+        subject
+      end
+    end
+
+    context "with template table not present" do
+      let(:template_table_exists) { false }
+
+      subject do
+        decorator.create_list_partition_of(
+          :parent,
+          values: [1, 2, 3]
+        )
+      end
+
+      it { is_expected.to match(/^parent_/) }
+
+      it "calls create_table_like with parent table" do
+        expect(decorator).to receive(:create_table_like).with(:parent, /^parent_/, primary_key: :id)
         subject
       end
 
-      it "does not call execute to add index" do
-        expect(adapter).to_not receive(:execute).with(/CREATE INDEX/)
-        subject
-      end
-
-      it "calls clear! on cache" do
-        expect(PgParty::Cache).to receive(:clear!)
+      it "calls execute to attach child table" do
+        expect(adapter).to receive(:execute).with(/ATTACH PARTITION/)
         subject
       end
     end

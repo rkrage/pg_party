@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "pg_party/cache"
+require "pg_party/schema_helper"
 
 module PgParty
   class ModelDecorator < SimpleDelegator
@@ -17,7 +18,7 @@ module PgParty
     def partition_table_exists?
       target_table = partitions.first || table_name
 
-      connection.schema_cache.send(table_exists_method, target_table)
+      PgParty::SchemaHelper.table_exists?(target_table)
     end
 
     def in_partition(child_table_name)
@@ -82,23 +83,25 @@ module PgParty
         start_range: start_range,
         end_range: end_range,
         primary_key: primary_key,
-        partition_key: partition_key_for_migration
       )
 
-      connection.create_range_partition_of(table_name, **modified_options)
+      create_partition(:create_range_partition_of, table_name, **modified_options)
     end
 
     def create_list_partition(values:, **options)
       modified_options = options.merge(
         values: values,
         primary_key: primary_key,
-        partition_key: partition_key_for_migration
       )
 
-      connection.create_list_partition_of(table_name, **modified_options)
+      create_partition(:create_list_partition_of, table_name, **modified_options)
     end
 
     private
+
+    def create_partition(migration_method, table_name, **options)
+      transaction { connection.send(migration_method, table_name, **options) }
+    end
 
     def partition_key_check_for(name)
       raise "##{name} not available for complex partition keys" if complex_partition_key
@@ -108,22 +111,8 @@ module PgParty
       __getobj__.object_id
     end
 
-    def table_exists_method
-      [:data_source_exists?, :table_exists?].detect do |meth|
-        connection.schema_cache.respond_to?(meth)
-      end
-    end
-
     def partition_key_as_arel
       arel_table[partition_key]
-    end
-
-    def partition_key_for_migration
-      if complex_partition_key
-        ->{ partition_key }
-      else
-        partition_key
-      end
     end
   end
 end

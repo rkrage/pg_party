@@ -16,7 +16,7 @@ class PgDumpHelper
   end
 
   def pg_dump
-    `#{pg_env_string} pg_dump -s -x -O -d #{config[:database]} -t #{@table_name}`
+    `#{pg_env_string} pg_dump -s -x -O -d #{config[:database]} -t #{@table_name} 2>/dev/null`
   end
 
   def pg_env_string
