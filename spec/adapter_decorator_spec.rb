@@ -391,7 +391,7 @@ RSpec.describe PgParty::AdapterDecorator do
       it { is_expected.to eq(:child) }
 
       it "calls create_table_like with template table" do
-        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child, primary_key: false)
         subject
       end
 
@@ -414,7 +414,7 @@ RSpec.describe PgParty::AdapterDecorator do
       it { is_expected.to eq(:child) }
 
       it "calls create_table_like with template table" do
-        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child, primary_key: false)
         subject
       end
 
@@ -436,7 +436,7 @@ RSpec.describe PgParty::AdapterDecorator do
       it { is_expected.to match(/^parent_/) }
 
       it "calls create_table_like with template table" do
-        expect(decorator).to receive(:create_table_like).with("parent_template", /^parent_/)
+        expect(decorator).to receive(:create_table_like).with("parent_template", /^parent_/, primary_key: false)
         subject
       end
 
@@ -546,7 +546,7 @@ RSpec.describe PgParty::AdapterDecorator do
       it { is_expected.to eq(:child) }
 
       it "calls create_table_like with template table" do
-        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child, primary_key: false)
         subject
       end
 
@@ -568,7 +568,7 @@ RSpec.describe PgParty::AdapterDecorator do
       it { is_expected.to eq(:child) }
 
       it "calls create_table_like with template table" do
-        expect(decorator).to receive(:create_table_like).with("parent_template", :child)
+        expect(decorator).to receive(:create_table_like).with("parent_template", :child, primary_key: false)
         subject
       end
 
@@ -589,7 +589,7 @@ RSpec.describe PgParty::AdapterDecorator do
       it { is_expected.to match(/^parent_/) }
 
       it "calls create_table_like with template table" do
-        expect(decorator).to receive(:create_table_like).with("parent_template", /^parent_/)
+        expect(decorator).to receive(:create_table_like).with("parent_template", /^parent_/, primary_key: false)
         subject
       end
 

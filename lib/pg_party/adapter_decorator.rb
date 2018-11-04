@@ -102,7 +102,7 @@ module PgParty
       template_table_name = template_table_name(table_name)
 
       if PgParty::SchemaHelper.table_exists?(template_table_name)
-        create_table_like(template_table_name, child_table_name)
+        create_table_like(template_table_name, child_table_name, primary_key: false)
       else
         create_table_like(table_name, child_table_name, primary_key: primary_key)
       end
