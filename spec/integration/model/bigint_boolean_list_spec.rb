@@ -25,12 +25,15 @@ RSpec.describe BigintBooleanList do
 
   describe ".create_partition" do
     let(:values) { true }
+    let(:child_table_name) { "#{table_name}_c" }
 
-    subject { described_class.create_partition(values: values) }
+    subject(:create_partition) { described_class.create_partition(values: values, name: child_table_name) }
+    subject(:child_table_exists) { PgParty::SchemaHelper.table_exists?(child_table_name) }
 
     context "when values overlap" do
-      it "raises error" do
-        expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+      it "raises error and cleans up intermediate table" do
+        expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+        expect(child_table_exists).to eq(false)
       end
     end
   end

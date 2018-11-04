@@ -36,7 +36,7 @@ RSpec.describe UuidStringRange do
     let(:end_range) { "9" }
     let(:child_table_name) { "#{table_name}_c" }
 
-    subject do
+    subject(:create_partition) do
       described_class.create_partition(
         start_range: start_range,
         end_range: end_range,
@@ -44,16 +44,17 @@ RSpec.describe UuidStringRange do
       )
     end
 
+    subject(:partitions) { described_class.partitions }
+    subject(:child_table_exists) { PgParty::SchemaHelper.table_exists?(child_table_name) }
+
     context "when ranges do not overlap" do
       before { described_class.partitions }
       after { connection.drop_table(child_table_name) }
 
-      it { is_expected.to eq(child_table_name) }
+      it "returns table name and adds it to partition list" do
+        expect(create_partition).to eq(child_table_name)
 
-      it "adds to partition list" do
-        subject
-
-        expect(described_class.partitions).to contain_exactly(
+        expect(partitions).to contain_exactly(
           "#{table_name}_a",
           "#{table_name}_b",
           "#{table_name}_c"
@@ -64,8 +65,9 @@ RSpec.describe UuidStringRange do
     context "when ranges overlap" do
       let(:end_range) { "b" }
 
-      it "raises error" do
-        expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+      it "raises error and cleans up intermediate table" do
+        expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+        expect(child_table_exists).to eq(false)
       end
     end
   end
