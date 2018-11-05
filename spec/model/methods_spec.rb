@@ -13,26 +13,72 @@ RSpec.describe PgParty::Model::Methods do
   end
 
   before do
-    allow(PgParty::ModelInjector).to receive(:new).with(model, key).and_return(injector)
+    allow(PgParty::ModelInjector).to receive(:new).and_return(injector)
     allow(injector).to receive(:inject_range_methods)
     allow(injector).to receive(:inject_list_methods)
   end
 
   describe ".range_partition_by" do
-    subject { model.range_partition_by(key) }
+    context "when partition key provided as argument" do
+      subject { model.range_partition_by(key) }
 
-    it "delegates to injector" do
-      expect(injector).to receive(:inject_range_methods)
-      subject
+      it "initializes injector with model and key" do
+        expect(PgParty::ModelInjector).to receive(:new).with(model, key)
+        subject
+      end
+
+      it "delegates to injector" do
+        expect(injector).to receive(:inject_range_methods)
+        subject
+      end
+    end
+
+    context "when partition key provided as block" do
+      let(:key_as_block) { ->{ key } }
+
+      subject { model.range_partition_by(&key_as_block) }
+
+      it "initializes injector with model and key as block" do
+        expect(PgParty::ModelInjector).to receive(:new).with(model, key_as_block)
+        subject
+      end
+
+      it "delegates to injector" do
+        expect(injector).to receive(:inject_range_methods)
+        subject
+      end
     end
   end
 
   describe ".list_partition_by" do
-    subject { model.list_partition_by(key) }
+    context "when partition key provided as argument" do
+      subject { model.list_partition_by(key) }
 
-    it "delegates to injector" do
-      expect(injector).to receive(:inject_list_methods)
-      subject
+      it "initializes injector with model and key" do
+        expect(PgParty::ModelInjector).to receive(:new).with(model, key)
+        subject
+      end
+
+      it "delegates to injector" do
+        expect(injector).to receive(:inject_list_methods)
+        subject
+      end
+    end
+
+    context "when partition key provided as block" do
+      let(:key_as_block) { ->{ key } }
+
+      subject { model.list_partition_by(&key_as_block) }
+
+      it "initializes injector with model and key as block" do
+        expect(PgParty::ModelInjector).to receive(:new).with(model, key_as_block)
+        subject
+      end
+
+      it "delegates to injector" do
+        expect(injector).to receive(:inject_list_methods)
+        subject
+      end
     end
   end
 
