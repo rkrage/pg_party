@@ -11,16 +11,8 @@ RSpec.describe PgParty::ModelDecorator do
   let(:complex_partition_key) { false }
   let(:arel_node) { double }
   let(:adapter) { instance_double(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) }
-  let(:schema_cache) { instance_double(ActiveRecord::ConnectionAdapters::SchemaCache) }
   let(:child_class) { class_double(ActiveRecord::Base) }
   let(:base_class) { model }
-  let(:table_exists_method) do
-    if Rails.gem_version >= Gem::Version.new("5.0")
-      "data_source_exists?"
-    else
-      "table_exists?"
-    end
-  end
 
   let(:model) do
     Class.new(ActiveRecord::Base) do
@@ -46,14 +38,12 @@ RSpec.describe PgParty::ModelDecorator do
     allow(model).to receive(:get_primary_key)
     allow(model).to receive(:base_class).and_return(base_class)
     allow(model).to receive(:name).and_return(model_name)
+    allow(model).to receive(:transaction).and_yield
 
     allow(adapter).to receive(:create_range_partition_of)
     allow(adapter).to receive(:create_list_partition_of)
     allow(adapter).to receive(:select_values).and_return(partitions)
     allow(adapter).to receive(:quote) { |value| "'#{value}'" }
-    allow(adapter).to receive(:schema_cache).and_return(schema_cache)
-
-    allow(schema_cache).to receive(table_exists_method)
 
     # stubbing arel is complex, so this is tested in the integration specs
     allow(decorator).to receive(:partition_key_as_arel).and_return(arel_node)
@@ -67,6 +57,8 @@ RSpec.describe PgParty::ModelDecorator do
 
     allow(child_class).to receive(:all)
     allow(child_class).to receive(:get_primary_key)
+
+    allow(PgParty::SchemaHelper).to receive(:table_exists?)
 
     allow(PgParty::Cache).to receive(:fetch_model).and_wrap_original { |*_, &blk| blk.call }
     allow(PgParty::Cache).to receive(:fetch_partitions).and_wrap_original { |*_, &blk| blk.call }
@@ -108,7 +100,7 @@ RSpec.describe PgParty::ModelDecorator do
 
     context "when partitions present" do
       it "calls table exists method with partition table name" do
-        expect(schema_cache).to receive(table_exists_method).with("a")
+        expect(PgParty::SchemaHelper).to receive(:table_exists?).with("a")
         subject
       end
     end
@@ -117,7 +109,7 @@ RSpec.describe PgParty::ModelDecorator do
       let(:partitions) { [] }
 
       it "calls table exists method with table name" do
-        expect(schema_cache).to receive(table_exists_method).with("parent")
+        expect(PgParty::SchemaHelper).to receive(:table_exists?).with("parent")
         subject
       end
     end
@@ -256,28 +248,10 @@ RSpec.describe PgParty::ModelDecorator do
         start_range: 1,
         end_range: 10,
         primary_key: primary_key.to_s,
-        partition_key: partition_key,
         name: :child
       )
 
       subject
-    end
-
-    context "when complex_partition_key is true" do
-      let(:complex_partition_key) { true }
-
-      it "calls create_range_partition on adapter with proc partition_key" do
-        expect(adapter).to receive(:create_range_partition_of).with(
-          table_name.to_s,
-          start_range: 1,
-          end_range: 10,
-          primary_key: primary_key.to_s,
-          partition_key: kind_of(Proc),
-          name: :child
-        )
-
-        subject
-      end
     end
   end
 
@@ -289,27 +263,10 @@ RSpec.describe PgParty::ModelDecorator do
         table_name.to_s,
         values: [1, 2, 3],
         primary_key: primary_key.to_s,
-        partition_key: partition_key,
         name: :child
       )
 
       subject
-    end
-
-    context "when complex_partition_key is true" do
-      let(:complex_partition_key) { true }
-
-      it "calls create_list_partition on adapter with proc partition key" do
-        expect(adapter).to receive(:create_list_partition_of).with(
-          table_name.to_s,
-          values: [1, 2, 3],
-          primary_key: primary_key.to_s,
-          partition_key: kind_of(Proc),
-          name: :child
-        )
-
-        subject
-      end
     end
   end
 end

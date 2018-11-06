@@ -2,6 +2,7 @@
 
 require "digest"
 require "pg_party/cache"
+require "pg_party/schema_helper"
 
 module PgParty
   class AdapterDecorator < SimpleDelegator
@@ -20,43 +21,39 @@ module PgParty
     end
 
     def create_range_partition_of(table_name, start_range:, end_range:, **options)
-      constraint_clause = "FROM (#{quote_collection(start_range)}) TO (#{quote_collection(end_range)})"
-
-      create_partition_of(table_name, constraint_clause, **options)
+      create_partition_of(table_name, range_constraint_clause(start_range, end_range), **options)
     end
 
     def create_list_partition_of(table_name, values:, **options)
-      constraint_clause = "IN (#{quote_collection(values)})"
-
-      create_partition_of(table_name, constraint_clause, **options)
+      create_partition_of(table_name, list_constraint_clause(values), **options)
     end
 
-    def create_table_like(table_name, new_table_name)
+    def create_table_like(table_name, new_table_name, **options)
+      primary_key = options.fetch(:primary_key) { calculate_primary_key(table_name) }
+
+      validate_primary_key(primary_key)
+
       execute(<<-SQL)
         CREATE TABLE #{quote_table_name(new_table_name)} (
           LIKE #{quote_table_name(table_name)} INCLUDING ALL
         )
       SQL
+
+      return if !primary_key
+      return if has_primary_key?(new_table_name)
+
+      execute(<<-SQL)
+        ALTER TABLE #{quote_table_name(new_table_name)}
+        ADD PRIMARY KEY (#{quote_column_name(primary_key)})
+      SQL
     end
 
     def attach_range_partition(parent_table_name, child_table_name, start_range:, end_range:)
-      execute(<<-SQL)
-        ALTER TABLE #{quote_table_name(parent_table_name)}
-        ATTACH PARTITION #{quote_table_name(child_table_name)}
-        FOR VALUES FROM (#{quote_collection(start_range)}) TO (#{quote_collection(end_range)})
-      SQL
-
-      PgParty::Cache.clear!
+      attach_partition(parent_table_name, child_table_name, range_constraint_clause(start_range, end_range))
     end
 
     def attach_list_partition(parent_table_name, child_table_name, values:)
-      execute(<<-SQL)
-        ALTER TABLE #{quote_table_name(parent_table_name)}
-        ATTACH PARTITION #{quote_table_name(child_table_name)}
-        FOR VALUES IN (#{quote_collection(values)})
-      SQL
-
-      PgParty::Cache.clear!
+      attach_partition(parent_table_name, child_table_name, list_constraint_clause(values))
     end
 
     def detach_partition(parent_table_name, child_table_name)
@@ -71,16 +68,17 @@ module PgParty
     private
 
     def create_partition(table_name, type, partition_key, **options)
-      modified_options = options.except(:id, :primary_key)
+      modified_options = options.except(:id, :primary_key, :template)
+      template         = options.fetch(:template, true)
       id               = options.fetch(:id, :bigserial)
-      primary_key      = options.fetch(:primary_key) { primary_key_for_table(table_name) }
+      primary_key      = options.fetch(:primary_key) { calculate_primary_key(table_name) }
 
-      raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
+      validate_primary_key(primary_key)
 
       modified_options[:id]      = false
       modified_options[:options] = "PARTITION BY #{type.to_s.upcase} (#{quote_partition_key(partition_key)})"
 
-      result = create_table(table_name, modified_options) do |td|
+      create_table(table_name, modified_options) do |td|
         if id == :uuid
           td.column(primary_key, id, null: false, default: uuid_function)
         elsif id
@@ -93,44 +91,35 @@ module PgParty
       # Rails 4 has a bug where uuid columns are always nullable
       change_column_null(table_name, primary_key, false) if id == :uuid
 
-      result
+      return unless template
+
+      create_table_like(table_name, template_table_name(table_name), primary_key: primary_key)
     end
 
     def create_partition_of(table_name, constraint_clause, **options)
-      primary_key      = options.fetch(:primary_key) { primary_key_for_table(table_name) }
-      child_table_name = options.fetch(:name) { hashed_table_name(table_name, constraint_clause) }
-      index            = options.fetch(:index, true)
-      partition_key    = options[:partition_key]
+      child_table_name    = options.fetch(:name) { hashed_table_name(table_name, constraint_clause) }
+      primary_key         = options.fetch(:primary_key) { calculate_primary_key(table_name) }
+      template_table_name = template_table_name(table_name)
 
-      raise ArgumentError, "composite primary key not supported" if primary_key.is_a?(Array)
+      if PgParty::SchemaHelper.table_exists?(template_table_name)
+        create_table_like(template_table_name, child_table_name, primary_key: false)
+      else
+        create_table_like(table_name, child_table_name, primary_key: primary_key)
+      end
 
-      quoted_primary_key = quote_column_name(primary_key) if primary_key
-      quoted_partition_key = quote_partition_key(partition_key) if partition_key
+      attach_partition(table_name, child_table_name, constraint_clause)
 
+      child_table_name
+    end
+
+    def attach_partition(parent_table_name, child_table_name, constraint_clause)
       execute(<<-SQL)
-        CREATE TABLE #{quote_table_name(child_table_name)}
-        PARTITION OF #{quote_table_name(table_name)}
+        ALTER TABLE #{quote_table_name(parent_table_name)}
+        ATTACH PARTITION #{quote_table_name(child_table_name)}
         FOR VALUES #{constraint_clause}
       SQL
 
-      if primary_key
-        execute(<<-SQL)
-          ALTER TABLE #{quote_table_name(child_table_name)}
-          ADD PRIMARY KEY (#{quoted_primary_key})
-        SQL
-      end
-
-      if index && quoted_partition_key && quoted_partition_key != quoted_primary_key
-        execute(<<-SQL)
-          CREATE INDEX #{quote_table_name(index_name(child_table_name))}
-          ON #{quote_table_name(child_table_name)}
-          USING btree (#{quoted_partition_key})
-        SQL
-      end
-
       PgParty::Cache.clear!
-
-      child_table_name
     end
 
     # Rails 5.2 now returns boolean literals
@@ -145,8 +134,16 @@ module PgParty
       end
     end
 
-    def primary_key_for_table(table_name)
+    def has_primary_key?(table_name)
+      primary_key(table_name).present?
+    end
+
+    def calculate_primary_key(table_name)
       ActiveRecord::Base.get_primary_key(table_name.to_s.singularize).to_sym
+    end
+
+    def validate_primary_key(key)
+      raise ArgumentError, "composite primary key not supported" if key.is_a?(Array)
     end
 
     def quote_partition_key(key)
@@ -161,6 +158,18 @@ module PgParty
       Array.wrap(values).map(&method(:quote)).join(",")
     end
 
+    def template_table_name(table_name)
+      "#{table_name}_template"
+    end
+
+    def range_constraint_clause(start_range, end_range)
+      "FROM (#{quote_collection(start_range)}) TO (#{quote_collection(end_range)})"
+    end
+
+    def list_constraint_clause(values)
+      "IN (#{quote_collection(values)})"
+    end
+
     def uuid_function
       try(:supports_pgcrypto_uuid?) ? "gen_random_uuid()" : "uuid_generate_v4()"
     end
@@ -171,10 +180,6 @@ module PgParty
 
     def supports_partitions?
       __getobj__.send(:postgresql_version) >= 100000
-    end
-
-    def index_name(table_name)
-      "index_#{table_name}_on_partition_key"
     end
   end
 end

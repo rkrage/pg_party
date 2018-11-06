@@ -6,6 +6,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   let(:table_name) { "t_#{SecureRandom.hex(6)}" }
   let(:child_table_name) { "t_#{SecureRandom.hex(6)}" }
   let(:table_like_name) { "t_#{SecureRandom.hex(6)}" }
+  let(:template_table_name) { "#{table_name}_template" }
   let(:current_date) { Date.current }
   let(:start_range) { current_date }
   let(:end_range) { current_date + 1.month }
@@ -39,6 +40,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       partition_key: ->{ "(created_at::date)" },
       primary_key: :custom_id,
       id: :uuid,
+      template: false,
       &timestamps_block
     )
   end
@@ -57,9 +59,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     adapter.create_range_partition_of(
       table_name,
       name: child_table_name,
-      index: true,
       primary_key: :custom_id,
-      partition_key: ->{ "(created_at::date)" },
       start_range: start_range,
       end_range: end_range
     )
@@ -71,8 +71,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     adapter.create_list_partition_of(
       table_name,
       name: child_table_name,
-      index: true,
-      partition_key: "#{table_name}_id",
       values: values
     )
   end
@@ -139,6 +137,15 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     it { is_expected.to include_heredoc(create_table_sql) }
     it { is_expected.to_not include("SET DEFAULT nextval") }
+
+    describe "template table" do
+      subject do
+        create_range_partition
+        PgDumpHelper.dump_table_structure(template_table_name)
+      end
+
+      it { is_expected.to be_empty }
+    end
   end
 
   describe "#create_list_partition" do
@@ -165,6 +172,31 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     it { is_expected.to include_heredoc(create_table_sql) }
     it { is_expected.to include_heredoc(incrementing_id_sql) }
+
+    describe "template table" do
+      let(:create_table_sql) do
+        <<-SQL
+          CREATE TABLE #{template_table_name} (
+            #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
+          );
+        SQL
+      end
+
+      let(:primary_key_sql) do
+        <<-SQL
+          ALTER TABLE ONLY #{template_table_name}
+          ADD CONSTRAINT #{template_table_name}_pkey PRIMARY KEY (#{table_name}_id);
+        SQL
+      end
+
+      subject do
+        create_list_partition
+        PgDumpHelper.dump_table_structure(template_table_name)
+      end
+
+      it { is_expected.to include_heredoc(create_table_sql) }
+      it { is_expected.to include_heredoc(primary_key_sql) }
+    end
   end
 
   describe "#create_range_partition_of" do
@@ -184,14 +216,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       SQL
     end
 
-    let(:index_sql) do
-      <<-SQL
-        CREATE INDEX index_#{child_table_name}_on_partition_key
-        ON #{child_table_name}
-        USING btree (((created_at)::date));
-      SQL
-    end
-
     subject do
       create_range_partition_of
       PgDumpHelper.dump_table_structure(child_table_name)
@@ -199,7 +223,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     it { is_expected.to include_heredoc(create_table_sql) }
     it { is_expected.to include_heredoc(primary_key_sql) }
-    it { is_expected.to include_heredoc(index_sql) }
   end
 
   describe "#create_list_partition_of" do
@@ -226,7 +249,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     it { is_expected.to include_heredoc(create_table_sql) }
     it { is_expected.to include_heredoc(primary_key_sql) }
-    it { is_expected.to_not include("CREATE INDEX") }
   end
 
   describe "#create_table_like" do
@@ -249,14 +271,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
         SQL
       end
 
-      let(:index_sql) do
-        <<-SQL
-          CREATE INDEX #{table_like_name}_created_at_idx
-          ON #{table_like_name}
-          USING btree (((created_at)::date));
-        SQL
-      end
-
       subject do
         create_range_table_like
         PgDumpHelper.dump_table_structure(table_like_name)
@@ -264,7 +278,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
       it { is_expected.to include_heredoc(create_table_sql) }
       it { is_expected.to include_heredoc(primary_key_sql) }
-      it { is_expected.to include_heredoc(index_sql) }
     end
 
     context "list partition" do
@@ -291,7 +304,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
       it { is_expected.to include_heredoc(create_table_sql) }
       it { is_expected.to include_heredoc(primary_key_sql) }
-      it { is_expected.to_not include("CREATE INDEX") }
     end
   end
 

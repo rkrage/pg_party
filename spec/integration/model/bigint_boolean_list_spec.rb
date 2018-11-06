@@ -9,7 +9,7 @@ RSpec.describe BigintBooleanList do
   describe ".create" do
     let(:some_bool) { true }
 
-    subject { described_class.create(some_bool: some_bool) }
+    subject { described_class.create!(some_bool: some_bool) }
 
     context "when partition key in list" do
       its(:id) { is_expected.to be_an(Integer) }
@@ -25,12 +25,15 @@ RSpec.describe BigintBooleanList do
 
   describe ".create_partition" do
     let(:values) { true }
+    let(:child_table_name) { "#{table_name}_c" }
 
-    subject { described_class.create_partition(values: values) }
+    subject(:create_partition) { described_class.create_partition(values: values, name: child_table_name) }
+    subject(:child_table_exists) { PgParty::SchemaHelper.table_exists?(child_table_name) }
 
     context "when values overlap" do
-      it "raises error" do
-        expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+      it "raises error and cleans up intermediate table" do
+        expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+        expect(child_table_exists).to eq(false)
       end
     end
   end
@@ -46,9 +49,9 @@ RSpec.describe BigintBooleanList do
     its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
     describe "query methods" do
-      let!(:record_one) { described_class.create(some_bool: true) }
-      let!(:record_two) { described_class.create(some_bool: true) }
-      let!(:record_three) { described_class.create(some_bool: false) }
+      let!(:record_one) { described_class.create!(some_bool: true) }
+      let!(:record_two) { described_class.create!(some_bool: true) }
+      let!(:record_three) { described_class.create!(some_bool: false) }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
@@ -67,9 +70,9 @@ RSpec.describe BigintBooleanList do
   describe ".partition_key_in" do
     let(:values) { true }
 
-    let!(:record_one) { described_class.create(some_bool: true) }
-    let!(:record_two) { described_class.create(some_bool: true) }
-    let!(:record_three) { described_class.create(some_bool: false) }
+    let!(:record_one) { described_class.create!(some_bool: true) }
+    let!(:record_two) { described_class.create!(some_bool: true) }
+    let!(:record_three) { described_class.create!(some_bool: false) }
 
     subject { described_class.partition_key_in(values) }
 
@@ -95,8 +98,8 @@ RSpec.describe BigintBooleanList do
   describe ".partition_key_eq" do
     let(:partition_key) { true }
 
-    let!(:record_one) { described_class.create(some_bool: true) }
-    let!(:record_two) { described_class.create(some_bool: false) }
+    let!(:record_one) { described_class.create!(some_bool: true) }
+    let!(:record_two) { described_class.create!(some_bool: false) }
 
     subject { described_class.partition_key_eq(partition_key) }
 

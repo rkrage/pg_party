@@ -9,7 +9,7 @@ RSpec.describe BigintCustomIdIntList do
   describe ".create" do
     let(:some_int) { 1 }
 
-    subject { described_class.create(some_int: some_int) }
+    subject { described_class.create!(some_int: some_int) }
 
     context "when partition key in list" do
       its(:id) { is_expected.to be_a(Integer) }
@@ -35,18 +35,18 @@ RSpec.describe BigintCustomIdIntList do
     let(:values) { [5, 6] }
     let(:child_table_name) { "#{table_name}_c" }
 
-    subject { described_class.create_partition(values: values, name: child_table_name) }
+    subject(:create_partition) { described_class.create_partition(values: values, name: child_table_name) }
+    subject(:partitions) { described_class.partitions }
+    subject(:child_table_exists) { PgParty::SchemaHelper.table_exists?(child_table_name) }
 
     context "when values do not overlap" do
       before { described_class.partitions }
       after { connection.drop_table(child_table_name) }
 
-      it { is_expected.to eq(child_table_name) }
+      it "returns table name and adds it to partition list" do
+        expect(create_partition).to eq(child_table_name)
 
-      it "adds to partition list" do
-        subject
-
-        expect(described_class.partitions).to contain_exactly(
+        expect(partitions).to contain_exactly(
           "#{table_name}_a",
           "#{table_name}_b",
           "#{table_name}_c"
@@ -57,8 +57,9 @@ RSpec.describe BigintCustomIdIntList do
     context "when values overlap" do
       let(:values) { [2, 3] }
 
-      it "raises error" do
-        expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+      it "raises error and cleans up intermediate table" do
+        expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
+        expect(child_table_exists).to eq(false)
       end
     end
   end
@@ -74,9 +75,9 @@ RSpec.describe BigintCustomIdIntList do
     its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
     describe "query methods" do
-      let!(:record_one) { described_class.create(some_int: 1) }
-      let!(:record_two) { described_class.create(some_int: 2) }
-      let!(:record_three) { described_class.create(some_int: 4) }
+      let!(:record_one) { described_class.create!(some_int: 1) }
+      let!(:record_two) { described_class.create!(some_int: 2) }
+      let!(:record_three) { described_class.create!(some_int: 4) }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
@@ -95,9 +96,9 @@ RSpec.describe BigintCustomIdIntList do
   describe ".partition_key_in" do
     let(:values) { [1, 2] }
 
-    let!(:record_one) { described_class.create(some_int: 1) }
-    let!(:record_two) { described_class.create(some_int: 2) }
-    let!(:record_three) { described_class.create(some_int: 4) }
+    let!(:record_one) { described_class.create!(some_int: 1) }
+    let!(:record_two) { described_class.create!(some_int: 2) }
+    let!(:record_three) { described_class.create!(some_int: 4) }
 
     subject { described_class.partition_key_in(values) }
 
@@ -121,8 +122,8 @@ RSpec.describe BigintCustomIdIntList do
   describe ".partition_key_eq" do
     let(:partition_key) { 1 }
 
-    let!(:record_one) { described_class.create(some_int: 1) }
-    let!(:record_two) { described_class.create(some_int: 3) }
+    let!(:record_one) { described_class.create!(some_int: 1) }
+    let!(:record_two) { described_class.create!(some_int: 3) }
 
     subject { described_class.partition_key_eq(partition_key) }
 
