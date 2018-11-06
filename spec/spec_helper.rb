@@ -22,6 +22,7 @@ require "pg_party/model/list_methods"
 
 Timecop.travel(Date.current + 12.hours)
 
+Combustion.path = "spec/dummy"
 Combustion.initialize! :active_record
 
 require "rspec/rails"

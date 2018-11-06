@@ -14,6 +14,12 @@ ActiveSupport.on_load(:active_record) do
     PgParty::Adapter::AbstractMethods
   )
 
+  require "pg_party/hacks/schema_cache"
+
+  ActiveRecord::ConnectionAdapters::SchemaCache.include(
+    PgParty::Hacks::SchemaCache
+  )
+
   begin
     require "active_record/connection_adapters/postgresql_adapter"
     require "pg_party/adapter/postgresql_methods"

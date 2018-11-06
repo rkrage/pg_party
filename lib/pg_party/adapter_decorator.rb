@@ -2,7 +2,6 @@
 
 require "digest"
 require "pg_party/cache"
-require "pg_party/schema_helper"
 
 module PgParty
   class AdapterDecorator < SimpleDelegator
@@ -93,7 +92,7 @@ module PgParty
 
       return unless template
 
-      create_table_like(table_name, template_table_name(table_name), primary_key: primary_key)
+      create_table_like(table_name, template_table_name(table_name), primary_key: id && primary_key)
     end
 
     def create_partition_of(table_name, constraint_clause, **options)
@@ -101,7 +100,7 @@ module PgParty
       primary_key         = options.fetch(:primary_key) { calculate_primary_key(table_name) }
       template_table_name = template_table_name(table_name)
 
-      if PgParty::SchemaHelper.table_exists?(template_table_name)
+      if schema_cache.data_source_exists?(template_table_name)
         create_table_like(template_table_name, child_table_name, primary_key: false)
       else
         create_table_like(table_name, child_table_name, primary_key: primary_key)

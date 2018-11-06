@@ -2,25 +2,22 @@
 
 require "spec_helper"
 
-RSpec.describe BigintMonthRange do
-  let(:current_date) { Date.current }
-  let(:current_time) { Time.current }
+RSpec.describe NoPkSubstringList do
   let(:connection) { described_class.connection }
   let(:schema_cache) { connection.schema_cache }
   let(:table_name) { described_class.table_name }
 
   describe ".create" do
-    let(:created_at) { current_time }
+    let(:some_string) { "a_foo" }
 
-    subject { described_class.create!(created_at: created_at) }
+    subject { described_class.create!(some_string: some_string) }
 
     context "when partition key in range" do
-      its(:id) { is_expected.to be_an(Integer) }
-      its(:created_at) { is_expected.to eq(created_at) }
+      its(:some_string) { is_expected.to eq(some_string) }
     end
 
     context "when partition key outside range" do
-      let(:created_at) { current_time - 1.month }
+      let(:some_string) { "e_foo" }
 
       it "raises error" do
         expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::CheckViolation/)
@@ -35,20 +32,10 @@ RSpec.describe BigintMonthRange do
   end
 
   describe ".create_partition" do
-    let(:start_date) { current_date + 2.months }
-    let(:end_date) { current_date + 3.months }
-    let(:start_range) { [start_date.year, start_date.month] }
-    let(:end_range) { [end_date.year, end_date.month] }
+    let(:values) { ["e", "f"] }
     let(:child_table_name) { "#{table_name}_c" }
 
-    subject(:create_partition) do
-      described_class.create_partition(
-        start_range: start_range,
-        end_range: end_range,
-        name: child_table_name
-      )
-    end
-
+    subject(:create_partition) { described_class.create_partition(values: values, name: child_table_name) }
     subject(:partitions) { described_class.partitions }
     subject(:child_table_exists) { schema_cache.data_source_exists?(child_table_name) }
 
@@ -68,12 +55,7 @@ RSpec.describe BigintMonthRange do
     end
 
     context "when name not provided" do
-      subject(:create_partition) do
-        described_class.create_partition(
-          start_range: start_range,
-          end_range: end_range,
-        )
-      end
+      subject(:create_partition) { described_class.create_partition(values: values) }
 
       it "returns table name and adds it to partition list" do
         expect(create_partition).to match(/^#{table_name}_\w{7}$/)
@@ -87,7 +69,7 @@ RSpec.describe BigintMonthRange do
     end
 
     context "when ranges overlap" do
-      let(:start_date) { current_date - 1.month }
+      let(:values) { ["b", "c"] }
 
       it "raises error and cleans up intermediate table" do
         expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
@@ -107,74 +89,102 @@ RSpec.describe BigintMonthRange do
     its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
     describe "query methods" do
-      let!(:record_one) { described_class.create!(created_at: current_time) }
-      let!(:record_two) { described_class.create!(created_at: current_time.end_of_month) }
-      let!(:record_three) { described_class.create!(created_at: (current_time + 1.month).end_of_month) }
+      let!(:record_one) { described_class.create!(some_string: "a_foo") }
+      let!(:record_two) { described_class.create!(some_string: "b_foo") }
+      let!(:record_three) { described_class.create!(some_string: "c_foo") }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
 
-        it { is_expected.to contain_exactly(record_one, record_two) }
+        it do
+          is_expected.to contain_exactly(
+            an_object_having_attributes(some_string: "a_foo"),
+            an_object_having_attributes(some_string: "b_foo"),
+          )
+        end
       end
 
       describe ".where" do
-        subject { described_class.in_partition(child_table_name).where(id: record_one.id) }
+        subject { described_class.in_partition(child_table_name).where(some_string: "a_foo") }
 
-        it { is_expected.to contain_exactly(record_one) }
+        it do
+          is_expected.to contain_exactly(
+            an_object_having_attributes(some_string: "a_foo")
+          )
+        end
       end
     end
   end
 
   describe ".partition_key_in" do
-    let(:start_date) { current_date }
-    let(:end_date) { current_date + 1.month }
-    let(:start_range) { [start_date.year, start_date.month] }
-    let(:end_range) { [end_date.year, end_date.month] }
+    let(:values) { ["a", "b"] }
 
-    let!(:record_one) { described_class.create!(created_at: current_time) }
-    let!(:record_two) { described_class.create!(created_at: current_time.end_of_month) }
-    let!(:record_three) { described_class.create!(created_at: (current_time + 1.month).end_of_month) }
+    let!(:record_one) { described_class.create!(some_string: "a_foo") }
+    let!(:record_two) { described_class.create!(some_string: "b_foo") }
+    let!(:record_three) { described_class.create!(some_string: "c_foo") }
 
-    subject { described_class.partition_key_in(start_range, end_range) }
+    subject { described_class.partition_key_in(values) }
 
     context "when spanning a single partition" do
-      it { is_expected.to contain_exactly(record_one, record_two) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo"),
+          an_object_having_attributes(some_string: "b_foo"),
+        )
+      end
     end
 
     context "when spanning multiple partitions" do
-      let(:end_date) { current_date + 2.months }
+      let(:values) { ["a", "b", "c", "d"] }
 
-      it { is_expected.to contain_exactly(record_one, record_two, record_three) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo"),
+          an_object_having_attributes(some_string: "b_foo"),
+          an_object_having_attributes(some_string: "c_foo"),
+        )
+      end
     end
 
     context "when chaining methods" do
-      subject { described_class.partition_key_in(start_range, end_range).where(id: record_one.id) }
+      subject { described_class.partition_key_in(values).where(some_string: "a_foo") }
 
-      it { is_expected.to contain_exactly(record_one) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo")
+        )
+      end
     end
   end
 
   describe ".partition_key_eq" do
-    let(:partition_date) { current_date }
-    let(:partition_key) { [partition_date.year, partition_date.month] }
+    let(:partition_key) { "a" }
 
-    let!(:record_one) { described_class.create!(created_at: current_time) }
-    let!(:record_two) { described_class.create!(created_at: current_time.end_of_month) }
-    let!(:record_three) { described_class.create!(created_at: (current_time + 1.month).end_of_month) }
+    let!(:record_one) { described_class.create!(some_string: "a_foo") }
+    let!(:record_two) { described_class.create!(some_string: "c_foo") }
 
     subject { described_class.partition_key_eq(partition_key) }
 
     context "when partition key in first partition" do
-      it { is_expected.to contain_exactly(record_one, record_two) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo")
+        )
+      end
     end
 
     context "when partition key in second partition" do
-      let(:partition_date) { current_date + 1.month }
+      let(:partition_key) { "c" }
 
-      it { is_expected.to contain_exactly(record_three) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "c_foo")
+        )
+      end
     end
 
-    context "when table is aliased" do
+    # TODO: write more tests like this
+    context "when partition key in first partition and table is aliased" do
       subject do
         described_class
           .select("*")
@@ -182,7 +192,11 @@ RSpec.describe BigintMonthRange do
           .partition_key_eq(partition_key)
       end
 
-      it { is_expected.to contain_exactly(record_one, record_two) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo")
+        )
+      end
     end
 
     context "when table alias not resolvable" do
