@@ -7,7 +7,7 @@ ActiveRecord::Schema.define do
   enable_extension "pgcrypto"
 
   create_range_partition :bigint_date_ranges, partition_key: ->{ "(created_at::date)" } do |t|
-    t.timestamps null: false
+    t.timestamps null: false, precision: nil
   end
 
   create_range_partition_of \
@@ -23,7 +23,7 @@ ActiveRecord::Schema.define do
     end_range: Date.tomorrow + 1
 
   create_range_partition :bigint_month_ranges, partition_key: ->{ "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" } do |t|
-    t.timestamps null: false
+    t.timestamps null: false, precision: nil
     t.integer :some_indexed_column
   end
 

@@ -11,7 +11,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   let(:start_range) { current_date }
   let(:end_range) { current_date + 1.month }
   let(:values) { [1, 2, 3] }
-  let(:timestamps_block) { ->(t) { t.timestamps null: false } }
+  let(:timestamps_block) { ->(t) { t.timestamps null: false, precision: nil } }
   let(:uuid_function) do
     if Rails.gem_version >= Gem::Version.new("5.1")
       "gen_random_uuid()"

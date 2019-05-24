@@ -16,3 +16,11 @@ end
 appraise "ar-5.2" do
   gem "activerecord", "~> 5.2.0"
 end
+
+appraise "ar-6.0" do
+  gem "activerecord", "6.0.0.rc1"
+  gem "activemodel", "6.0.0.rc1"
+  gem "activesupport", "6.0.0.rc1"
+  gem "actionpack", "6.0.0.rc1"
+  gem "railties", "6.0.0.rc1"
+end
