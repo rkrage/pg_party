@@ -142,4 +142,8 @@ ActiveRecord::Schema.define do
     :no_pk_substring_lists,
     name: :no_pk_substring_lists_b,
     values: ["c", "d"]
+
+  create_range_partition :bigint_date_range_no_partitions, partition_key: ->{ "(created_at::date)" } do |t|
+    t.timestamps null: false, precision: nil
+  end
 end
