@@ -48,10 +48,14 @@ RSpec.describe UuidStringRange do
     subject(:partitions) { described_class.partitions }
     subject(:child_table_exists) { schema_cache.data_source_exists?(child_table_name) }
 
-    context "when ranges do not overlap" do
-      before { described_class.partitions }
-      after { connection.drop_table(child_table_name) }
+    before do
+      schema_cache.clear!
+      described_class.partitions
+    end
 
+    after { connection.drop_table(child_table_name) if child_table_exists }
+
+    context "when ranges do not overlap" do
       it "returns table name and adds it to partition list" do
         expect(create_partition).to eq(child_table_name)
 
@@ -64,6 +68,8 @@ RSpec.describe UuidStringRange do
     end
 
     context "when name not provided" do
+      let(:child_table_name) { create_partition }
+
       subject(:create_partition) do
         described_class.create_partition(
           start_range: start_range,
@@ -77,7 +83,7 @@ RSpec.describe UuidStringRange do
         expect(partitions).to contain_exactly(
           "#{table_name}_a",
           "#{table_name}_b",
-          create_partition,
+          child_table_name,
         )
       end
     end
