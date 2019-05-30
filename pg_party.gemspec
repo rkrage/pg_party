@@ -31,7 +31,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "combustion", "~> 1.1"
   spec.add_development_dependency "database_cleaner", "~> 1.6"
   spec.add_development_dependency "nokogiri", "~> 1.9.1"
-  spec.add_development_dependency "pg", "~> 0.20"
   spec.add_development_dependency "pry-byebug", "~> 3.4"
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "rspec-its", "~> 1.2"

@@ -7,6 +7,12 @@ RSpec.describe BigintBooleanList do
   let(:schema_cache) { connection.schema_cache }
   let(:table_name) { described_class.table_name }
 
+  describe ".primary_key" do
+    subject { described_class.primary_key }
+
+    it { is_expected.to eq("id") }
+  end
+
   describe ".create" do
     let(:some_bool) { true }
 

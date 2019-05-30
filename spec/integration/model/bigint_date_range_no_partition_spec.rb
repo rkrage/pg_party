@@ -12,8 +12,8 @@ RSpec.describe BigintDateRangeNoPartition do
   describe ".primary_key" do
     subject { described_class.primary_key }
 
-    # some versions of rails get the pk from the schema,
-    # others infer that it is simply id
+    # some versions of rails recognize partition tables and
+    # attempt to pull the nonexistent key from the parent table
     it { is_expected.to be_in([nil, "id"]) }
   end
 
