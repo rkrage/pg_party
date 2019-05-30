@@ -4,7 +4,14 @@ require "spec_helper"
 
 RSpec.describe BigintCustomIdIntRange do
   let(:connection) { described_class.connection }
+  let(:schema_cache) { connection.schema_cache }
   let(:table_name) { described_class.table_name }
+
+  describe ".primary_key" do
+    subject { described_class.primary_key }
+
+    it { is_expected.to eq("some_id") }
+  end
 
   describe ".create" do
     let(:some_int) { 5 }
@@ -45,12 +52,16 @@ RSpec.describe BigintCustomIdIntRange do
     end
 
     subject(:partitions) { described_class.partitions }
-    subject(:child_table_exists) { PgParty::SchemaHelper.table_exists?(child_table_name) }
+    subject(:child_table_exists) { schema_cache.data_source_exists?(child_table_name) }
+
+    before do
+      schema_cache.clear!
+      described_class.partitions
+    end
+
+    after { connection.drop_table(child_table_name) if child_table_exists }
 
     context "when ranges do not overlap" do
-      before { described_class.partitions }
-      after { connection.drop_table(child_table_name) }
-
       it "returns table name and adds it to partition list" do
         expect(create_partition).to eq(child_table_name)
 
@@ -58,6 +69,27 @@ RSpec.describe BigintCustomIdIntRange do
           "#{table_name}_a",
           "#{table_name}_b",
           "#{table_name}_c"
+        )
+      end
+    end
+
+    context "when name not provided" do
+      let(:child_table_name) { create_partition }
+
+      subject(:create_partition) do
+        described_class.create_partition(
+          start_range: start_range,
+          end_range: end_range,
+        )
+      end
+
+      it "returns table name and adds it to partition list" do
+        expect(create_partition).to match(/^#{table_name}_\w{7}$/)
+
+        expect(partitions).to contain_exactly(
+          "#{table_name}_a",
+          "#{table_name}_b",
+          child_table_name,
         )
       end
     end
@@ -144,6 +176,28 @@ RSpec.describe BigintCustomIdIntRange do
       let(:partition_key) { 10 }
 
       it { is_expected.to contain_exactly(record_two) }
+    end
+
+    context "when table is aliased" do
+      subject do
+        described_class
+          .select("*")
+          .from(described_class.arel_table.alias)
+          .partition_key_eq(partition_key)
+      end
+
+      it { is_expected.to contain_exactly(record_one) }
+    end
+
+    context "when table alias not resolvable" do
+      subject do
+        described_class
+          .select("*")
+          .from("garbage")
+          .partition_key_eq(partition_key)
+      end
+
+      it { expect { subject }.to raise_error("could not find arel table in current scope") }
     end
   end
 end

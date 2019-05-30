@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe BigintCustomIdIntList do
+RSpec.describe NoPkSubstringList do
   let(:connection) { described_class.connection }
   let(:schema_cache) { connection.schema_cache }
   let(:table_name) { described_class.table_name }
@@ -10,21 +10,20 @@ RSpec.describe BigintCustomIdIntList do
   describe ".primary_key" do
     subject { described_class.primary_key }
 
-    it { is_expected.to eq("some_id") }
+    it { is_expected.to be_nil }
   end
 
   describe ".create" do
-    let(:some_int) { 1 }
+    let(:some_string) { "a_foo" }
 
-    subject { described_class.create!(some_int: some_int) }
+    subject { described_class.create!(some_string: some_string) }
 
-    context "when partition key in list" do
-      its(:id) { is_expected.to be_a(Integer) }
-      its(:some_int) { is_expected.to eq(some_int) }
+    context "when partition key in range" do
+      its(:some_string) { is_expected.to eq(some_string) }
     end
 
-    context "when partition key outside list" do
-      let(:some_int) { 5 }
+    context "when partition key outside range" do
+      let(:some_string) { "e_foo" }
 
       it "raises error" do
         expect { subject }.to raise_error(ActiveRecord::StatementInvalid, /PG::CheckViolation/)
@@ -39,7 +38,7 @@ RSpec.describe BigintCustomIdIntList do
   end
 
   describe ".create_partition" do
-    let(:values) { [5, 6] }
+    let(:values) { ["e", "f"] }
     let(:child_table_name) { "#{table_name}_c" }
 
     subject(:create_partition) { described_class.create_partition(values: values, name: child_table_name) }
@@ -53,7 +52,7 @@ RSpec.describe BigintCustomIdIntList do
 
     after { connection.drop_table(child_table_name) if child_table_exists }
 
-    context "when values do not overlap" do
+    context "when ranges do not overlap" do
       it "returns table name and adds it to partition list" do
         expect(create_partition).to eq(child_table_name)
 
@@ -81,8 +80,8 @@ RSpec.describe BigintCustomIdIntList do
       end
     end
 
-    context "when values overlap" do
-      let(:values) { [2, 3] }
+    context "when ranges overlap" do
+      let(:values) { ["b", "c"] }
 
       it "raises error and cleans up intermediate table" do
         expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
@@ -102,69 +101,102 @@ RSpec.describe BigintCustomIdIntList do
     its(:allocate)   { is_expected.to be_an_instance_of(described_class) }
 
     describe "query methods" do
-      let!(:record_one) { described_class.create!(some_int: 1) }
-      let!(:record_two) { described_class.create!(some_int: 2) }
-      let!(:record_three) { described_class.create!(some_int: 4) }
+      let!(:record_one) { described_class.create!(some_string: "a_foo") }
+      let!(:record_two) { described_class.create!(some_string: "b_foo") }
+      let!(:record_three) { described_class.create!(some_string: "c_foo") }
 
       describe ".all" do
         subject { described_class.in_partition(child_table_name).all }
 
-        it { is_expected.to contain_exactly(record_one, record_two) }
+        it do
+          is_expected.to contain_exactly(
+            an_object_having_attributes(some_string: "a_foo"),
+            an_object_having_attributes(some_string: "b_foo"),
+          )
+        end
       end
 
       describe ".where" do
-        subject { described_class.in_partition(child_table_name).where(some_id: record_one.some_id) }
+        subject { described_class.in_partition(child_table_name).where(some_string: "a_foo") }
 
-        it { is_expected.to contain_exactly(record_one) }
+        it do
+          is_expected.to contain_exactly(
+            an_object_having_attributes(some_string: "a_foo")
+          )
+        end
       end
     end
   end
 
   describe ".partition_key_in" do
-    let(:values) { [1, 2] }
+    let(:values) { ["a", "b"] }
 
-    let!(:record_one) { described_class.create!(some_int: 1) }
-    let!(:record_two) { described_class.create!(some_int: 2) }
-    let!(:record_three) { described_class.create!(some_int: 4) }
+    let!(:record_one) { described_class.create!(some_string: "a_foo") }
+    let!(:record_two) { described_class.create!(some_string: "b_foo") }
+    let!(:record_three) { described_class.create!(some_string: "c_foo") }
 
     subject { described_class.partition_key_in(values) }
 
     context "when spanning a single partition" do
-      it { is_expected.to contain_exactly(record_one, record_two) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo"),
+          an_object_having_attributes(some_string: "b_foo"),
+        )
+      end
     end
 
     context "when spanning multiple partitions" do
-      let(:values) { [1, 2, 3, 4] }
+      let(:values) { ["a", "b", "c", "d"] }
 
-      it { is_expected.to contain_exactly(record_one, record_two, record_three) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo"),
+          an_object_having_attributes(some_string: "b_foo"),
+          an_object_having_attributes(some_string: "c_foo"),
+        )
+      end
     end
 
     context "when chaining methods" do
-      subject { described_class.partition_key_in(values).where(some_int: 1) }
+      subject { described_class.partition_key_in(values).where(some_string: "a_foo") }
 
-      it { is_expected.to contain_exactly(record_one) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo")
+        )
+      end
     end
   end
 
   describe ".partition_key_eq" do
-    let(:partition_key) { 1 }
+    let(:partition_key) { "a" }
 
-    let!(:record_one) { described_class.create!(some_int: 1) }
-    let!(:record_two) { described_class.create!(some_int: 3) }
+    let!(:record_one) { described_class.create!(some_string: "a_foo") }
+    let!(:record_two) { described_class.create!(some_string: "c_foo") }
 
     subject { described_class.partition_key_eq(partition_key) }
 
     context "when partition key in first partition" do
-      it { is_expected.to contain_exactly(record_one) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo")
+        )
+      end
     end
 
     context "when partition key in second partition" do
-      let(:partition_key) { 3 }
+      let(:partition_key) { "c" }
 
-      it { is_expected.to contain_exactly(record_two) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "c_foo")
+        )
+      end
     end
 
-    context "when table is aliased" do
+    # TODO: write more tests like this
+    context "when partition key in first partition and table is aliased" do
       subject do
         described_class
           .select("*")
@@ -172,7 +204,11 @@ RSpec.describe BigintCustomIdIntList do
           .partition_key_eq(partition_key)
       end
 
-      it { is_expected.to contain_exactly(record_one) }
+      it do
+        is_expected.to contain_exactly(
+          an_object_having_attributes(some_string: "a_foo")
+        )
+      end
     end
 
     context "when table alias not resolvable" do

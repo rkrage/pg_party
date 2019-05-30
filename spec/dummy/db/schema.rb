@@ -128,4 +128,22 @@ ActiveRecord::Schema.define do
     :uuid_string_lists,
     name: :uuid_string_lists_b,
     values: ["c", "d"]
+
+  create_list_partition :no_pk_substring_lists, id: false, partition_key: ->{ "LEFT(some_string, 1)" } do |t|
+    t.text :some_string, null: false
+  end
+
+  create_list_partition_of \
+    :no_pk_substring_lists,
+    name: :no_pk_substring_lists_a,
+    values: ["a", "b"]
+
+  create_list_partition_of \
+    :no_pk_substring_lists,
+    name: :no_pk_substring_lists_b,
+    values: ["c", "d"]
+
+  create_range_partition :bigint_date_range_no_partitions, partition_key: ->{ "(created_at::date)" } do |t|
+    t.timestamps null: false, precision: nil
+  end
 end

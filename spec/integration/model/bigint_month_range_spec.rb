@@ -6,7 +6,14 @@ RSpec.describe BigintMonthRange do
   let(:current_date) { Date.current }
   let(:current_time) { Time.current }
   let(:connection) { described_class.connection }
+  let(:schema_cache) { connection.schema_cache }
   let(:table_name) { described_class.table_name }
+
+  describe ".primary_key" do
+    subject { described_class.primary_key }
+
+    it { is_expected.to eq("id") }
+  end
 
   describe ".create" do
     let(:created_at) { current_time }
@@ -49,12 +56,16 @@ RSpec.describe BigintMonthRange do
     end
 
     subject(:partitions) { described_class.partitions }
-    subject(:child_table_exists) { PgParty::SchemaHelper.table_exists?(child_table_name) }
+    subject(:child_table_exists) { schema_cache.data_source_exists?(child_table_name) }
+
+    before do
+      schema_cache.clear!
+      described_class.partitions
+    end
+
+    after { connection.drop_table(child_table_name) if child_table_exists }
 
     context "when ranges do not overlap" do
-      before { described_class.partitions }
-      after { connection.drop_table(child_table_name) }
-
       it "returns table name and adds it to partition list" do
         expect(create_partition).to eq(child_table_name)
 
@@ -62,6 +73,27 @@ RSpec.describe BigintMonthRange do
           "#{table_name}_a",
           "#{table_name}_b",
           "#{table_name}_c"
+        )
+      end
+    end
+
+    context "when name not provided" do
+      let(:child_table_name) { create_partition }
+
+      subject(:create_partition) do
+        described_class.create_partition(
+          start_range: start_range,
+          end_range: end_range,
+        )
+      end
+
+      it "returns table name and adds it to partition list" do
+        expect(create_partition).to match(/^#{table_name}_\w{7}$/)
+
+        expect(partitions).to contain_exactly(
+          "#{table_name}_a",
+          "#{table_name}_b",
+          child_table_name,
         )
       end
     end
@@ -106,25 +138,74 @@ RSpec.describe BigintMonthRange do
   end
 
   describe ".partition_key_in" do
-    let(:start_range) { current_date }
-    let(:end_range) { current_date + 1.day }
-    let(:error_message) { "#partition_key_in not available for complex partition keys" }
+    let(:start_date) { current_date }
+    let(:end_date) { current_date + 1.month }
+    let(:start_range) { [start_date.year, start_date.month] }
+    let(:end_range) { [end_date.year, end_date.month] }
+
+    let!(:record_one) { described_class.create!(created_at: current_time) }
+    let!(:record_two) { described_class.create!(created_at: current_time.end_of_month) }
+    let!(:record_three) { described_class.create!(created_at: (current_time + 1.month).end_of_month) }
 
     subject { described_class.partition_key_in(start_range, end_range) }
 
-    it "raises error" do
-      expect { subject }.to raise_error(RuntimeError, error_message)
+    context "when spanning a single partition" do
+      it { is_expected.to contain_exactly(record_one, record_two) }
+    end
+
+    context "when spanning multiple partitions" do
+      let(:end_date) { current_date + 2.months }
+
+      it { is_expected.to contain_exactly(record_one, record_two, record_three) }
+    end
+
+    context "when chaining methods" do
+      subject { described_class.partition_key_in(start_range, end_range).where(id: record_one.id) }
+
+      it { is_expected.to contain_exactly(record_one) }
     end
   end
 
   describe ".partition_key_eq" do
-    let(:partition_key) { current_date }
-    let(:error_message) { "#partition_key_eq not available for complex partition keys" }
+    let(:partition_date) { current_date }
+    let(:partition_key) { [partition_date.year, partition_date.month] }
+
+    let!(:record_one) { described_class.create!(created_at: current_time) }
+    let!(:record_two) { described_class.create!(created_at: current_time.end_of_month) }
+    let!(:record_three) { described_class.create!(created_at: (current_time + 1.month).end_of_month) }
 
     subject { described_class.partition_key_eq(partition_key) }
 
-    it "raises error" do
-      expect { subject }.to raise_error(RuntimeError, error_message)
+    context "when partition key in first partition" do
+      it { is_expected.to contain_exactly(record_one, record_two) }
+    end
+
+    context "when partition key in second partition" do
+      let(:partition_date) { current_date + 1.month }
+
+      it { is_expected.to contain_exactly(record_three) }
+    end
+
+    context "when table is aliased" do
+      subject do
+        described_class
+          .select("*")
+          .from(described_class.arel_table.alias)
+          .partition_key_eq(partition_key)
+      end
+
+      it { is_expected.to contain_exactly(record_one, record_two) }
+    end
+
+    context "when table alias not resolvable" do
+      subject do
+        described_class
+          .select("*")
+          .from("garbage")
+          .partition_key_eq(partition_key)
+      end
+
+      it { expect { subject }.to raise_error("could not find arel table in current scope") }
     end
   end
 end

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "pg_party/cache"
-require "pg_party/schema_helper"
 
 module PgParty
   class ModelDecorator < SimpleDelegator
@@ -18,7 +17,7 @@ module PgParty
     def partition_table_exists?
       target_table = partitions.first || table_name
 
-      PgParty::SchemaHelper.table_exists?(target_table)
+      connection.schema_cache.data_source_exists?(target_table)
     end
 
     def in_partition(child_table_name)
@@ -47,23 +46,33 @@ module PgParty
     end
 
     def partition_key_eq(value)
-      partition_key_check_for(:partition_key_eq)
-
-      where(partition_key_as_arel.eq(value))
+      if complex_partition_key
+        complex_partition_key_query("(#{partition_key}) = (?)", value)
+      else
+        where(current_arel_table[partition_key].eq(value))
+      end
     end
 
     def range_partition_key_in(start_range, end_range)
-      partition_key_check_for(:partition_key_in)
+      if complex_partition_key
+        complex_partition_key_query(
+          "(#{partition_key}) >= (?) AND (#{partition_key}) < (?)",
+          start_range,
+          end_range
+        )
+      else
+        node = current_arel_table[partition_key]
 
-      node = partition_key_as_arel
-
-      where(node.gteq(start_range).and(node.lt(end_range)))
+        where(node.gteq(start_range).and(node.lt(end_range)))
+      end
     end
 
     def list_partition_key_in(*values)
-      partition_key_check_for(:partition_key_in)
-
-      where(partition_key_as_arel.in(values.flatten))
+      if complex_partition_key
+        complex_partition_key_query("(#{partition_key}) IN (?)", values.flatten)
+      else
+        where(current_arel_table[partition_key].in(values.flatten))
+      end
     end
 
     def partitions
@@ -103,16 +112,37 @@ module PgParty
       transaction { connection.send(migration_method, table_name, **options) }
     end
 
-    def partition_key_check_for(name)
-      raise "##{name} not available for complex partition keys" if complex_partition_key
-    end
-
     def cache_key
       __getobj__.object_id
     end
 
-    def partition_key_as_arel
-      arel_table[partition_key]
+    # https://stackoverflow.com/questions/28685149/activerecord-query-with-aliasd-table-names
+    def current_arel_table
+      none.arel.source.left.tap do |node|
+        if [Arel::Table, Arel::Nodes::TableAlias].exclude?(node.class)
+          raise "could not find arel table in current scope"
+        end
+      end
+    end
+
+    def current_alias
+      arel_node = current_arel_table
+
+      case arel_node
+      when Arel::Table
+        arel_node.name
+      when Arel::Nodes::TableAlias
+        arel_node.right
+      end
+    end
+
+    def complex_partition_key_query(clause, *interpolated_values)
+      subquery = base_class
+        .unscoped
+        .select("*")
+        .where(clause, *interpolated_values)
+
+      from(subquery, current_alias)
     end
   end
 end
