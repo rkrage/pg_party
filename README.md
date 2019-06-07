@@ -12,14 +12,18 @@
 
 [ActiveRecord](http://guides.rubyonrails.org/active_record_basics.html) migrations and model helpers for creating and managing [PostgreSQL 10+ partitions](https://www.postgresql.org/docs/10/static/ddl-partitioning.html)!
 
-Features:
-  - Migration methods for partition specific database operations
-  - Model methods for querying partitioned data
-  - Model methods for creating adhoc partitions
+## Features
 
-Limitations:
-  - Partition tables are not represented correctly in `db/schema.rb` — please use the `:sql` schema format
-  - For complex partition keys (e.g. `created_at::date`), the `partition_key_eq` and `partition_key_in` query methods will not be available
+- Migration methods for partition specific database operations
+- Model methods for querying partitioned data, creating adhoc partitions, and retreiving partition metadata
+
+## Limitations
+
+- Partition tables are not represented correctly in `db/schema.rb` — please use the `:sql` schema format
+
+## Future Work
+
+- Automatic partition creation (via cron or some other means)
 
 ## Installation
 
@@ -31,122 +35,152 @@ gem 'pg_party'
 
 And then execute:
 
-    $ bundle
+```
+$ bundle
+```
 
 Or install it yourself as:
 
-    $ gem install pg_party
+```
+$ gem install pg_party
+```
+
+Note that the gemspec does not require `pg`, as some model methods _may_ work for other databases.
+Migration methods will be unavailable unless `pg` is installed.
 
 ## Usage
 
-Full API documentation is in progress.
+### Migrations
 
-In the meantime, take a look at the Combustion schema definition and integration specs:
-  - https://github.com/rkrage/pg_party/blob/master/spec/internal/db/schema.rb
-  - https://github.com/rkrage/pg_party/tree/master/spec/integration
+#### Methods
 
-### Migration Examples
+These methods are available in migrations as well as `ActiveRecord::Base#connection` objects.
 
-Create range partition on `created_at::date` with two child partitions:
+- `create_range_partition`
+  - Create partitioned table using the _range_ partitioning method
+  - Required args: `table_name`, `partitition_key:`
+- `create_list_partition`
+  - Create partitioned table using the _list_ partitioning method
+  - Required args: `table_name`, `partition_key:`
+- `create_range_partition_of`
+  - Create partition in _range_ partitioned table with partition key between _range_ of values
+  - Required args: `table_name`, `start_range:`, `end_range:`
+- `create_list_partition_of`
+  - Create partition in _list_ partitioned table with partition key in _list_ of values
+  - Required args: `table_name`, `values:`
+- `attach_range_partition`
+  - Attach existing table to _range_ partitioned table with partition key between _range_ of values
+  - Required args: `parent_table_name`, `child_table_name`, `start_range:`, `end_range:`
+- `attach_list_partition`
+  - Attach existing table to _list_ partitioned table with partition key in _list_ of values
+  - Required args: `parent_table_name`, `child_table_name`, `values:`
+- `detach_partition`
+  - Detach partition from both _range and list_ partitioned tables
+  - Required args: `parent_table_name`, `child_table_name`
+- `create_table_like`
+  - Clone _any_ existing table
+  - Required args: `table_name`, `new_table_name`
+
+#### Examples
+
+Create _range_ partitioned table on `created_at::date` with two partitions:
 
 ```ruby
 class CreateSomeRangeRecord < ActiveRecord::Migration[5.1]
   def up
-    current_date = Date.current
-
-    # NOTE: proc is only required for complex partition keys
-
+    # proc is used for partition keys containing expressions
     create_range_partition :some_range_records, partition_key: ->{ "(created_at::date)" } do |t|
       t.text :some_value
       t.timestamps
     end
 
+    # optional name argument is used to specify child table name
     create_range_partition_of \
       :some_range_records,
-      partition_key: ->{ "(created_at::date)" },
-      start_range: current_date,
-      end_range: current_date + 1.day
+      name: :some_range_records_a,
+      start_range: "2019-06-07",
+      end_range: "2019-06-08"
 
+    # optional name argument is used to specify child table name
      create_range_partition_of \
        :some_range_records,
-       partition_key: ->{ "(created_at::date)" },
-       start_range: current_date + 1.day,
-       end_range: current_date + 2.days
+       name: :some_range_records_b,
+       start_range: "2019-06-08",
+       end_range: "2019-06-09"
   end
 end
 ```
 
-Create list partition on `id` with two child partitions:
+Create _list_ partitioned table on `id` with two partitions:
 
 ```ruby
 class CreateSomeListRecord < ActiveRecord::Migration[5.1]
   def up
+    # symbol is used for partition keys referring to individual columns
     create_list_partition :some_list_records, partition_key: :id do |t|
       t.text :some_value
       t.timestamps
     end
 
+    # without name argument, child partition created as "some_list_records_<hash>"
     create_list_partition_of \
       :some_list_records,
-      partition_key: :id,
-      values: (1..100).to_a
+      values: 1..100
 
+    # without name argument, child partition created as "some_list_records_<hash>"
      create_list_partition_of \
        :some_list_records,
-       partition_key: :id,
-       values: (101..200).to_a
+       values: 101..200
   end
 end
 ```
 
-If a partitioned table requires an index on a column other than the partition key, an explicit `add_index` operation is required for each child partition:
+Unfortunately, PostgreSQL 10 doesn't support indexes on partitioned tables.
+However, individual _partitions_ can have indexes.
+To avoid explicit index creation for _every_ new partition, we've introduced the idea of template tables.
+For every call to `create_list_partition` and `create_range_partition`, a clone `<table_name>_template` is created.
+Indexes, constraints, etc. created on the template table will propagate to new partitions in calls to `create_list_partition_of` and `create_range_partition_of`:
 
 ```ruby
 class CreateSomeListRecord < ActiveRecord::Migration[5.1]
   def up
+    # template table creation is enabled by default - use "template: false" to opt-out
     create_list_partition :some_list_records, partition_key: :id do |t|
       t.integer :some_foreign_id
       t.text :some_value
       t.timestamps
     end
 
-    # Partition with dynamically generated table name returned
-    partition_table = create_list_partition_of \
-      :some_list_records,
-      partition_key: :id,
-      values: (1..100).to_a
+    # create index on the template table
+    add_index :some_list_records_template, :some_foreign_id
 
-    # Partition with user-specified table name
+    # create partition with an index on "some_foreign_id"
     create_list_partition_of \
       :some_list_records,
-      name: :some_list_records_101_200,
-      partition_key: :id,
-      values: (101..200).to_a
+      values: 1..100
 
-    # indexes for newly created partition tables
-    add_index partition_table, :some_foreign_id
-    add_index :some_list_records_101_200, :some_foreign_id
+    # create partition with an index on "some_foreign_id"
+    create_list_partition_of \
+      :some_list_records,
+      values: 101..200
   end
 end
 ```
 
-Attach an existing table to a range partition:
+Attach an existing table to a _range_ partitioned table:
 
 ```ruby
-class AttachRangePartition < ActiveRecord::Migration[5.1]
   def up
-    current_date = Date.current
-
     attach_range_partition \
       :some_range_records,
       :some_existing_table,
-      start_range: current_date,
-      end_range: current_date + 1.day
+      start_range: "2019-06-09",
+      end_range: "2019-06-10"
   end
 end
 ```
 
-Attach an existing table to a list partition:
+Attach an existing table to a _list_ partitioned table:
 
 ```ruby
 class AttachListPartition < ActiveRecord::Migration[5.1]
@@ -154,12 +188,12 @@ class AttachListPartition < ActiveRecord::Migration[5.1]
     attach_list_partition \
       :some_list_records,
       :some_existing_table,
-      values: (200..300).to_a
+      values: 200..300
   end
 end
 ```
 
-Detach a child table from any partition:
+Detach a partition from any partitioned table:
 
 ```ruby
 class DetachPartition < ActiveRecord::Migration[5.1]
@@ -169,53 +203,104 @@ class DetachPartition < ActiveRecord::Migration[5.1]
 end
 ```
 
-### Model Examples
+For more examples, take a look at the Combustion schema definition and integration specs:
 
-Define model that is backed by a range partition:
+- https://github.com/rkrage/pg_party/blob/master/spec/dummy/db/schema.rb
+- https://github.com/rkrage/pg_party/blob/master/spec/integration/migration_spec.rb
+
+### Models
+
+#### Methods
+
+Class methods available to _all_ ActiveRecord models:
+
+- `partitioned?`
+  - Check if a model is backed by either a _list or range_ partitioned table
+  - No arguments
+- `range_partition_by`
+  - Configure a model backed by a _range_ partitioned table
+  - Required arg: `key` (partition key column) or block returning partition key expression
+- `list_partition_by`
+  - Configure a model backed by a _list_ partitioned table
+  - Required arg: `key` (partition key column) or block returning partition key expression
+
+Class methods available to both _range and list_ partitioned models:
+
+- `partitions`
+  - Retrieve a list of currently attached partitions
+  - No arguments
+- `in_partition`
+  - Retrieve an ActiveRecord model scoped to an individual partition
+  - Required arg: `child_table_name`
+- `partition_key_eq`
+  - Query for records where partition key matches a value
+  - Required arg: `value`
+
+Class methods available to _range_ partitioned models:
+
+- `create_partition`
+  - Dynamically create new partition with partition key in _range_ of values
+  - Required args: `start_range:`, `end_range:`
+- `partition_key_in`
+  - Query for records where partition key in _range_ of values
+  - Required args: `start_range`, `end_range`
+
+Class methods available to _list_ partitioned models:
+
+- `create_partition`
+  - Dynamically create new partition with partition key in _list_ of values
+  - Required arg: `values:`
+- `partition_key_in`
+  - Query for records where partition key in _list_ of values
+  - Required arg: list of `values`
+
+#### Examples
+
+Configure model backed by a _range_ partitioned table to get access to the methods described above:
 
 ```ruby
 class SomeRangeRecord < ApplicationRecord
-  # NOTE: proc is only required for complex partition keys
-
-  range_partition_by ->{ "(created_at::date)" }
+  # block is used for partition keys containing expressions
+  range_partition_by { "(created_at::date)" }
 end
  ```
 
-Define model that is backed by a list partition:
+Configure model backed by a _list_ partitioned table to get access to the methods described above:
 
 ```ruby
 class SomeListRecord < ApplicationRecord
+  # symbol is used for partition keys referring to individual columns
   list_partition_by :id
 end
 ```
 
-Create child partition from range partition model:
+Dynamically create new partition from _range_ partitioned model:
 
 ```ruby
-current_date = Date.current
-
-SomeRangeRecord.create_partition(start_range: current_date + 1.day, end_range: current_date + 2.days)
+# additional options include: "name:" and "primary_key:"
+SomeRangeRecord.create_partition(start_range: "2019-06-09", end_range: "2019-06-10")
 ```
 
-Create child partition from list partition model:
+Dynamically create new partition from _list_ partitioned model:
 
 ```ruby
-SomeListRecord.create_partition(values: (200..300).to_a)
+# additional options include: "name:" and "primary_key:"
+SomeListRecord.create_partition(values: 200..300)
 ```
 
-Query for records within partition range:
+For _range_ partitioned model, query for records where partition key in _range_ of values:
 
 ```ruby
-SomeRangeRecord.partition_key_in("2017-01-01".to_date, "2017-02-01".to_date)
+SomeRangeRecord.partition_key_in("2019-06-08", "2019-06-10")
 ```
 
-Query for records in partition list:
+For _list_ partitioned model, query for records where partition key in _list_ of values:
 
 ```ruby
 SomeListRecord.partition_key_in(1, 2, 3, 4)
 ```
 
-Query for records matching partition key:
+For both _range and list_ partitioned models, query for records matching partition key:
 
 ```ruby
 SomeRangeRecord.partition_key_eq(Date.current)
@@ -223,7 +308,7 @@ SomeRangeRecord.partition_key_eq(Date.current)
 SomeListRecord.partition_key_eq(100)
 ```
 
-List currently attached partitions:
+For both _range and list_ partitioned models, retrieve currently attached partitions:
 
 ```ruby
 SomeRangeRecord.partitions
@@ -231,7 +316,7 @@ SomeRangeRecord.partitions
 SomeListRecord.partitions
 ```
 
-Retrieve ActiveRecord model class scoped to a child partition:
+For both _range and list_ partitioned models, retrieve ActiveRecord model scoped to individual partition:
 
 ```ruby
 SomeRangeRecord.in_partition(:some_range_records_partition_name)
@@ -239,26 +324,38 @@ SomeRangeRecord.in_partition(:some_range_records_partition_name)
 SomeListRecord.in_partition(:some_list_records_partition_name)
 ```
 
+For more examples, take a look at the model integration specs:
+
+- https://github.com/rkrage/pg_party/tree/documentation/spec/integration/model
+
 ## Development
 
 The development / test environment relies heavily on [Docker](https://docs.docker.com).
 
 Start the containers in the background:
 
-    $ docker-compose up -d
+```
+$ docker-compose up -d
+```
 
 Install dependencies:
 
-    $ bin/de bundle
-    $ bin/de appraisal
+```
+$ bin/de bundle
+$ bin/de appraisal
+```
 
 Run the tests:
 
-    $ bin/de appraisal rake
+```
+$ bin/de appraisal rake
+```
 
 Open a Pry console to play around with the sample Rails app:
 
-    $ bin/de console
+```
+$ bin/de console
+```
 
 ## Contributing
 
