@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module PgParty
-  VERSION = "0.7.3"
+  VERSION = "1.0.0"
 end
