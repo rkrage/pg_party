@@ -34,7 +34,15 @@ RSpec.describe NoPkSubstringList do
   describe ".partitions" do
     subject { described_class.partitions }
 
-    it { is_expected.to contain_exactly("#{table_name}_a", "#{table_name}_b") }
+    context "when query successful" do
+      it { is_expected.to contain_exactly("#{table_name}_a", "#{table_name}_b") }
+    end
+
+    context "when an error occurs" do
+      before { allow(PgParty::Cache).to receive(:fetch_partitions).and_raise("boom") }
+
+      it { is_expected.to eq([]) }
+    end
   end
 
   describe ".create_partition" do

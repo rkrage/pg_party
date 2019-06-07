@@ -85,6 +85,8 @@ module PgParty
           WHERE pg_tables.tablename = #{connection.quote(table_name)}
         SQL
       end
+    rescue
+      []
     end
 
     def create_range_partition(start_range:, end_range:, **options)

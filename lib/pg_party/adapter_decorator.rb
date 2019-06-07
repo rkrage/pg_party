@@ -166,7 +166,7 @@ module PgParty
     end
 
     def list_constraint_clause(values)
-      "IN (#{quote_collection(values)})"
+      "IN (#{quote_collection(values.try(:to_a) || values)})"
     end
 
     def uuid_function
