@@ -128,6 +128,17 @@ RSpec.describe BigintBooleanList do
       it { is_expected.to contain_exactly(record_two) }
     end
 
+    context "when chaining methods" do
+      subject do
+        described_class
+          .in_partition("#{table_name}_b")
+          .unscoped
+          .partition_key_eq(partition_key)
+      end
+
+      it { is_expected.to be_empty }
+    end
+
     context "when table is aliased" do
       subject do
         described_class

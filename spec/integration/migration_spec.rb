@@ -202,8 +202,18 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   describe "#create_range_partition_of" do
     let(:create_table_sql) do
       <<-SQL
-        CREATE TABLE #{child_table_name}
-        PARTITION OF #{table_name}
+        CREATE TABLE #{child_table_name} (
+          custom_id uuid DEFAULT #{uuid_function} NOT NULL,
+          created_at timestamp without time zone NOT NULL,
+          updated_at timestamp without time zone NOT NULL
+        );
+      SQL
+    end
+
+    let(:attach_table_sql) do
+      <<-SQL
+        ALTER TABLE ONLY #{table_name}
+        ATTACH PARTITION #{child_table_name}
         FOR VALUES FROM ('#{start_range}') TO ('#{end_range}');
       SQL
     end
@@ -222,14 +232,23 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     it { is_expected.to include_heredoc(create_table_sql) }
+    it { is_expected.to include_heredoc(attach_table_sql) }
     it { is_expected.to include_heredoc(primary_key_sql) }
   end
 
   describe "#create_list_partition_of" do
     let(:create_table_sql) do
       <<-SQL
-        CREATE TABLE #{child_table_name}
-        PARTITION OF #{table_name}
+        CREATE TABLE #{child_table_name} (
+          #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
+        );
+      SQL
+    end
+
+    let(:attach_table_sql) do
+      <<-SQL
+        ALTER TABLE ONLY #{table_name}
+        ATTACH PARTITION #{child_table_name}
         FOR VALUES IN (1, 2, 3);
       SQL
     end
@@ -248,6 +267,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     it { is_expected.to include_heredoc(create_table_sql) }
+    it { is_expected.to include_heredoc(attach_table_sql) }
     it { is_expected.to include_heredoc(primary_key_sql) }
   end
 
@@ -308,37 +328,37 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   end
 
   describe "#attach_range_partition" do
+    let(:attach_table_sql) do
+      <<-SQL
+        ALTER TABLE ONLY #{table_name}
+        ATTACH PARTITION #{child_table_name}
+        FOR VALUES FROM ('#{start_range}') TO ('#{end_range}');
+      SQL
+    end
+
     subject do
       attach_range_partition
       PgDumpHelper.dump_table_structure(child_table_name)
     end
 
-    let(:create_table_sql) do
-      <<-SQL
-        CREATE TABLE #{child_table_name}
-        PARTITION OF #{table_name}
-        FOR VALUES FROM ('#{start_range}') TO ('#{end_range}');
-      SQL
-    end
-
-    it { is_expected.to include_heredoc(create_table_sql) }
+    it { is_expected.to include_heredoc(attach_table_sql) }
   end
 
   describe "#attach_list_partition" do
+    let(:attach_table_sql) do
+      <<-SQL
+        ALTER TABLE ONLY #{table_name}
+        ATTACH PARTITION #{child_table_name}
+        FOR VALUES IN (1, 2, 3);
+      SQL
+    end
+
     subject do
       attach_list_partition
       PgDumpHelper.dump_table_structure(child_table_name)
     end
 
-    let(:create_table_sql) do
-      <<-SQL
-        CREATE TABLE #{child_table_name}
-        PARTITION OF #{table_name}
-        FOR VALUES IN (1, 2, 3);
-      SQL
-    end
-
-    it { is_expected.to include_heredoc(create_table_sql) }
+    it { is_expected.to include_heredoc(attach_table_sql) }
   end
 
   describe "#detach_partition" do
@@ -358,5 +378,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     it { is_expected.to include_heredoc(create_table_sql) }
+    it { is_expected.to_not include("ATTACH") }
   end
 end

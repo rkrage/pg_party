@@ -170,6 +170,7 @@ end
 Attach an existing table to a _range_ partitioned table:
 
 ```ruby
+class AttachRangePartition < ActiveRecord::Migration[5.1]
   def up
     attach_range_partition \
       :some_range_records,

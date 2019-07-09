@@ -203,7 +203,17 @@ RSpec.describe NoPkSubstringList do
       end
     end
 
-    # TODO: write more tests like this
+    context "when chaining methods" do
+      subject do
+        described_class
+          .in_partition("#{table_name}_b")
+          .unscoped
+          .partition_key_eq(partition_key)
+      end
+
+      it { is_expected.to be_empty }
+    end
+
     context "when partition key in first partition and table is aliased" do
       subject do
         described_class
