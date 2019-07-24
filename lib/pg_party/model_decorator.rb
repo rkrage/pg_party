@@ -138,17 +138,8 @@ module PgParty
       end
     end
 
-    def model_class
-      if respond_to?(:klass)
-        klass
-      else
-        self
-      end
-    end
-
     def complex_partition_key_query(clause, *interpolated_values)
-      subquery = model_class
-        .unscoped
+      subquery = unscoped
         .select("*")
         .where(clause, *interpolated_values)
 
