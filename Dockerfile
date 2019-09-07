@@ -16,8 +16,6 @@ RUN export DEBIAN_CODENAME=$(cat /etc/os-release | grep "VERSION=" | cut -d "(" 
 RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /usr/local/bin/cc-reporter && \
     chmod +x /usr/local/bin/cc-reporter
 
-RUN gem install bundler -v 1.15.2
-
 RUN mkdir /code
 
 WORKDIR /code

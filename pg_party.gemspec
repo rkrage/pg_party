@@ -16,8 +16,7 @@ Gem::Specification.new do |spec|
   spec.homepage    = "https://github.com/rkrage/pg_party"
   spec.license     = "MIT"
 
-  spec.required_ruby_version     = ">= 2.2.2"
-  spec.required_rubygems_version = ">= 1.8.11"
+  spec.required_ruby_version     = ">= 2.3.0"
 
   spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*"]
 
@@ -26,16 +25,15 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "activerecord", ">= 4.2", "< 6.1"
 
   spec.add_development_dependency "appraisal", "~> 2.2"
-  spec.add_development_dependency "bundler", "~> 1.15"
-  spec.add_development_dependency "byebug", "~> 10.0"
+  spec.add_development_dependency "byebug", "~> 11.0"
   spec.add_development_dependency "combustion", "~> 1.1"
-  spec.add_development_dependency "database_cleaner", "~> 1.6"
-  spec.add_development_dependency "nokogiri", "~> 1.9.1"
-  spec.add_development_dependency "pry-byebug", "~> 3.4"
-  spec.add_development_dependency "rake", "~> 12.0"
-  spec.add_development_dependency "rspec-its", "~> 1.2"
-  spec.add_development_dependency "rspec-rails", "~> 3.6"
-  spec.add_development_dependency "rspec_junit_formatter", "~> 0.3"
-  spec.add_development_dependency "simplecov", "~> 0.15"
+  spec.add_development_dependency "database_cleaner", "~> 1.7"
+  spec.add_development_dependency "nokogiri", ">= 1.10.4", "< 2.0"
+  spec.add_development_dependency "pry-byebug", "~> 3.7"
+  spec.add_development_dependency "rake", "~> 12.3"
+  spec.add_development_dependency "rspec-its", "~> 1.3"
+  spec.add_development_dependency "rspec-rails", "~> 3.8"
+  spec.add_development_dependency "rspec_junit_formatter", "~> 0.4"
+  spec.add_development_dependency "simplecov", "~> 0.17"
   spec.add_development_dependency "timecop", "~> 0.9"
 end

@@ -7,7 +7,7 @@ services:
       context: .
       args:
         - CONTAINER_PG_VERSION=${CONTAINER_PG_VERSION:-10}
-        - CONTAINER_RUBY_VERSION=${CONTAINER_RUBY_VERSION:-2.6.3}
+        - CONTAINER_RUBY_VERSION=${CONTAINER_RUBY_VERSION:-2.6.4}
     image: pg_party
     environment:
       - CC_TEST_REPORTER_ID
