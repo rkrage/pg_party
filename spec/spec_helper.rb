@@ -20,7 +20,7 @@ require "pg_party/model/shared_methods"
 require "pg_party/model/range_methods"
 require "pg_party/model/list_methods"
 
-Timecop.travel(Date.current + 12.hours)
+Timecop.freeze(Date.current + 12.hours)
 
 Combustion.path = "spec/dummy"
 Combustion.initialize! :active_record
@@ -54,6 +54,7 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
+    PgParty.reset
     DatabaseCleaner.start
     example.run
     DatabaseCleaner.clean

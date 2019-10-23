@@ -5,15 +5,9 @@ require "spec_helper"
 RSpec.describe PgParty::Cache do
   let(:block) { ->{ :new_value } }
 
-  subject(:cache) { described_class }
+  subject(:cache) { described_class.new }
   subject(:fetch_model) { cache.fetch_model(12345678901, :child, &block) }
   subject(:fetch_partitions) { cache.fetch_partitions(12345678901, &block) }
-
-  around do |example|
-    cache.clear!
-    example.run
-    cache.clear!
-  end
 
   describe ".clear!" do
     before do
@@ -60,6 +54,35 @@ RSpec.describe PgParty::Cache do
         subject
       end
     end
+
+    context "when caching disabled" do
+      before do
+        PgParty.config.caching = false
+        cache.fetch_model(12345678901, :child) { :old_value }
+      end
+
+      it { is_expected.to eq(:new_value) }
+
+      it "executes block" do
+        expect(block).to receive(:call).and_call_original
+        subject
+      end
+    end
+
+    context "when TTL expires" do
+      around do |example|
+        PgParty.config.caching_ttl = 60
+        cache.fetch_model(12345678901, :child) { :old_value }
+        Timecop.freeze(Time.now + 61, &example)
+      end
+
+      it { is_expected.to eq(:new_value) }
+
+      it "executes block" do
+        expect(block).to receive(:call).and_call_original
+        subject
+      end
+    end
   end
 
   describe ".fetch_partitions" do
@@ -83,6 +106,35 @@ RSpec.describe PgParty::Cache do
 
       it "does not execute block" do
         expect(block).to_not receive(:call)
+        subject
+      end
+    end
+
+    context "when caching disabled" do
+      before do
+        PgParty.config.caching = false
+        cache.fetch_partitions(12345678901) { :old_value }
+      end
+
+      it { is_expected.to eq(:new_value) }
+
+      it "executes block" do
+        expect(block).to receive(:call).and_call_original
+        subject
+      end
+    end
+
+    context "when TTL expires" do
+      around do |example|
+        PgParty.config.caching_ttl = 60
+        cache.fetch_partitions(12345678901) { :old_value }
+        Timecop.freeze(Time.now + 61, &example)
+      end
+
+      it { is_expected.to eq(:new_value) }
+
+      it "executes block" do
+        expect(block).to receive(:call).and_call_original
         subject
       end
     end
