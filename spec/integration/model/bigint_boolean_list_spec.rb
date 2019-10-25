@@ -32,7 +32,7 @@ RSpec.describe BigintBooleanList do
     end
 
     context "when an error occurs" do
-      before { allow(PgParty::Cache).to receive(:fetch_partitions).and_raise("boom") }
+      before { allow(PgParty.cache).to receive(:fetch_partitions).and_raise("boom") }
 
       it { is_expected.to eq([]) }
     end

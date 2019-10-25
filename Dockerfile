@@ -20,6 +20,12 @@ RUN mkdir /code
 
 WORKDIR /code
 
+COPY . /code
+
+RUN bundle install
+
+RUN rm -rf *
+
 ENV PATH "/code/bin:$PATH"
 
 CMD /bin/sleep infinity

@@ -1,7 +1,26 @@
 # frozen_string_literal: true
 
 require "pg_party/version"
+require "pg_party/config"
 require "active_support"
+
+module PgParty
+  @config = Config.new
+  @cache = Cache.new
+
+  class << self
+    attr_reader :config, :cache
+
+    def configure(&blk)
+      blk.call(config)
+    end
+
+    def reset
+      @config = Config.new
+      @cache = Cache.new
+    end
+  end
+end
 
 ActiveSupport.on_load(:active_record) do
   require "pg_party/model/methods"

@@ -61,7 +61,7 @@ module PgParty
         DETACH PARTITION #{quote_table_name(child_table_name)}
       SQL
 
-      PgParty::Cache.clear!
+      PgParty.cache.clear!
     end
 
     private
@@ -118,7 +118,7 @@ module PgParty
         FOR VALUES #{constraint_clause}
       SQL
 
-      PgParty::Cache.clear!
+      PgParty.cache.clear!
     end
 
     # Rails 5.2 now returns boolean literals

@@ -21,7 +21,7 @@ module PgParty
     end
 
     def in_partition(child_table_name)
-      PgParty::Cache.fetch_model(cache_key, child_table_name) do
+      PgParty.cache.fetch_model(cache_key, child_table_name) do
         Class.new(__getobj__) do
           self.table_name = child_table_name
 
@@ -76,7 +76,7 @@ module PgParty
     end
 
     def partitions
-      PgParty::Cache.fetch_partitions(cache_key) do
+      PgParty.cache.fetch_partitions(cache_key) do
         connection.select_values(<<-SQL)
           SELECT pg_inherits.inhrelid::regclass::text
           FROM pg_tables
