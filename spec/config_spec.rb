@@ -30,4 +30,17 @@ RSpec.describe PgParty::Config do
       it { is_expected.to eq(60) }
     end
   end
+
+  describe "#schema_exclude_partitions" do
+    subject { instance.schema_exclude_partitions }
+
+    context "when defaulted" do
+      it { is_expected.to eq(true) }
+    end
+
+    context "when overridden" do
+      before { instance.schema_exclude_partitions = false }
+      it { is_expected.to eq(false) }
+    end
+  end
 end

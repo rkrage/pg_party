@@ -5,7 +5,12 @@ module PgParty
     module DatabaseTasks
       def structure_dump(*)
         old_ignore_list = ActiveRecord::SchemaDumper.ignore_tables
-        new_ignore_list = partitions.map { |table| "*.#{table}" }
+
+        if PgParty.config.schema_exclude_partitions
+          new_ignore_list = partitions.map { |table| "*.#{table}" }
+        else
+          new_ignore_list = []
+        end
 
         ActiveRecord::SchemaDumper.ignore_tables = old_ignore_list + new_ignore_list
 
