@@ -8,6 +8,7 @@ RSpec.describe PgParty do
       described_class.configure do |c|
         c.caching = false
         c.caching_ttl = 60
+        c.schema_exclude_partitions = false
       end
 
       described_class.config
@@ -15,6 +16,7 @@ RSpec.describe PgParty do
 
     its(:caching) { is_expected.to eq(false) }
     its(:caching_ttl) { is_expected.to eq(60) }
+    its(:schema_exclude_partitions) { is_expected.to eq(false) }
   end
 
   describe ".reset" do
