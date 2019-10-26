@@ -6,6 +6,7 @@ require "combustion"
 require "timecop"
 require "pry-byebug"
 require "simplecov"
+require "rake"
 
 if ENV["CODE_COVERAGE"] == "true"
   SimpleCov.command_name Rails.gem_version.to_s
@@ -24,6 +25,8 @@ Combustion.path = "spec/dummy"
 Combustion.initialize! :active_record do
   config.eager_load = true
 end
+
+load "support/db.rake"
 
 require "rspec/rails"
 require "rspec/its"
