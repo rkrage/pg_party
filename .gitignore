@@ -6,6 +6,7 @@
 /doc/
 /pkg/
 /spec/results/
+/spec/dummy/db/structure.sql
 /tmp/
 /.ruby-version
 /*.gem

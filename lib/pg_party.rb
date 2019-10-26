@@ -40,6 +40,12 @@ ActiveSupport.on_load(:active_record) do
     PgParty::Hacks::SchemaCache
   )
 
+  require "pg_party/hacks/database_tasks"
+
+  ActiveRecord::Tasks::DatabaseTasks.extend(
+    PgParty::Hacks::DatabaseTasks
+  )
+
   begin
     require "active_record/connection_adapters/postgresql_adapter"
     require "pg_party/adapter/postgresql_methods"

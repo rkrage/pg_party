@@ -13,7 +13,6 @@ RSpec.describe "threading" do
   before do
     allow(PgParty.cache).to receive(:clear!)
     PgParty.config.caching_ttl = 5
-    Thread.abort_on_exception = true
     Timecop.travel(current_date + 12.hours)
   end
 
@@ -28,7 +27,11 @@ RSpec.describe "threading" do
             partitions = model.partitions
           end
 
-          raise "unexpected partition count" if partitions.size != 3
+          if partitions.size == 3
+            Thread.current[:status] = "success"
+          else
+            Thread.current[:status] = "failed"
+          end
         end
       end
 
@@ -43,7 +46,9 @@ RSpec.describe "threading" do
 
       expect(model.partitions.size).to eq(2)
 
-      threads.each(&:join)
+      threads.map(&:join).each do |t|
+        expect(t[:status]).to eq("success")
+      end
 
       expect(model.partitions.size).to eq(3)
     end
@@ -71,8 +76,11 @@ RSpec.describe "threading" do
             partition_b_data = model.in_partition("#{table_name}_b").all
           end
 
-          raise "unexpected record count for partition a" if partition_a_data.count != 13
-          raise "unexpected record count for partition b" if partition_b_data.count != 13
+          if partition_a_data.count == 13 && partition_b_data.count == 13
+            Thread.current[:status] = "success"
+          else
+            Thread.current[:status] = "failed"
+          end
         end
       end
 
@@ -86,7 +94,9 @@ RSpec.describe "threading" do
         updated_at: current_time + 12.hours,
       )
 
-      threads.each(&:join)
+      threads.map(&:join).each do |t|
+        expect(t[:status]).to eq("success")
+      end
     end
   end
 end
