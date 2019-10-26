@@ -6,11 +6,19 @@ module PgParty
   module Model
     module SharedMethods
       def reset_primary_key
-        PgParty::ModelDecorator.new(self).partition_primary_key
+        if self != base_class
+          base_class.primary_key
+        elsif partition_name = partitions.first
+          in_partition(partition_name).get_primary_key(base_class.name)
+        else
+          get_primary_key(base_class.name)
+        end
       end
 
       def table_exists?
-        PgParty::ModelDecorator.new(self).partition_table_exists?
+        target_table = partitions.first || table_name
+
+        connection.schema_cache.data_source_exists?(target_table)
       end
 
       def partitions

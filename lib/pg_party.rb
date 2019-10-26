@@ -2,6 +2,7 @@
 
 require "pg_party/version"
 require "pg_party/config"
+require "pg_party/cache"
 require "active_support"
 
 module PgParty

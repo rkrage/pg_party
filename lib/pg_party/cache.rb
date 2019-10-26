@@ -19,10 +19,14 @@ module PgParty
     end
 
     def fetch_model(key, child_table, &block)
+      return block.call unless caching_enabled?
+
       LOCK.synchronize { fetch_value(@store[key][:models], child_table.to_sym, block) }
     end
 
     def fetch_partitions(key, &block)
+      return block.call unless caching_enabled?
+
       LOCK.synchronize { fetch_value(@store[key], :partitions, block) }
     end
 
@@ -33,8 +37,6 @@ module PgParty
     end
 
     def fetch_value(subhash, key, block)
-      return block.call unless caching_enabled?
-
       entry = subhash[key]
 
       if entry.nil? || entry.expired?
