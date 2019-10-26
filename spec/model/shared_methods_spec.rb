@@ -15,24 +15,6 @@ RSpec.describe PgParty::Model::SharedMethods do
     end
   end
 
-  describe ".reset_primary_key" do
-    subject { model.reset_primary_key }
-
-    it "delegates to decorator" do
-      expect(decorator).to receive(:partition_primary_key)
-      subject
-    end
-  end
-
-  describe ".partition_table_exists?" do
-    subject { model.table_exists? }
-
-    it "delegates to decorator" do
-      expect(decorator).to receive(:partition_table_exists?)
-      subject
-    end
-  end
-
   describe ".partitions" do
     subject { model.partitions }
 

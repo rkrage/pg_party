@@ -1,25 +1,7 @@
 # frozen_string_literal: true
 
-require "pg_party/cache"
-
 module PgParty
   class ModelDecorator < SimpleDelegator
-    def partition_primary_key
-      if self != base_class
-        base_class.primary_key
-      elsif partition_name = partitions.first
-        in_partition(partition_name).get_primary_key(base_class.name)
-      else
-        get_primary_key(base_class.name)
-      end
-    end
-
-    def partition_table_exists?
-      target_table = partitions.first || table_name
-
-      connection.schema_cache.data_source_exists?(target_table)
-    end
-
     def in_partition(child_table_name)
       PgParty.cache.fetch_model(cache_key, child_table_name) do
         Class.new(__getobj__) do
@@ -40,6 +22,11 @@ module PgParty
           # will ultimately insert into the parent partition table
           def self.new(*args, &blk)
             superclass.new(*args, &blk)
+          end
+
+          # to avoid unnecessary db lookups
+          def self.partitions
+            []
           end
         end
       end

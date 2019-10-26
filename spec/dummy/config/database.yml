@@ -6,7 +6,7 @@ test: &test
   host: postgres
   schema_search_path: e9651f34
   port: 5432
-  pool: 5
+  pool: 50
 
 development:
   <<: *test

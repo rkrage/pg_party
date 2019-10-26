@@ -20,10 +20,10 @@ require "pg_party/model/shared_methods"
 require "pg_party/model/range_methods"
 require "pg_party/model/list_methods"
 
-Timecop.freeze(Date.current + 12.hours)
-
 Combustion.path = "spec/dummy"
-Combustion.initialize! :active_record
+Combustion.initialize! :active_record do
+  config.eager_load = true
+end
 
 require "rspec/rails"
 require "rspec/its"
@@ -31,6 +31,8 @@ require "database_cleaner"
 require "support/uuid_matcher"
 require "support/heredoc_matcher"
 require "support/pg_dump_helper"
+
+static_time = Date.current + 12.hours
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -54,6 +56,7 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
+    Timecop.freeze(static_time)
     PgParty.reset
     DatabaseCleaner.start
     example.run
