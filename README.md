@@ -48,6 +48,32 @@ $ gem install pg_party
 Note that the gemspec does not require `pg`, as some model methods _may_ work for other databases.
 Migration methods will be unavailable unless `pg` is installed.
 
+## Configuration
+
+These values can be accessed and set via `PgParty.config` and `PgParty.configure`.
+
+- `caching`
+  - Whether to cache currently attached partitions and anonymous model classes
+  - Default: `true`
+- `caching_ttl`
+  - Length of time (in seconds) that cache entries are considered valid
+  - Default: `-1` (never expire cache entries)
+- `schema_exclude_partitions`
+  - Whether to exclude child partitions in `rake db:structure:dump` (supported in ActiveRecord 5.2+)
+  - Default: `true`
+
+Note that caching is done in-memory for each process of an application. Attaching / detaching partitions _will_ clear the cache, but only for the process that initiated the request. For multi-process web servers, it is recommended to use a TTL or disable caching entirely.
+
+### Example
+
+```ruby
+# in a Rails initializer
+PgParty.configure do |c|
+  c.caching_ttl = 60
+  c.schema_exclude_partitions = false
+end
+```
+
 ## Usage
 
 ### Migrations
