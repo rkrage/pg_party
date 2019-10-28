@@ -40,10 +40,11 @@ ActiveSupport.on_load(:active_record) do
     PgParty::Hacks::SchemaCache
   )
 
-  require "pg_party/hacks/database_tasks"
+  require "active_record/tasks/postgresql_database_tasks"
+  require "pg_party/hacks/postgresql_database_tasks"
 
-  ActiveRecord::Tasks::DatabaseTasks.extend(
-    PgParty::Hacks::DatabaseTasks
+  ActiveRecord::Tasks::PostgreSQLDatabaseTasks.prepend(
+    PgParty::Hacks::PostgreSQLDatabaseTasks
   )
 
   begin

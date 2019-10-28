@@ -59,7 +59,7 @@ These values can be accessed and set via `PgParty.config` and `PgParty.configure
   - Length of time (in seconds) that cache entries are considered valid
   - Default: `-1` (never expire cache entries)
 - `schema_exclude_partitions`
-  - Whether to exclude child partitions in `rake db:structure:dump` (supported in ActiveRecord 5.2+)
+  - Whether to exclude child partitions in `rake db:structure:dump`
   - Default: `true`
 
 Note that caching is done in-memory for each process of an application. Attaching / detaching partitions _will_ clear the cache, but only for the process that initiated the request. For multi-process web servers, it is recommended to use a TTL or disable caching entirely.

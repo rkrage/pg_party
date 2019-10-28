@@ -3,10 +3,6 @@
 require "spec_helper"
 
 RSpec.describe "db:structure:dump" do
-  let(:skip_test) { Rails.gem_version < Gem::Version.new("5.2") }
-
-  before { skip "only supported in AR 5.2+" if skip_test }
-
   subject do
     Rake::Task["db:structure:dump"].invoke
     File.read(File.expand_path("../../dummy/db/structure.sql", __FILE__))
