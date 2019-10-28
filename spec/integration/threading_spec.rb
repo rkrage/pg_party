@@ -17,6 +17,12 @@ RSpec.describe "threading" do
   end
 
   describe ".partitions" do
+    after do
+      ActiveRecord::Base
+        .connection
+        .execute("DROP TABLE IF EXISTS #{child_table_name} CASCADE")
+    end
+
     it "eventually detects new partitions" do
       threads = 20.times.map do
         Thread.new do
