@@ -351,6 +351,32 @@ SomeRangeRecord.in_partition(:some_range_records_partition_name)
 SomeListRecord.in_partition(:some_list_records_partition_name)
 ```
 
+To create _range_ partitions by month for previous, current and next months it's possible to use this example. To automate creation of partitions, run `Log.maintenance` every day with cron:
+
+```ruby
+class Log < ApplicationRecord
+  range_partition_by { '(created_at::date)' }
+
+  def self.maintenance
+    partitions = [Date.today.prev_month, Date.today, Date.today.next_month]
+
+    partitions.each do |day|
+      name = Log.partition_name_for(day)
+      next if ActiveRecord::Base.connection.table_exists?(name)
+      Log.create_partition(
+        name: name,
+        start_range: day.beginning_of_month,
+        end_range: day.end_of_month
+      )
+    end
+  end
+
+  def self.partition_name_for(day)
+    "logs_y#{day.year}_m#{day.month}"
+  end
+end
+```
+
 For more examples, take a look at the model integration specs:
 
 - https://github.com/rkrage/pg_party/tree/documentation/spec/integration/model
