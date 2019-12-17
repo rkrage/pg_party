@@ -134,11 +134,6 @@ class CreateSomeRangeRecord < ActiveRecord::Migration[5.1]
        start_range: "2019-06-08",
        end_range: "2019-06-09"
   end
-
-  def down
-    drop_table :some_range_records
-    drop_table :some_range_records_template
-  end
 end
 ```
 
@@ -356,7 +351,7 @@ SomeRangeRecord.in_partition(:some_range_records_partition_name)
 SomeListRecord.in_partition(:some_list_records_partition_name)
 ```
 
-To create _range_ partitions by month for previous, current and next months it's possible to use this example. To automate creation of partitions, run `EventLogArchive.maintenance` every day with cron:
+To create _range_ partitions by month for previous, current and next months it's possible to use this example. To automate creation of partitions, run `Log.maintenance` every day with cron:
 
 ```ruby
 class Log < ApplicationRecord
