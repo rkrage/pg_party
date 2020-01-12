@@ -366,7 +366,7 @@ class Log < ApplicationRecord
       Log.create_partition(
         name: name,
         start_range: day.beginning_of_month,
-        end_range: day.end_of_month
+        end_range: day.next_month.beginning_of_month
       )
     end
   end
