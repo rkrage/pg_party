@@ -379,7 +379,7 @@ end
 
 For more examples, take a look at the model integration specs:
 
-- https://github.com/rkrage/pg_party/tree/documentation/spec/integration/model
+- https://github.com/rkrage/pg_party/tree/master/spec/integration/model
 
 ## Development
 
