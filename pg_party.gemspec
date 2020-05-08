@@ -34,6 +34,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-its", "~> 1.3"
   spec.add_development_dependency "rspec-rails", "~> 3.8"
   spec.add_development_dependency "rspec_junit_formatter", "~> 0.4"
-  spec.add_development_dependency "simplecov", "~> 0.17"
+  spec.add_development_dependency "simplecov", "~> 0.17.0" # https://github.com/codeclimate/test-reporter/issues/413
   spec.add_development_dependency "timecop", "~> 0.9"
 end
