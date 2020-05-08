@@ -55,21 +55,22 @@ ActiveRecord::Schema.define do
     start_range: [(Date.today + 1.month).year, (Date.today + 1.month).month],
     end_range: [(Date.today + 2.months).year, (Date.today + 2.months).month]
 
-  create_range_partition :bigint_custom_id_int_ranges, primary_key: :some_id, partition_key: :some_int do |t|
+  create_range_partition :bigint_custom_id_int_ranges, primary_key: :some_id, partition_key: [:some_int, :some_other_int] do |t|
     t.integer :some_int, null: false
+    t.integer :some_other_int, null: false
   end
 
   create_range_partition_of \
     :bigint_custom_id_int_ranges,
     name: :bigint_custom_id_int_ranges_a,
-    start_range: 0,
-    end_range: 10
+    start_range: [0, 0],
+    end_range: [10, 10]
 
   create_range_partition_of \
     :bigint_custom_id_int_ranges,
     name: :bigint_custom_id_int_ranges_b,
-    start_range: 10,
-    end_range: 20
+    start_range: [10, 10],
+    end_range: [20, 20]
 
   create_range_partition :uuid_string_ranges, id: :uuid, partition_key: :some_string do |t|
     t.text :some_string, null: false

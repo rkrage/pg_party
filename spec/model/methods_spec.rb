@@ -38,8 +38,13 @@ RSpec.describe PgParty::Model::Methods do
 
       subject { model.range_partition_by(&key_as_block) }
 
-      it "initializes injector with model and key as block" do
-        expect(PgParty::ModelInjector).to receive(:new).with(model, key_as_block)
+      it "initializes injector with model and block" do
+        expect(PgParty::ModelInjector).to receive(:new) do |m, &blk|
+          expect(m).to eq(model)
+          expect(blk).to eq(blk)
+          injector
+        end
+
         subject
       end
 
@@ -70,8 +75,13 @@ RSpec.describe PgParty::Model::Methods do
 
       subject { model.list_partition_by(&key_as_block) }
 
-      it "initializes injector with model and key as block" do
-        expect(PgParty::ModelInjector).to receive(:new).with(model, key_as_block)
+      it "initializes injector with model and block" do
+        expect(PgParty::ModelInjector).to receive(:new) do |m, &blk|
+          expect(m).to eq(model)
+          expect(blk).to eq(blk)
+          injector
+        end
+
         subject
       end
 

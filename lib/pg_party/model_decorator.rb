@@ -36,7 +36,7 @@ module PgParty
       if complex_partition_key
         complex_partition_key_query("(#{partition_key}) = (?)", value)
       else
-        where(current_arel_table[partition_key].eq(value))
+        where_partition_key(:eq, value)
       end
     end
 
@@ -48,9 +48,9 @@ module PgParty
           end_range
         )
       else
-        node = current_arel_table[partition_key]
-
-        where(node.gteq(start_range).and(node.lt(end_range)))
+        where_partition_key(:gteq, start_range).merge(
+          where_partition_key(:lt, end_range)
+        )
       end
     end
 
@@ -131,6 +131,27 @@ module PgParty
         .where(clause, *interpolated_values)
 
       from(subquery, current_alias)
+    end
+
+    def where_partition_key(meth, values)
+      partition_key_array = Array.wrap(partition_key)
+      values = Array.wrap(values)
+
+      if partition_key_array.size != values.size
+        raise "number of provided values does not match the number of partition key columns"
+      end
+
+      arel_query = partition_key_array.zip(values).inject(nil) do |obj, (column, value)|
+        node = current_arel_table[column].send(meth, value)
+
+        if obj.nil?
+          node
+        else
+          obj.and(node)
+        end
+      end
+
+      where(arel_query)
     end
   end
 end

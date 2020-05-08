@@ -148,7 +148,7 @@ module PgParty
       if key.is_a?(Proc)
         key.call.to_s # very difficult to determine how to sanitize a complex expression
       else
-        quote_column_name(key)
+        Array.wrap(key).map(&method(:quote_column_name)).join(",")
       end
     end
 

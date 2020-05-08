@@ -2,9 +2,10 @@
 
 module PgParty
   class ModelInjector
-    def initialize(model, key)
+    def initialize(model, *key, &blk)
       @model = model
-      @key = key
+      @key = key.flatten.compact
+      @key_blk = blk
     end
 
     def inject_range_methods
@@ -38,11 +39,16 @@ module PgParty
         instance_predicate: false
       )
 
-      if @key.is_a?(Proc)
-        @model.partition_key = @key.call
+      if @key_blk
+        @model.partition_key = @key_blk.call
         @model.complex_partition_key = true
       else
-        @model.partition_key = @key
+        if @key.size == 1
+          @model.partition_key = @key.first
+        else
+          @model.partition_key = @key
+        end
+
         @model.complex_partition_key = false
       end
     end
