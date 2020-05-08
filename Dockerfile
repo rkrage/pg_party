@@ -22,7 +22,9 @@ WORKDIR /code
 
 COPY . /code
 
-RUN bundle install
+RUN gem install rubygems-bundler && \
+    bundle install && \
+    gem regenerate_binstubs
 
 RUN rm -rf *
 

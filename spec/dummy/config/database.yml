@@ -3,6 +3,7 @@ test: &test
   adapter: postgresql
   encoding: unicode
   username: postgres
+  password: postgres
   host: postgres
   schema_search_path: e9651f34
   port: 5432
