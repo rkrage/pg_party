@@ -16,7 +16,7 @@ RSpec.describe PgParty::Model::RangeMethods do
   end
 
   describe ".create_partition" do
-    let(:options) do
+    let(:args) do
       {
         start_range: Date.current,
         end_range: Date.tomorrow,
@@ -24,10 +24,10 @@ RSpec.describe PgParty::Model::RangeMethods do
       }
     end
 
-    subject { model.create_partition(**options) }
+    subject { model.create_partition(args) }
 
     it "delegates to decorator" do
-      expect(decorator).to receive(:create_range_partition).with(options)
+      expect(decorator).to receive(:create_range_partition).with(args)
       subject
     end
   end
