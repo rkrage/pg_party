@@ -16,17 +16,17 @@ RSpec.describe PgParty::Model::ListMethods do
   end
 
   describe ".create_partition" do
-    let(:args) do
+    let(:options) do
       {
         values: Date.current,
         name: "my_partition"
       }
     end
 
-    subject { model.create_partition(args) }
+    subject { model.create_partition(**options) }
 
     it "delegates to decorator" do
-      expect(decorator).to receive(:create_list_partition).with(args)
+      expect(decorator).to receive(:create_list_partition).with(options)
       subject
     end
   end

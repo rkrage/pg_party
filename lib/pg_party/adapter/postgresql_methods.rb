@@ -5,36 +5,36 @@ require "pg_party/adapter_decorator"
 module PgParty
   module Adapter
     module PostgreSQLMethods
-      def create_range_partition(*args, &blk)
-        PgParty::AdapterDecorator.new(self).create_range_partition(*args, &blk)
+      def create_range_partition(*args, **options, &blk)
+        PgParty::AdapterDecorator.new(self).create_range_partition(*args, **options, &blk)
       end
 
-      def create_list_partition(*args, &blk)
-        PgParty::AdapterDecorator.new(self).create_list_partition(*args, &blk)
+      def create_list_partition(*args, **options, &blk)
+        PgParty::AdapterDecorator.new(self).create_list_partition(*args, **options, &blk)
       end
 
-      def create_range_partition_of(*args)
-        PgParty::AdapterDecorator.new(self).create_range_partition_of(*args)
+      def create_range_partition_of(*args, **options)
+        PgParty::AdapterDecorator.new(self).create_range_partition_of(*args, **options)
       end
 
-      def create_list_partition_of(*args)
-        PgParty::AdapterDecorator.new(self).create_list_partition_of(*args)
+      def create_list_partition_of(*args, **options)
+        PgParty::AdapterDecorator.new(self).create_list_partition_of(*args, **options)
       end
 
-      def create_table_like(*args)
-        PgParty::AdapterDecorator.new(self).create_table_like(*args)
+      def create_table_like(*args, **options)
+        PgParty::AdapterDecorator.new(self).create_table_like(*args, **options)
       end
 
-      def attach_range_partition(*args)
-        PgParty::AdapterDecorator.new(self).attach_range_partition(*args)
+      def attach_range_partition(*args, **options)
+        PgParty::AdapterDecorator.new(self).attach_range_partition(*args, **options)
       end
 
-      def attach_list_partition(*args)
-        PgParty::AdapterDecorator.new(self).attach_list_partition(*args)
+      def attach_list_partition(*args, **options)
+        PgParty::AdapterDecorator.new(self).attach_list_partition(*args, **options)
       end
 
-      def detach_partition(*args)
-        PgParty::AdapterDecorator.new(self).detach_partition(*args)
+      def detach_partition(*args, **options)
+        PgParty::AdapterDecorator.new(self).detach_partition(*args, **options)
       end
     end
   end
