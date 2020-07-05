@@ -62,15 +62,11 @@ module PgParty
       end
     end
 
-    def partitions
-      PgParty.cache.fetch_partitions(cache_key) do
-        connection.select_values(<<-SQL)
-          SELECT pg_inherits.inhrelid::regclass::text
-          FROM pg_tables
-          INNER JOIN pg_inherits
-            ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
-          WHERE pg_tables.tablename = #{connection.quote(table_name)}
-        SQL
+    alias_method :hash_partition_key_in, :list_partition_key_in
+
+    def partitions(include_subpartitions: PgParty.config.include_subpartitions_in_partition_list)
+      PgParty.cache.fetch_partitions(cache_key, include_subpartitions) do
+        connection.partitions_for_table_name(table_name, include_subpartitions: include_subpartitions)
       end
     rescue
       []
@@ -93,6 +89,23 @@ module PgParty
       )
 
       create_partition(:create_list_partition_of, table_name, **modified_options)
+    end
+
+    def create_hash_partition(modulus:, remainder:, **options)
+      modified_options = options.merge(
+        modulus: modulus,
+        remainder: remainder,
+        primary_key: primary_key,
+      )
+
+      create_partition(:create_hash_partition_of, table_name, **modified_options)
+    end
+
+    def create_default_partition(**options)
+      modified_options = options.merge(
+        primary_key: primary_key,
+      )
+      create_partition(:create_default_partition_of, table_name, **modified_options)
     end
 
     private

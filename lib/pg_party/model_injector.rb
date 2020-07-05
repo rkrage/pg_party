@@ -20,6 +20,12 @@ module PgParty
       inject_methods_for(PgParty::Model::ListMethods)
     end
 
+    def inject_hash_methods
+      require "pg_party/model/hash_methods"
+
+      inject_methods_for(PgParty::Model::HashMethods)
+    end
+
     private
 
     def inject_methods_for(mod)

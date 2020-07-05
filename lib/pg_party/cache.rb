@@ -9,7 +9,7 @@ module PgParty
     def initialize
       # automatically initialize a new hash when
       # accessing an object id that doesn't exist
-      @store = Hash.new { |h, k| h[k] = { models: {}, partitions: nil } }
+      @store = Hash.new { |h, k| h[k] = { models: {}, partitions: nil, partitions_with_subpartitions: nil } }
     end
 
     def clear!
@@ -24,10 +24,11 @@ module PgParty
       LOCK.synchronize { fetch_value(@store[key][:models], child_table.to_sym, block) }
     end
 
-    def fetch_partitions(key, &block)
+    def fetch_partitions(key, include_subpartitions, &block)
       return block.call unless caching_enabled?
+      sub_key = include_subpartitions ? :partitions_with_subpartitions : :partitions
 
-      LOCK.synchronize { fetch_value(@store[key], :partitions, block) }
+      LOCK.synchronize { fetch_value(@store[key], sub_key, block) }
     end
 
     private

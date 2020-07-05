@@ -13,6 +13,10 @@ module PgParty
         PgParty::ModelInjector.new(self, *key, &blk).inject_list_methods
       end
 
+      def hash_partition_by(*key, &blk)
+        PgParty::ModelInjector.new(self, *key, &blk).inject_hash_methods
+      end
+
       def partitioned?
         try(:partition_key).present?
       end

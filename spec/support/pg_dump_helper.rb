@@ -9,6 +9,12 @@ class PgDumpHelper
     pg_dump.gsub("#{schema_name}.", "")
   end
 
+  def self.dump_indices
+    ActiveRecord::Base.connection.select_values(
+      "SELECT indexdef FROM pg_indexes WHERE tablename NOT LIKE 'pg%'"
+    ).join('; ').gsub("#{schema_name}.", "")
+  end
+
   private
 
   def initialize(options)
@@ -28,11 +34,19 @@ class PgDumpHelper
     env_strings.join(" ")
   end
 
-  def config
+  def self.config
     @config ||= ActiveRecord::Base.connection_config
   end
 
-  def schema_name
+  def config
+    self.class.config
+  end
+
+  def self.schema_name
     config[:schema_search_path]
+  end
+
+  def schema_name
+    self.class.schema_name
   end
 end

@@ -116,6 +116,29 @@ ActiveRecord::Schema.define do
     name: :bigint_custom_id_int_lists_b,
     values: [3, 4]
 
+  create_list_partition :bigint_int_list_date_range_subpartitions, primary_key: false, partition_key: [:id] do |t|
+    t.integer :id
+    t.timestamps null: false, precision: nil
+  end
+
+  create_list_partition_of \
+    :bigint_int_list_date_range_subpartitions,
+    name: :bigint_int_list_date_range_subpartitions_a,
+    values: [1, 2],
+    partition_type: :range,
+    partition_key: :created_at
+
+  create_range_partition_of \
+    :bigint_int_list_date_range_subpartitions_a,
+    name: :bigint_int_list_date_range_subpartitions_a_1,
+    start_range: Time.now - 1.day,
+    end_range: Time.now + 10.days
+
+  create_list_partition_of \
+    :bigint_int_list_date_range_subpartitions,
+    name: :bigint_int_list_date_range_subpartitions_b,
+    values: [3, 4]
+
   create_list_partition :uuid_string_lists, id: :uuid, partition_key: :some_string do |t|
     t.text :some_string, null: false
   end
