@@ -148,8 +148,12 @@ These methods are available in migrations as well as `ActiveRecord::Base#connect
   - Required args: `table_name`, `include_subpartitions:` (true or false)
 - `parent_for_table_name`
   - Fetch the parent table for a partition
+  - Required args: `table_name`
   - Pass optional `traverse: true` to return the top-level table in the hierarchy (for subpartitions)
   - Returns `nil` if the table is not a partition / has no parent
+- `table_partitioned?`
+  - Returns true if the table is partitioned (false for non-partitioned tables and partitions themselves)
+  - Required args: `table_name`
 - `add_index_on_all_partitions`
   - Recursively add an index to all partitions and subpartitions of `table_name` using Postgres's ADD INDEX CONCURRENTLY
     algorithm which adds the index in a non-blocking manner.

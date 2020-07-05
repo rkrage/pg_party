@@ -160,4 +160,14 @@ RSpec.describe PgParty::Adapter::PostgreSQLMethods do
       subject
     end
   end
+
+  describe "#table_partitioned?" do
+    subject { adapter.table_partitioned?(:table_name) }
+
+    it "delegates to decorator" do
+      expect(decorator).to receive(:table_partitioned?)
+                             .with(:table_name)
+      subject
+    end
+  end
 end

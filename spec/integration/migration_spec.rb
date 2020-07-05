@@ -502,9 +502,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   describe '#parent_for_table_name' do
     let(:traverse) { false }
 
-    before do
-      create_range_partition_of_subpartitioned_by_list
-    end
+    before { create_range_partition_of_subpartitioned_by_list }
 
     it 'fetches the parent of the given table' do
       expect(adapter.parent_for_table_name(grandchild_table_name)).to eq child_table_name
@@ -620,6 +618,17 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
           end
         end
       end
+    end
+  end
+
+  describe '#table_partitioned?' do
+    before { create_range_partition_of_subpartitioned_by_list }
+
+    it 'returns true for partitioned tables; false for partitions themselves' do
+      expect(adapter.table_partitioned?(table_name)).to be true
+      expect(adapter.table_partitioned?(child_table_name)).to be true
+      expect(adapter.table_partitioned?(sibling_table_name)).to be false
+      expect(adapter.table_partitioned?(grandchild_table_name)).to be false
     end
   end
 end

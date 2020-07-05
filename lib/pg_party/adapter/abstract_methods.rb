@@ -66,6 +66,10 @@ module PgParty
       def add_index_on_all_partitions(*)
         raise "#add_index_on_all_partitions is not implemented"
       end
+
+      def table_partitioned?(*)
+        raise "#table_partitioned? is not implemented"
+      end
     end
   end
 end

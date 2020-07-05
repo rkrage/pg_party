@@ -138,4 +138,12 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
       expect { subject }.to raise_error(RuntimeError, "#add_index_on_all_partitions is not implemented")
     end
   end
+
+  describe "#table_partitioned?" do
+    subject { adapter.table_partitioned?("args") }
+
+    it "raises not implemented error" do
+      expect { subject }.to raise_error(RuntimeError, "#table_partitioned? is not implemented")
+    end
+  end
 end

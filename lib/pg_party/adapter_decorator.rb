@@ -167,6 +167,14 @@ module PgParty
       )
     end
 
+    def table_partitioned?(table_name)
+      select_values(%[
+        SELECT relkind FROM pg_catalog.pg_class AS c
+        JOIN pg_catalog.pg_namespace AS ns ON c.relnamespace = ns.oid
+        WHERE relname = #{quote(table_name)} AND nspname = current_schema()
+      ]).first == 'p'
+    end
+
     private
 
     def create_partition(table_name, type, partition_key, **options)
@@ -385,14 +393,6 @@ module PgParty
         "SELECT relname FROM pg_class, pg_index WHERE pg_index.indisvalid = false AND "\
           "pg_index.indexrelid = pg_class.oid AND relname = #{quote(index_name)}"
       ).empty?
-    end
-
-    def table_partitioned?(table_name)
-      select_values(%[
-        SELECT relkind FROM pg_catalog.pg_class AS c
-        JOIN pg_catalog.pg_namespace AS ns ON c.relnamespace = ns.oid
-        WHERE relname = #{quote(table_name)} AND nspname = current_schema()
-      ]).first == 'p'
     end
 
     def generate_index_name(index_name, table_name)

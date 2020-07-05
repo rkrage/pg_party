@@ -116,8 +116,7 @@ ActiveRecord::Schema.define do
     name: :bigint_custom_id_int_lists_b,
     values: [3, 4]
 
-  create_list_partition :bigint_int_list_date_range_subpartitions, primary_key: false, partition_key: [:id] do |t|
-    t.integer :id
+  create_list_partition :bigint_int_list_date_range_subpartitions, partition_key: :id do |t|
     t.timestamps null: false, precision: nil
   end
 

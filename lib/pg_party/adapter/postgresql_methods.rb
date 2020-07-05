@@ -69,6 +69,10 @@ module PgParty
       ruby2_keywords def add_index_on_all_partitions(*args)
         PgParty::AdapterDecorator.new(self).add_index_on_all_partitions(*args)
       end
+
+      ruby2_keywords def table_partitioned?(*args)
+        PgParty::AdapterDecorator.new(self).table_partitioned?(*args)
+      end
     end
   end
 end

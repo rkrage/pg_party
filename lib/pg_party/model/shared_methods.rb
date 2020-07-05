@@ -8,7 +8,10 @@ module PgParty
       def reset_primary_key
         if self != base_class
           base_class.primary_key
-        elsif partition_name = partitions.first
+        elsif (partitions = partitions(include_subpartitions: true)) && partitions.any?
+          partition_name = partitions.detect { |p| !connection.table_partitioned?(p) }
+          raise 'No child partitions exist for this model' unless partition_name
+
           in_partition(partition_name).get_primary_key(base_class.name)
         else
           get_primary_key(base_class.name)
