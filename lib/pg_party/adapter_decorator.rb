@@ -262,63 +262,72 @@ module PgParty
 
       # If this is a partitioned table, add index ONLY on this table.
       if table_partitioned?(table_name)
-        if postgres_11_plus?
-          execute "CREATE #{index_type} INDEX #{quote_column_name(updated_name)} ON ONLY "\
-                  "#{quote_table_name(table_name)} #{using} (#{index_columns})#{index_options}"
-        end
+        add_index_only(table_name, type: index_type, name: updated_name, using: using, columns: index_columns,
+                       options: index_options)
         _created_index_names << updated_name
 
-        if partitions.any? && in_threads && in_threads > 1
-          Parallel.map(partitions, in_threads: in_threads) do |partition_name|
-            ActiveRecord::Base.connection_pool.with_connection do
-              recursive_add_index(
-                table_name: partition_name,
-                index_name: index_name,
-                index_type: index_type,
-                index_columns: index_columns,
-                index_options: index_options,
-                using: using,
-                algorithm: algorithm,
-                _parent_index_name: updated_name,
-                _created_index_names: _created_index_names
-              )
-            end
-          end
-        else
-          partitions.each do |partition_name|
-            recursive_add_index(
-              table_name: partition_name,
-              index_name: index_name,
-              index_type: index_type,
-              index_columns: index_columns,
-              index_options: index_options,
-              using: using,
-              algorithm: algorithm,
-              _parent_index_name: updated_name,
-              _created_index_names: _created_index_names
-            )
-          end
+        parallel_map(partitions, in_threads: in_threads) do |partition_name|
+          recursive_add_index(
+            table_name: partition_name,
+            index_name: index_name,
+            index_type: index_type,
+            index_columns: index_columns,
+            index_options: index_options,
+            using: using,
+            algorithm: algorithm,
+            _parent_index_name: updated_name,
+            _created_index_names: _created_index_names
+          )
         end
       else
         _created_index_names << updated_name # Track as created before execution of concurrent index command
-        execute "CREATE #{index_type} INDEX #{algorithm} #{quote_column_name(updated_name)} ON "\
-                "#{quote_table_name(table_name)} #{using} (#{index_columns})#{index_options}"
+        add_index_from_options(table_name, name: updated_name, type: index_type, algorithm: algorithm, using: using,
+                               columns: index_columns, options: index_options)
       end
 
-      if _parent_index_name && postgres_11_plus?
-        execute "ALTER INDEX #{quote_column_name(_parent_index_name)} "\
-                "ATTACH PARTITION #{quote_column_name(updated_name)}"
-      end
+      attach_child_index(updated_name, _parent_index_name) if _parent_index_name
 
       return true if index_valid?(updated_name)
 
       raise 'index creation failed - an index was marked invalid'
     rescue => e
       # Clean up any indexes created so this command can be retried later
-      _created_index_names.each do |created_index|
-        execute "DROP INDEX IF EXISTS #{quote_column_name(created_index)}"
-      end
+      drop_indices_if_exist(_created_index_names)
       raise e
+    end
+
+    def attach_child_index(child, parent)
+      return unless postgres_11_plus?
+
+      execute "ALTER INDEX #{quote_column_name(parent)} ATTACH PARTITION #{quote_column_name(child)}"
+    end
+
+    def add_index_only(table_name, type:, name:, using:, columns:, options:)
+      return unless postgres_11_plus?
+
+      execute "CREATE #{type} INDEX #{quote_column_name(name)} ON ONLY "\
+              "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
+    end
+
+    def add_index_from_options(table_name, name:, type:, algorithm:, using:, columns:, options:)
+      execute "CREATE #{type} INDEX #{algorithm} #{quote_column_name(name)} ON "\
+              "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
+    end
+
+    def drop_indices_if_exist(index_names)
+      index_names.uniq.each { |name| execute "DROP INDEX IF EXISTS #{quote_column_name(name)}" }
+    end
+
+    def parallel_map(arr, in_threads:)
+      return [] if arr.empty?
+
+      if in_threads && in_threads > 1
+        return Parallel.map(arr, in_threads: in_threads) do |item|
+          ActiveRecord::Base.connection_pool.with_connection { yield(item) }
+        end
+      end
+
+      arr.map { |item| yield(item) }
     end
 
     # Rails 5.2 now returns boolean literals
