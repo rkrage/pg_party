@@ -297,13 +297,13 @@ module PgParty
     end
 
     def attach_child_index(child, parent)
-      return unless postgres_11_plus?
+      return unless postgres_major_version >= 11
 
       execute "ALTER INDEX #{quote_column_name(parent)} ATTACH PARTITION #{quote_column_name(child)}"
     end
 
     def add_index_only(table_name, type:, name:, using:, columns:, options:)
-      return unless postgres_11_plus?
+      return unless postgres_major_version >= 11
 
       execute "CREATE #{type} INDEX #{quote_column_name(name)} ON ONLY "\
               "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
@@ -410,7 +410,7 @@ module PgParty
 
     def validate_supported_partition_type!(partition_type)
       if (sym = partition_type.to_s.downcase.to_sym) && sym.in?(SUPPORTED_PARTITION_TYPES)
-        return if sym != :hash || postgres_11_plus?
+        return if sym != :hash || postgres_major_version >= 11
 
         raise NotImplementedError, 'Hash partitions are only available in Postgres 11 or higher'
       end
@@ -419,17 +419,17 @@ module PgParty
     end
 
     def validate_default_partition_support!
-      return if postgres_11_plus?
+      return if postgres_major_version >= 11
 
       raise NotImplementedError, 'Default partitions are only available in Postgres 11 or higher'
     end
 
     def supports_partitions?
-      __getobj__.send(:postgresql_version) >= 100000
+      postgres_major_version >= 10
     end
 
-    def postgres_11_plus?
-      __getobj__.send(:postgresql_version) >= 110000
+    def postgres_major_version
+      __getobj__.send(:postgresql_version)/10000
     end
   end
 end
