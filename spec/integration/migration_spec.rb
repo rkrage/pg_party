@@ -592,7 +592,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     context 'when in_threads: is provided' do
-      let(:index_threads) { 2 }
+      let(:index_threads) { ActiveRecord::Base.connection_pool.size - 1 }
 
       before do
         allow(Parallel).to receive(:map).with([child_table_name, sibling_table_name], in_threads: index_threads)
@@ -616,6 +616,16 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
               '`disable_ddl_transaction!` and break out this operation into its own migration.'
             )
           end
+        end
+      end
+
+      context 'when in_threads is equal to or greater than connection pool size' do
+        let(:index_threads) { ActiveRecord::Base.connection_pool.size }
+
+        it 'raises ArgumentError' do
+          expect { subject }.to raise_error(ArgumentError,
+            'in_threads: must be lower than your database connection pool size'
+          )
         end
       end
     end

@@ -115,7 +115,8 @@ module PgParty
           FROM pg_tables
           INNER JOIN pg_inherits
             ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
-          WHERE pg_tables.tablename = #{quote(table_name)}
+          WHERE pg_tables.schemaname = current_schema() AND
+          pg_tables.tablename = #{quote(table_name)}
                     ]).each_with_object(_accumulator) do |partition, acc|
         acc << partition
         next unless include_subpartitions
@@ -130,7 +131,8 @@ module PgParty
           FROM pg_tables
           INNER JOIN pg_inherits
             ON pg_tables.tablename::regclass = pg_inherits.inhrelid::regclass
-          WHERE pg_tables.tablename = #{quote(table_name)}
+          WHERE pg_tables.schemaname = current_schema() AND
+          pg_tables.tablename = #{quote(table_name)}
       ]).first
       return parent if parent.nil? || !traverse
 
@@ -320,14 +322,15 @@ module PgParty
 
     def parallel_map(arr, in_threads:)
       return [] if arr.empty?
+      return arr.map { |item| yield(item) } unless in_threads && in_threads > 1
 
-      if in_threads && in_threads > 1
-        return Parallel.map(arr, in_threads: in_threads) do |item|
-          ActiveRecord::Base.connection_pool.with_connection { yield(item) }
-        end
+      if ActiveRecord::Base.connection_pool.size <= in_threads
+        raise ArgumentError, 'in_threads: must be lower than your database connection pool size'
       end
 
-      arr.map { |item| yield(item) }
+      Parallel.map(arr, in_threads: in_threads) do |item|
+        ActiveRecord::Base.connection_pool.with_connection { yield(item) }
+      end
     end
 
     # Rails 5.2 now returns boolean literals

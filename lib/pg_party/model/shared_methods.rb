@@ -9,7 +9,7 @@ module PgParty
         return base_class.primary_key if self != base_class
 
         partitions = partitions(include_subpartitions: true)
-        return get_primary_key(base_class.name) unless partitions.any?
+        return get_primary_key(base_class.name) if partitions.empty?
 
         first_partition = partitions.detect { |p| !connection.table_partitioned?(p) }
         raise 'No leaf partitions exist for this model. Create a partition to contain your data' unless first_partition
