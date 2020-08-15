@@ -9,6 +9,7 @@ RSpec.describe PgParty::ModelInjector do
 
   subject(:inject_range_methods) { injector.inject_range_methods }
   subject(:inject_list_methods) { injector.inject_list_methods }
+  subject(:inject_hash_methods) { injector.inject_hash_methods }
 
   before { allow(model).to receive(:extend).and_call_original }
 
@@ -116,7 +117,7 @@ RSpec.describe PgParty::ModelInjector do
     context "when key is array" do
       let(:key) { ["created_at", "updated_at"] }
 
-      it "extends range methods" do
+      it "extends list methods" do
         expect(model).to receive(:extend).with(PgParty::Model::ListMethods)
         subject
       end
@@ -142,7 +143,7 @@ RSpec.describe PgParty::ModelInjector do
 
       let(:injector) { described_class.new(model, &blk) }
 
-      it "extends range methods" do
+      it "extends list methods" do
         expect(model).to receive(:extend).with(PgParty::Model::ListMethods)
         subject
       end
@@ -155,6 +156,82 @@ RSpec.describe PgParty::ModelInjector do
       describe "model" do
         subject do
           inject_list_methods
+          model
+        end
+
+        its(:partition_key) { is_expected.to eq("created_at::date") }
+        its(:complex_partition_key) { is_expected.to eq(true) }
+      end
+    end
+  end
+
+  describe "#inject_hash_methods" do
+    subject { inject_hash_methods }
+
+    context "when key is a string" do
+      it "extends hash methods" do
+        expect(model).to receive(:extend).with(PgParty::Model::HashMethods)
+        subject
+      end
+
+      it "extends shared methods" do
+        expect(model).to receive(:extend).with(PgParty::Model::SharedMethods)
+        subject
+      end
+
+      describe "model" do
+        subject do
+          inject_hash_methods
+          model
+        end
+
+        its(:partition_key) { is_expected.to eq("created_at") }
+        its(:complex_partition_key) { is_expected.to eq(false) }
+      end
+    end
+
+    context "when key is array" do
+      let(:key) { ["created_at", "updated_at"] }
+
+      it "extends hash methods" do
+        expect(model).to receive(:extend).with(PgParty::Model::HashMethods)
+        subject
+      end
+
+      it "extends shared methods" do
+        expect(model).to receive(:extend).with(PgParty::Model::SharedMethods)
+        subject
+      end
+
+      describe "model" do
+        subject do
+          inject_hash_methods
+          model
+        end
+
+        its(:partition_key) { is_expected.to eq(["created_at", "updated_at"]) }
+        its(:complex_partition_key) { is_expected.to eq(false) }
+      end
+    end
+
+    context "when block is provided" do
+      let(:blk) { ->{ "created_at::date" } }
+
+      let(:injector) { described_class.new(model, &blk) }
+
+      it "extends hash methods" do
+        expect(model).to receive(:extend).with(PgParty::Model::HashMethods)
+        subject
+      end
+
+      it "extends shared methods" do
+        expect(model).to receive(:extend).with(PgParty::Model::SharedMethods)
+        subject
+      end
+
+      describe "model" do
+        subject do
+          inject_hash_methods
           model
         end
 

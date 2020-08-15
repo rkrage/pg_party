@@ -20,6 +20,7 @@ end
 require "pg_party/model/shared_methods"
 require "pg_party/model/range_methods"
 require "pg_party/model/list_methods"
+require "pg_party/model/hash_methods"
 
 Combustion.path = "spec/dummy"
 Combustion.initialize! :active_record do
@@ -34,6 +35,7 @@ require "database_cleaner"
 require "support/uuid_matcher"
 require "support/heredoc_matcher"
 require "support/pg_dump_helper"
+require "support/pg_version_helper"
 
 static_time = Date.current + 12.hours
 

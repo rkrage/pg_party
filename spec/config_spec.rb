@@ -43,4 +43,43 @@ RSpec.describe PgParty::Config do
       it { is_expected.to eq(false) }
     end
   end
+
+  describe "#create_template_tables" do
+    subject { instance.create_template_tables }
+
+    context "when defaulted" do
+      it { is_expected.to eq(true) }
+    end
+
+    context "when overridden" do
+      before { instance.create_template_tables = false }
+      it { is_expected.to eq(false) }
+    end
+  end
+
+  describe "#create_with_primary_key" do
+    subject { instance.create_with_primary_key }
+
+    context "when defaulted" do
+      it { is_expected.to eq(false) }
+    end
+
+    context "when overridden" do
+      before { instance.create_with_primary_key = true }
+      it { is_expected.to eq(true) }
+    end
+  end
+
+  describe "#include_subpartitions_in_partition_list" do
+    subject { instance.include_subpartitions_in_partition_list }
+
+    context "when defaulted" do
+      it { is_expected.to eq(false) }
+    end
+
+    context "when overridden" do
+      before { instance.include_subpartitions_in_partition_list = true }
+      it { is_expected.to eq(true) }
+    end
+  end
 end

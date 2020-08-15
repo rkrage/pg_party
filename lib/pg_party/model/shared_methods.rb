@@ -6,13 +6,15 @@ module PgParty
   module Model
     module SharedMethods
       def reset_primary_key
-        if self != base_class
-          base_class.primary_key
-        elsif partition_name = partitions.first
-          in_partition(partition_name).get_primary_key(base_class.name)
-        else
-          get_primary_key(base_class.name)
-        end
+        return base_class.primary_key if self != base_class
+
+        partitions = partitions(include_subpartitions: true)
+        return get_primary_key(base_class.name) if partitions.empty?
+
+        first_partition = partitions.detect { |p| !connection.table_partitioned?(p) }
+        raise 'No leaf partitions exist for this model. Create a partition to contain your data' unless first_partition
+
+        in_partition(first_partition).get_primary_key(base_class.name)
       end
 
       def table_exists?
@@ -21,8 +23,8 @@ module PgParty
         connection.schema_cache.data_source_exists?(target_table)
       end
 
-      def partitions
-        PgParty::ModelDecorator.new(self).partitions
+      def partitions(*args)
+        PgParty::ModelDecorator.new(self).partitions(*args)
       end
 
       def in_partition(*args)

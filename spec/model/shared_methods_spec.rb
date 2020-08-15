@@ -16,10 +16,10 @@ RSpec.describe PgParty::Model::SharedMethods do
   end
 
   describe ".partitions" do
-    subject { model.partitions }
+    subject { model.partitions(include_subpartitions: true) }
 
     it "delegates to decorator" do
-      expect(decorator).to receive(:partitions)
+      expect(decorator).to receive(:partitions).with(include_subpartitions: true)
       subject
     end
   end

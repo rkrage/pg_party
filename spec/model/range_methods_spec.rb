@@ -32,6 +32,20 @@ RSpec.describe PgParty::Model::RangeMethods do
     end
   end
 
+  describe ".create_default_partition" do
+    let(:args) do
+      {
+        name: "my_partition"
+      }
+    end
+    subject { model.create_default_partition(args) }
+
+    it "delegates to decorator" do
+      expect(decorator).to receive(:create_default_partition).with(args)
+      subject
+    end
+  end
+
   describe ".partition_key_in" do
     let(:start_range) { Date.current }
     let(:end_range)   { Date.tomorrow }
