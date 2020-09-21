@@ -66,7 +66,10 @@ These values can be accessed and set via `PgParty.config` and `PgParty.configure
   - Default: `true`
 - `create_with_primary_key`
   - Whether to add primary key constraints to partitioned (parent) tables by default.
-    * This is not supported for Postgres 10 but is recommended for Postgres 11
+    * This behavior is disabled by default as this configuration usually requires composite primary keys to be specified
+      and ActiveRecord does not natively support composite primary keys. There are workarounds such as the
+      [composite_primary_keys gem](https://github.com/composite-primary-keys/composite_primary_keys).
+    * This is not supported for Postgres 10 (requires Postgres 11+)
     * Primary key constraints must include all partition keys, for example: `primary_key: [:id, :created_at], partition_key: :created_at`
     * Partition keys cannot use expressions
     * Can be overridden via the `create_with_primary_key:` option when creating partitioned tables
@@ -86,7 +89,8 @@ PgParty.configure do |c|
   c.caching_ttl = 60
   c.schema_exclude_partitions = false
   c.include_subpartitions_in_partition_list = true
-  # Postgres 11+ users starting fresh may want to use below options
+  # Postgres 11+ users starting fresh may consider the below options to rely on Postgres' native features instead of
+  # this gem's template tables feature.
   c.create_template_tables = false
   c.create_with_primary_key = true
 end
@@ -221,7 +225,7 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
 end
 ```
 
-Create _hash_ partitioned table on `id` with two partitions (Postgres 11+ required):
+Create _hash_ partitioned table on `account_id` with two partitions (Postgres 11+ required):
   * A hash partition can be used to spread keys evenly(ish) across partitions
   * `modulus:` should always equal the total number of partitions planned for the table
   * `remainder:` is an integer which should be in the range of 0 to modulus-1
@@ -232,7 +236,11 @@ class CreateSomeHashRecord < ActiveRecord::Migration[5.1]
     # symbol is used for partition keys referring to individual columns
     # create_with_primary_key: true, template: false on Postgres 11 will rely on PostgreSQL's native partition schema
     # management vs this gem's template tables
-    create_hash_partition :some_hash_records, partition_key: :id, create_with_primary_key: true, template: false do |t|
+    # Note composite primary keys will require a workaround in ActiveRecord, such as through the use of the composite_primary_keys gem
+    create_hash_partition :some_hash_records, partition_key: :account_id, primary_key: [:id, :account_id],
+    create_with_primary_key: true, template: false do |t|
+      t.bigint :id, null: false, auto_increment: true
+      t.bigint :account_id, null: false
       t.text :some_value
       t.timestamps
     end
@@ -252,26 +260,18 @@ class CreateSomeHashRecord < ActiveRecord::Migration[5.1]
 end
 ```
 
-Advanced example with subpartitioning: Create _list_ partitioned table on `id` subpartitioned by _range_ on `created_at`
-with default partitions
-* We can use Postgres 11's support for primary keys vs template tables, using the composite primary key `[:id, :created_at]`
-  to ensure all partition keys are present in the primary key
+Advanced example with subpartitioning: Create _list_ partitioned table on `account_id` subpartitioned by _range_ on `created_at`
+with default partitions. This example is for a table with no primary key... perhaps for some analytics use case.
 * Default partitions are only supported in Postgres 11+
 
 ```ruby
 class CreateSomeListSubpartitionedRecord < ActiveRecord::Migration[5.1]
   def up
-    # when specifying a composite primary key, the primary keys must be specified as columns
-    create_list_partition \
-      :some_list_subpartitioned_records,
-      partition_key: [:id],
-      primary_key: [:id, :created_at],
-      template: false,
-      create_with_primary_key: true do |t|
-
-      t.integer :id
+    create_list_partition :some_list_subpartitioned_records, partition_key: :account_id, id: false,
+      template: false do |t|
+      t.bigint :account_id, null: false
       t.text :some_value
-      t.timestamps
+      t.created_at
     end
 
     create_default_partition_of \
@@ -331,7 +331,8 @@ To avoid explicit index creation for _every_ new partition, we've introduced the
 For every call to `create_list_partition` and `create_range_partition`, a clone `<table_name>_template` is created.
 Indexes, constraints, etc. created on the template table will propagate to new partitions in calls to `create_list_partition_of` and `create_range_partition_of`:
 * Subpartitions will correctly clone from template tables if a template table exists for the top-level ancestor
-* When using Postgres 11 or higher, you may wish to disable template tables and use the native features instead, see [Configuration](#configuration)
+* When using Postgres 11 or higher, you may wish to disable template tables and use the native features instead, see [Configuration](#configuration)\
+  but this may result in you using composite primary keys, which is not natively supported by ActiveRecord.
 
 ```ruby
 class CreateSomeListRecord < ActiveRecord::Migration[5.1]
