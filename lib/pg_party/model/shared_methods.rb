@@ -8,7 +8,7 @@ module PgParty
       def reset_primary_key
         return base_class.primary_key if self != base_class
 
-        partitions = partitions(include_subpartitions: true)
+        partitions = partitions(include_subpartitions: PgParty.config.include_subpartitions_in_partition_list)
         return get_primary_key(base_class.name) if partitions.empty?
 
         first_partition = partitions.detect { |p| !connection.table_partitioned?(p) }
