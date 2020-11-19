@@ -12,6 +12,34 @@ RSpec.describe PgParty::Model::SharedMethods do
   subject(:model) do
     Class.new do
       extend PgParty::Model::SharedMethods
+
+      def self.base_class
+        self
+      end
+
+      def self.get_primary_key(class_name)
+        nil
+      end
+    end
+  end
+
+  describe ".reset_primary_key" do
+    subject { model.reset_primary_key }
+
+    context 'when using default config: config.include_subpartitions_in_partition_list = false' do
+      it do
+        expect(decorator).to receive(:partitions).with(include_subpartitions: false).and_return([])
+        subject
+      end
+    end
+
+    context 'config.include_subpartitions_in_partition_list = true' do
+      before { PgParty.config.include_subpartitions_in_partition_list = true }
+
+      it do
+        expect(decorator).to receive(:partitions).with(include_subpartitions: true).and_return([])
+        subject
+      end
     end
   end
 
