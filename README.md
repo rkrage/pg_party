@@ -239,7 +239,7 @@ class CreateSomeHashRecord < ActiveRecord::Migration[5.1]
     # Note composite primary keys will require a workaround in ActiveRecord, such as through the use of the composite_primary_keys gem
     create_hash_partition :some_hash_records, partition_key: :account_id, primary_key: [:id, :account_id],
     create_with_primary_key: true, template: false do |t|
-      t.bigint :id, null: false, auto_increment: true
+      t.bigserial :id, null: false
       t.bigint :account_id, null: false
       t.text :some_value
       t.timestamps
