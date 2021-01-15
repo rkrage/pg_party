@@ -4,6 +4,7 @@ require "spec_helper"
 
 RSpec.describe "db:structure:dump" do
   subject do
+    ActiveRecord::Base.schema_format = :sql
     Rake::Task["db:structure:dump"].invoke
     File.read(File.expand_path("../../dummy/db/structure.sql", __FILE__))
   end

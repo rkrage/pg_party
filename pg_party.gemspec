@@ -22,13 +22,13 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "activerecord", ">= 5.0", "< 6.1"
+  spec.add_runtime_dependency "activerecord", ">= 5.0", "< 6.2"
   spec.add_runtime_dependency "ruby2_keywords", "~> 0.0.2"
   spec.add_runtime_dependency "parallel", "~> 1.0"
 
   spec.add_development_dependency "appraisal", "~> 2.2"
   spec.add_development_dependency "byebug", "~> 11.0"
-  spec.add_development_dependency "combustion", "~> 1.1"
+  spec.add_development_dependency "combustion", "~> 1.3"
   spec.add_development_dependency "database_cleaner", "~> 1.7"
   spec.add_development_dependency "nokogiri", ">= 1.10.4", "< 2.0"
   spec.add_development_dependency "pry-byebug", "~> 3.7"
