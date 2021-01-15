@@ -151,7 +151,7 @@ module PgParty
               '`disable_ddl_transaction!` and break out this operation into its own migration.'
       end
 
-      index_metadata = add_index_options(table_name, column_name, options)
+      index_metadata = add_index_options(table_name, column_name, **options)
 
       if @new_index_def_style
         index_definition = index_metadata.first
@@ -213,7 +213,7 @@ module PgParty
       end
       modified_options[:options] = partition_by_clause(type, partition_key)
 
-      create_table(table_name, modified_options) do |td|
+      create_table(table_name, **modified_options) do |td|
         if !modified_options[:id] && id == :uuid
           td.column(primary_key, id, null: false, default: uuid_function)
         elsif !modified_options[:id] && id

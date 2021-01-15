@@ -23,8 +23,8 @@ module PgParty
         connection.schema_cache.data_source_exists?(target_table)
       end
 
-      def partitions(*args)
-        PgParty::ModelDecorator.new(self).partitions(*args)
+      def partitions(**args)
+        PgParty::ModelDecorator.new(self).partitions(**args)
       end
 
       def in_partition(*args)
