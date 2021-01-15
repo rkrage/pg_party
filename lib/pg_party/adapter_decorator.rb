@@ -149,9 +149,9 @@ module PgParty
               '`disable_ddl_transaction!` and break out this operation into its own migration.'
       end
 
-      index_name, index_type, index_columns, index_options, algorithm, using = add_index_options(
-          table_name, column_name, options
-        )
+      index_name, index_type, index_columns, index_options, algorithm, using = extract_index_options(
+        add_index_options(table_name, column_name, **options)
+      )
 
       # Postgres limits index name to 63 bytes (characters). We will use 8 characters for a `_random_suffix`
       # on partitions to ensure no conflicts, leaving 55 chars for the specified index name
@@ -200,7 +200,7 @@ module PgParty
       end
       modified_options[:options] = partition_by_clause(type, partition_key)
 
-      create_table(table_name, modified_options) do |td|
+      create_table(table_name, **modified_options) do |td|
         if !modified_options[:id] && id == :uuid
           td.column(primary_key, id, null: false, default: uuid_function)
         elsif !modified_options[:id] && id
@@ -314,6 +314,27 @@ module PgParty
     def add_index_from_options(table_name, name:, type:, algorithm:, using:, columns:, options:)
       execute "CREATE #{type} INDEX #{algorithm} #{quote_column_name(name)} ON "\
               "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
+    end
+
+    def extract_index_options(add_index_options_result)
+      # Rails 6.1 changes the result of #add_index_options
+      index_definition = add_index_options_result.first
+      return add_index_options_result unless index_definition.is_a?(ActiveRecord::ConnectionAdapters::IndexDefinition)
+
+      index_columns = if index_definition.columns.is_a?(String)
+                        index_definition.columns
+                      else
+                        quoted_columns_for_index(index_definition.columns, index_definition.column_options)
+                      end
+
+      [
+        index_definition.name,
+        index_definition.unique ? 'UNIQUE' : index_definition.type,
+        index_columns,
+        index_definition.where ? " WHERE #{index_definition.where}" : nil,
+        add_index_options_result.second, # algorithm option
+        index_definition.using ? "USING #{index_definition.using}" : nil
+      ]
     end
 
     def drop_indices_if_exist(index_names)

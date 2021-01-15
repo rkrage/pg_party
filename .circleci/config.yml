@@ -85,7 +85,7 @@ jobs:
     environment:
       CONTAINER_RUBY_VERSION: latest
       CONTAINER_PG_VERSION: 10
-      RAILS_VERSIONS: "5.0 5.1 5.2 6.0"
+      RAILS_VERSIONS: "6.0 6.1"
 
   build-ruby-latest-pg-11:
     <<: *shared_config
@@ -93,7 +93,7 @@ jobs:
     environment:
       CONTAINER_RUBY_VERSION: latest
       CONTAINER_PG_VERSION: 11
-      RAILS_VERSIONS: "5.0 5.1 5.2 6.0"
+      RAILS_VERSIONS: "6.0 6.1"
 
   build-ruby-latest-pg-12:
     <<: *shared_config
@@ -101,7 +101,7 @@ jobs:
     environment:
       CONTAINER_RUBY_VERSION: latest
       CONTAINER_PG_VERSION: 12
-      RAILS_VERSIONS: "5.0 5.1 5.2 6.0"
+      RAILS_VERSIONS: "6.0 6.1"
 
   build-ruby-latest-pg-13:
     <<: *shared_config
@@ -109,7 +109,7 @@ jobs:
     environment:
       CONTAINER_RUBY_VERSION: latest
       CONTAINER_PG_VERSION: 13
-      RAILS_VERSIONS: "5.0 5.1 5.2 6.0"
+      RAILS_VERSIONS: "6.0 6.1"
       UPLOAD_COVERAGE: true
 
 workflows:
