@@ -11,6 +11,8 @@ module PgParty
       super(adapter)
 
       raise "Partitioning only supported in PostgreSQL >= 10.0" unless supports_partitions?
+
+      @new_index_def_style = Gem::Version.new(ActiveRecord::VERSION::STRING) >= Gem::Version.new("6.1")
     end
 
     def create_range_partition(table_name, partition_key:, **options, &blk)
@@ -149,9 +151,20 @@ module PgParty
               '`disable_ddl_transaction!` and break out this operation into its own migration.'
       end
 
-      index_name, index_type, index_columns, index_options, algorithm, using = add_index_options(
-          table_name, column_name, options
-        )
+      index_metadata = add_index_options(table_name, column_name, options)
+
+      if @new_index_def_style
+        index_definition = index_metadata.first
+
+        index_name = index_definition.name
+        index_type = index_definition.type
+        index_columns = quote_column_name(index_definition.columns.first)
+        index_options = index_definition.where.present? ? " WHERE #{index_definition.where}" : nil
+        algorithm = index_metadata.second
+        using = index_definition.using.present? ? "USING #{index_definition.using}" : nil
+      else
+        index_name, index_type, index_columns, index_options, algorithm, using = index_metadata
+      end
 
       # Postgres limits index name to 63 bytes (characters). We will use 8 characters for a `_random_suffix`
       # on partitions to ensure no conflicts, leaving 55 chars for the specified index name
