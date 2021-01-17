@@ -593,24 +593,17 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     context 'when unique: true index option is used' do
       subject(:add_index_on_all_partitions) do
-        create_range_partition_of_subpartitioned_by_list
+        create_list_partition_of
 
-        adapter.add_index_on_all_partitions table_name, :updated_at, name: index_prefix,
-                                            in_threads: index_threads, algorithm: :concurrently, unique: true,
-                                            where: "created_at > '#{current_date.to_time.iso8601}'"
+        adapter.add_index_on_all_partitions table_name, "#{table_name}_id", name: index_prefix,
+                                            in_threads: index_threads, algorithm: :concurrently, unique: true
       end
 
       it 'creates a unique index' do
         subject
         expect(adapter).to have_received(:execute).with(
-          "CREATE UNIQUE INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}\" "\
-        "ON \"#{grandchild_table_name}\"  (\"updated_at\") "\
-        "WHERE created_at > '#{current_date.to_time.iso8601}'"
-        )
-        expect(adapter).to have_received(:execute).with(
-          "CREATE UNIQUE INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}\" "\
-        "ON \"#{sibling_table_name}\"  (\"updated_at\") "\
-        "WHERE created_at > '#{current_date.to_time.iso8601}'"
+          "CREATE UNIQUE INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}\" "\
+        "ON \"#{child_table_name}\"  (\"#{table_name}_id\")"
         )
       end
     end
