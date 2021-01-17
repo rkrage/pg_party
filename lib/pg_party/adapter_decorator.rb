@@ -319,7 +319,7 @@ module PgParty
     def extract_index_options(add_index_options_result)
       # Rails 6.1 changes the result of #add_index_options
       index_definition = add_index_options_result.first
-      return add_index_options_result unless (index_definition).is_a?(ActiveRecord::ConnectionAdapters::IndexDefinition)
+      return add_index_options_result unless index_definition.is_a?(ActiveRecord::ConnectionAdapters::IndexDefinition)
 
       index_columns = if index_definition.columns.is_a?(String)
                         index_definition.columns
