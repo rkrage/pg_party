@@ -11,8 +11,6 @@ module PgParty
       super(adapter)
 
       raise "Partitioning only supported in PostgreSQL >= 10.0" unless supports_partitions?
-
-      @new_index_def_style = Gem::Version.new(ActiveRecord::VERSION::STRING) >= Gem::Version.new("6.1")
     end
 
     def create_range_partition(table_name, partition_key:, **options, &blk)
@@ -151,20 +149,9 @@ module PgParty
               '`disable_ddl_transaction!` and break out this operation into its own migration.'
       end
 
-      index_metadata = add_index_options(table_name, column_name, **options)
-
-      if @new_index_def_style
-        index_definition = index_metadata.first
-
-        index_name = index_definition.name
-        index_type = index_definition.type
-        index_columns = quote_column_name(index_definition.columns.first)
-        index_options = index_definition.where.present? ? " WHERE #{index_definition.where}" : nil
-        algorithm = index_metadata.second
-        using = index_definition.using.present? ? "USING #{index_definition.using}" : nil
-      else
-        index_name, index_type, index_columns, index_options, algorithm, using = index_metadata
-      end
+      index_name, index_type, index_columns, index_options, algorithm, using = extract_index_options(
+        add_index_options(table_name, column_name, **options)
+      )
 
       # Postgres limits index name to 63 bytes (characters). We will use 8 characters for a `_random_suffix`
       # on partitions to ensure no conflicts, leaving 55 chars for the specified index name
@@ -327,6 +314,27 @@ module PgParty
     def add_index_from_options(table_name, name:, type:, algorithm:, using:, columns:, options:)
       execute "CREATE #{type} INDEX #{algorithm} #{quote_column_name(name)} ON "\
               "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
+    end
+
+    def extract_index_options(add_index_options_result)
+      # Rails 6.1 changes the result of #add_index_options
+      index_definition = add_index_options_result.first
+      return add_index_options_result unless (index_definition).is_a?(ActiveRecord::ConnectionAdapters::IndexDefinition)
+
+      index_columns = if index_definition.columns.is_a?(String)
+                        index_definition.columns
+                      else
+                        quoted_columns_for_index(index_definition.columns, index_definition.column_options)
+                      end
+
+      [
+        index_definition.name,
+        index_definition.unique ? 'UNIQUE' : index_definition.type,
+        index_columns,
+        index_definition.where ? " WHERE #{index_definition.where}" : nil,
+        add_index_options_result.second, # algorithm option
+        index_definition.using ? "USING #{index_definition.using}" : nil
+      ]
     end
 
     def drop_indices_if_exist(index_names)

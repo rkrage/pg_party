@@ -591,6 +591,30 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       )
     end
 
+    context 'when unique: true index option is used' do
+      subject(:add_index_on_all_partitions) do
+        create_range_partition_of_subpartitioned_by_list
+
+        adapter.add_index_on_all_partitions table_name, :updated_at, name: index_prefix,
+                                            in_threads: index_threads, algorithm: :concurrently, unique: true,
+                                            where: "created_at > '#{current_date.to_time.iso8601}'"
+      end
+
+      it 'creates a unique index' do
+        subject
+        expect(adapter).to have_received(:execute).with(
+          "CREATE UNIQUE INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}\" "\
+        "ON \"#{grandchild_table_name}\"  (\"updated_at\") "\
+        "WHERE created_at > '#{current_date.to_time.iso8601}'"
+        )
+        expect(adapter).to have_received(:execute).with(
+          "CREATE UNIQUE INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}\" "\
+        "ON \"#{sibling_table_name}\"  (\"updated_at\") "\
+        "WHERE created_at > '#{current_date.to_time.iso8601}'"
+        )
+      end
+    end
+
     context 'when in_threads: is provided' do
       let(:index_threads) { ActiveRecord::Base.connection_pool.size - 1 }
 
