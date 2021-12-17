@@ -35,7 +35,11 @@ class PgDumpHelper
   end
 
   def self.config
-    @config ||= ActiveRecord::Base.connection_config
+    if Rails::VERSION::MAJOR < 7
+      @config ||= ActiveRecord::Base.connection_config
+    else
+      @config ||= ActiveRecord::Base.connection_db_config.as_json["configuration_hash"].symbolize_keys!
+    end
   end
 
   def config
