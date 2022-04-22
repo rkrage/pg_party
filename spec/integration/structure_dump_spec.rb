@@ -4,8 +4,17 @@ require "spec_helper"
 
 RSpec.describe "db:structure:dump" do
   subject do
-    ActiveRecord::Base.schema_format = :sql
-    Rake::Task["db:structure:dump"].invoke
+    if Rails.gem_version < Gem::Version.new("6.1")
+      ActiveRecord::Base.schema_format = :sql
+      Rake::Task["db:structure:dump"].invoke
+    elsif Rails.gem_version < Gem::Version.new("7.0")
+      ActiveRecord::Base.schema_format = :sql
+      Rake::Task["db:schema:dump"].invoke
+    else
+      ActiveRecord.schema_format = :sql
+      Rake::Task["db:schema:dump"].invoke
+    end
+
     File.read(File.expand_path("../../dummy/db/structure.sql", __FILE__))
   end
 

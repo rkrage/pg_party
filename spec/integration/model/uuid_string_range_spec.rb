@@ -161,6 +161,13 @@ RSpec.describe UuidStringRange do
       it { is_expected.to contain_exactly(record_one, record_two, record_three) }
     end
 
+    context "when excluding records with a lower bound" do
+      let(:start_range) { "f" }
+      let(:end_range) { "z" }
+
+      it { is_expected.to contain_exactly(record_two, record_three) }
+    end
+
     context "when chaining methods" do
       subject { described_class.partition_key_in(start_range, end_range).where(some_string: "d") }
 

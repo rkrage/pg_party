@@ -16,13 +16,13 @@ Gem::Specification.new do |spec|
   spec.homepage    = "https://github.com/rkrage/pg_party"
   spec.license     = "MIT"
 
-  spec.required_ruby_version = ">= 2.5.0"
+  spec.required_ruby_version = ">= 2.7.0"
 
   spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*"]
 
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "activerecord", ">= 5.0", "< 6.2"
+  spec.add_runtime_dependency "activerecord", ">= 5.2", "< 7.1"
   spec.add_runtime_dependency "ruby2_keywords", "~> 0.0.2"
   spec.add_runtime_dependency "parallel", "~> 1.0"
 
@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-its", "~> 1.3"
   spec.add_development_dependency "rspec-rails", "~> 3.8"
   spec.add_development_dependency "rspec_junit_formatter", "~> 0.4"
-  spec.add_development_dependency "simplecov", "~> 0.17.0" # https://github.com/codeclimate/test-reporter/issues/413
+  spec.add_development_dependency "simplecov", "~> 0.21"
   spec.add_development_dependency "timecop", "~> 0.9"
+  spec.add_development_dependency "psych", "~> 3.3" # psych 4 ships with ruby 3.1 and breaks a lot of things
 end
