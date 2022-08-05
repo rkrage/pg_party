@@ -179,7 +179,7 @@ module PgParty
 
     private
 
-    def create_partition(table_name, type, partition_key, **options)
+    def create_partition(table_name, type, partition_key, **options, &blk)
       modified_options      = options.except(:id, :primary_key, :template, :create_with_primary_key)
       template              = options.fetch(:template, PgParty.config.create_template_tables)
       id                    = options.fetch(:id, :bigserial)
@@ -200,18 +200,18 @@ module PgParty
       end
       modified_options[:options] = partition_by_clause(type, partition_key)
 
-      create_table(table_name, **modified_options) do |td|
+      (blk&.binding&.receiver || self).public_send(:create_table, table_name, **modified_options) do |td|
         if !modified_options[:id] && id == :uuid
           td.column(primary_key, id, null: false, default: uuid_function)
         elsif !modified_options[:id] && id
           td.column(primary_key, id, null: false)
         end
 
-        yield(td) if block_given?
+        blk&.call(td)
       end
 
       # Rails 4 has a bug where uuid columns are always nullable
-      change_column_null(table_name, primary_key, false) if !modified_options[:id] && id == :uuid
+      (blk&.binding&.receiver || self).public_send(:change_column_null, table_name, primary_key, false) if !modified_options[:id] && id == :uuid
 
       return unless template
 
