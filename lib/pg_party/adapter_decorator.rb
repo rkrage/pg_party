@@ -200,7 +200,7 @@ module PgParty
       end
       modified_options[:options] = partition_by_clause(type, partition_key)
 
-      (blk&.binding&.receiver || self).public_send(:create_table, table_name, **modified_options) do |td|
+      migration_or_adapter(blk).public_send(:create_table, table_name, **modified_options) do |td|
         if !modified_options[:id] && id == :uuid
           td.column(primary_key, id, null: false, default: uuid_function)
         elsif !modified_options[:id] && id
@@ -211,7 +211,7 @@ module PgParty
       end
 
       # Rails 4 has a bug where uuid columns are always nullable
-      (blk&.binding&.receiver || self).public_send(:change_column_null, table_name, primary_key, false) if !modified_options[:id] && id == :uuid
+      migration_or_adapter(blk).public_send(:change_column_null, table_name, primary_key, false) if !modified_options[:id] && id == :uuid
 
       return unless template
 
@@ -454,6 +454,11 @@ module PgParty
 
     def postgres_major_version
       __getobj__.send(:postgresql_version)/10000
+    end
+
+    def migration_or_adapter(blk)
+      blk_receiver = blk&.binding&.receiver
+      blk_receiver.is_a?(ActiveRecord::Migration) ? blk_receiver : self
     end
   end
 end
