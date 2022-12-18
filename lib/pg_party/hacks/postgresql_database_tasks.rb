@@ -10,13 +10,20 @@ module PgParty
 
         partitions = begin
           ActiveRecord::Base.connection.select_values(
-            "SELECT DISTINCT inhrelid::regclass::text FROM pg_inherits"
+            """
+              SELECT
+                inhrelid::regclass::text
+              FROM
+                pg_inherits
+              JOIN pg_class AS p ON inhparent = p.oid
+              WHERE p.relkind = 'p'
+            """
           )
         rescue
           []
         end
 
-        excluded_tables = partitions.flat_map { |table| ["-T", "*.#{table}"] }
+        excluded_tables = partitions.flat_map { |table| ["-T", table] }
 
         super(cmd, args + excluded_tables, action)
       end
