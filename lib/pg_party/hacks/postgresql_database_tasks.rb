@@ -9,9 +9,14 @@ module PgParty
         end
 
         partitions = begin
-          ActiveRecord::Base.connection.select_values(
-            "SELECT DISTINCT inhrelid::regclass::text FROM pg_inherits"
-          )
+          ActiveRecord::Base.connection.select_values(<<-SQL)
+            SELECT
+              inhrelid::regclass::text
+            FROM
+              pg_inherits
+            JOIN pg_class AS p ON inhparent = p.oid
+            WHERE p.relkind = 'p'
+          SQL
         rescue
           []
         end
