@@ -8,7 +8,7 @@ module PgParty
           return super
         end
 
-        partitions = ActiveRecord::Base.connection.select_values(<<-SQL)
+        partitions = ActiveRecord::Base.connection.select_values(<<-SQL, "SCHEMA")
           SELECT
             inhrelid::regclass::text
           FROM
