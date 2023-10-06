@@ -31,11 +31,9 @@ load "support/db.rake"
 
 require "rspec/rails"
 require "rspec/its"
-require "database_cleaner"
 require "support/uuid_matcher"
 require "support/heredoc_matcher"
 require "support/pg_dump_helper"
-require "support/pg_version_helper"
 
 static_time = Date.current + 12.hours
 
@@ -56,15 +54,10 @@ RSpec.configure do |config|
 
   config.use_transactional_fixtures = false
 
-  config.before(:suite) do
-    DatabaseCleaner.strategy = :truncation
-  end
-
   config.around(:each) do |example|
     Timecop.freeze(static_time)
     PgParty.reset
-    DatabaseCleaner.start
     example.run
-    DatabaseCleaner.clean
+    ActiveRecord::Tasks::DatabaseTasks.truncate_all
   end
 end

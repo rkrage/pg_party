@@ -35,13 +35,7 @@ class PgDumpHelper
   end
 
   def self.config
-    @config ||= begin
-      if Rails.gem_version < Gem::Version.new("6.1")
-        ActiveRecord::Base.connection_config
-      else
-        ActiveRecord::Base.connection_db_config.as_json["configuration_hash"].symbolize_keys!
-      end
-    end
+    @config ||= ActiveRecord::Base.connection_db_config.as_json["configuration_hash"].symbolize_keys!
   end
 
   def config

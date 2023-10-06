@@ -29,19 +29,10 @@ ActiveRecord::Schema.define do
 
   add_index :bigint_month_ranges_template, :some_indexed_column
 
-  # Rails 5+ supports expressions when creating indexes:
-  #
-  # add_index \
-  #   :bigint_month_ranges_template,
-  #   "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)",
-  #   name: :bigint_month_ranges_created_at_month
-  #
-  # Rails 4.2 does not, so we're forced to use raw SQL:
-  execute(<<-SQL)
-    CREATE INDEX bigint_month_ranges_template_created_at
-    ON bigint_month_ranges_template
-    USING btree (EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at))
-  SQL
+  add_index \
+    :bigint_month_ranges_template,
+    "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)",
+    name: :bigint_month_ranges_created_at_month
 
   create_range_partition_of \
     :bigint_month_ranges,

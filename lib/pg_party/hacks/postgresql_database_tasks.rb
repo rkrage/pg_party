@@ -8,18 +8,14 @@ module PgParty
           return super
         end
 
-        partitions = begin
-          ActiveRecord::Base.connection.select_values(<<-SQL)
-            SELECT
-              inhrelid::regclass::text
-            FROM
-              pg_inherits
-            JOIN pg_class AS p ON inhparent = p.oid
-            WHERE p.relkind = 'p'
-          SQL
-        rescue
-          []
-        end
+        partitions = ActiveRecord::Base.connection.select_values(<<-SQL)
+          SELECT
+            inhrelid::regclass::text
+          FROM
+            pg_inherits
+          JOIN pg_class AS p ON inhparent = p.oid
+          WHERE p.relkind = 'p'
+        SQL
 
         excluded_tables = partitions.flat_map { |table| ["-T", "*.#{table}"] }
 

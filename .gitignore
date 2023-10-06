@@ -8,6 +8,7 @@
 /pkg/
 /spec/results/
 /spec/dummy/db/structure.sql
+spec/dummy/tmp/
 /tmp/
 /.ruby-version
 /*.gem

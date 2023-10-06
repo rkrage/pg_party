@@ -2,8 +2,7 @@
 
 require "spec_helper"
 
-# Integration tests run only on Postgres 11 and higher
-RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter, if: PgVersionHelper.postgres_11_plus? do
+RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   let(:table_name) { "t1_#{SecureRandom.hex(6)}" }
   let(:child_table_name) { "t2_#{SecureRandom.hex(6)}" }
   let(:sibling_table_name) { "t3_#{SecureRandom.hex(6)}" }

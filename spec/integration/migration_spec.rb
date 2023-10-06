@@ -2,7 +2,6 @@
 
 require "spec_helper"
 
-# These specs run on all Postgres versions
 RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   let(:table_name) { "t_#{SecureRandom.hex(6)}" }
   let(:child_table_name) { "t_#{SecureRandom.hex(6)}" }
@@ -18,13 +17,6 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   let(:timestamps_block) { ->(t) { t.timestamps null: false, precision: nil } }
   let(:index_prefix) { "i_#{SecureRandom.hex(6)}" }
   let(:index_threads) { nil }
-  let(:uuid_function) do
-    if Rails.gem_version >= Gem::Version.new("5.1")
-      "gen_random_uuid()"
-    else
-      "uuid_generate_v4()"
-    end
-  end
 
   before do
     ActiveRecord::Base.primary_key_prefix_type = :table_name_with_underscore
@@ -174,7 +166,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     let(:create_table_sql) do
       <<-SQL
         CREATE TABLE #{table_name} (
-          custom_id uuid DEFAULT #{uuid_function} NOT NULL,
+          custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
           created_at timestamp without time zone NOT NULL,
           updated_at timestamp without time zone NOT NULL
         ) PARTITION BY RANGE (((created_at)::date));
@@ -262,7 +254,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     let(:create_table_sql) do
       <<-SQL
         CREATE TABLE #{child_table_name} (
-          custom_id uuid DEFAULT #{uuid_function} NOT NULL,
+          custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
           created_at timestamp without time zone NOT NULL,
           updated_at timestamp without time zone NOT NULL
         );
@@ -298,7 +290,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       let(:create_table_sql) do
         <<-SQL
           CREATE TABLE #{child_table_name} (
-            custom_id uuid DEFAULT #{uuid_function} NOT NULL,
+            custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
             created_at timestamp without time zone NOT NULL,
             updated_at timestamp without time zone NOT NULL
           )
@@ -394,7 +386,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       let(:create_table_sql) do
         <<-SQL
           CREATE TABLE #{table_like_name} (
-            custom_id uuid DEFAULT #{uuid_function} NOT NULL,
+            custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
             created_at timestamp without time zone NOT NULL,
             updated_at timestamp without time zone NOT NULL
           );
@@ -483,7 +475,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     let(:create_table_sql) do
       <<-SQL
         CREATE TABLE #{child_table_name} (
-          custom_id uuid DEFAULT #{uuid_function} NOT NULL,
+          custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
           created_at timestamp without time zone NOT NULL,
           updated_at timestamp without time zone NOT NULL
         );
