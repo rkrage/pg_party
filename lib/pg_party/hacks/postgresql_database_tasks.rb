@@ -9,6 +9,7 @@ module PgParty
         end
 
         partitions = begin
+          # puts "!!!!!!!!"
           ActiveRecord::Base.connection.select_values(<<-SQL)
             SELECT
               inhrelid::regclass::text
@@ -17,7 +18,7 @@ module PgParty
             JOIN pg_class AS p ON inhparent = p.oid
             WHERE p.relkind = 'p'
           SQL
-        rescue
+        rescue StandardError
           []
         end
 
