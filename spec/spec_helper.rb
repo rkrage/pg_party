@@ -31,11 +31,10 @@ load "support/db.rake"
 
 require "rspec/rails"
 require "rspec/its"
-require "database_cleaner"
+require "database_cleaner/active_record"
 require "support/uuid_matcher"
 require "support/heredoc_matcher"
 require "support/pg_dump_helper"
-require "support/pg_version_helper"
 
 static_time = Date.current + 12.hours
 

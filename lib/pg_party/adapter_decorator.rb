@@ -202,7 +202,7 @@ module PgParty
 
       migration_or_adapter(blk).create_table(table_name, **modified_options) do |td|
         if !modified_options[:id] && id == :uuid
-          td.column(primary_key, id, null: false, default: uuid_function)
+          td.column(primary_key, id, null: false, default: "gen_random_uuid()")
         elsif !modified_options[:id] && id
           td.column(primary_key, id, null: false)
         end
@@ -408,10 +408,6 @@ module PgParty
 
     def partition_by_clause(type, partition_key)
       "PARTITION BY #{type.to_s.upcase} (#{quote_partition_key(partition_key)})"
-    end
-
-    def uuid_function
-      try(:supports_pgcrypto_uuid?) ? "gen_random_uuid()" : "uuid_generate_v4()"
     end
 
     def hashed_table_name(table_name, key)
