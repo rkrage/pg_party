@@ -29,7 +29,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "appraisal", "~> 2.2"
   spec.add_development_dependency "byebug", "~> 11.0"
   spec.add_development_dependency "combustion", "~> 1.3"
-  spec.add_development_dependency "database_cleaner-active_record", "~> 2.1"
   spec.add_development_dependency "nokogiri", ">= 1.10.4", "< 2.0"
   spec.add_development_dependency "pry-byebug", "~> 3.7"
   spec.add_development_dependency "rake", "~> 12.3"

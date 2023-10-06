@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.xdescribe "db:structure:dump", :structure_dump do
+RSpec.describe "db:structure:dump", :structure_dump do
   subject do
     if Rails.gem_version < Gem::Version.new("7.0")
       ActiveRecord::Base.schema_format = :sql
