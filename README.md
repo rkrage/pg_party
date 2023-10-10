@@ -21,9 +21,20 @@
 
 - Partition tables are not represented correctly in `db/schema.rb` — please use the `:sql` schema format
 
+## Compatibility
+
+This gem is tested against:
+
+- Rails: 6.1, 7.0, 7.1
+- Ruby: 3.0, latest (currently 3.2 at the time of this commit)
+- PostgreSQL: 11, 12, 13, 14, 15, 16
+
 ## Future Work
 
-- Automatic partition creation (via cron or some other means)
+I plan to separate out the model functionality into a new gem and port the migration functionality into [pg\_ha\_migrations](https://github.com/braintree/pg_ha_migrations) (some of which has already been done).
+I will continue to maintain this gem (bugfixes / support for new versions of Rails) until that work is complete.
+
+I originally planned to add a feature for automatic partition creation, but I think that functionality would be better served by [pg\_partman](https://github.com/pgpartman/pg_partman).
 
 ## Installation
 
