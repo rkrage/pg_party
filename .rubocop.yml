@@ -1,0 +1,65 @@
+inherit_from: .rubocop_todo.yml
+
+require:
+  # - rubocop-rspec
+  - rubocop-rake
+  - rubocop-performance
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.0
+
+Gemspec/RequireMFA:
+  Enabled: false
+
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 145
+
+Metrics/AbcSize:
+  Exclude:
+    - spec/**/*
+
+Metrics/BlockLength:
+  Enabled: false
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/ParameterLists:
+  Max: 10
+
+Naming/VariableNumber:
+  Exclude:
+    - 'spec/dummy/db/schema.rb'
+
+Performance/TimesMap:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - gemfiles/**/*
+
+Style/HashSyntax:
+  EnforcedShorthandSyntax: either
+
+Style/MixinUsage:
+  Exclude:
+    - 'spec/support/db.rake'
+
+Style/ArgumentsForwarding:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
