@@ -170,7 +170,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_range_partition" do
     let(:create_table_sql) do
-      <<-SQL
+      <<~SQL
         CREATE TABLE #{table_name} (
           custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
           created_at timestamp without time zone NOT NULL,
@@ -199,7 +199,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_list_partition" do
     let(:create_table_sql) do
-      <<-SQL
+      <<~SQL
         CREATE TABLE #{table_name} (
           #{table_name}_id integer NOT NULL
         ) PARTITION BY LIST (#{table_name}_id);
@@ -207,7 +207,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:incrementing_id_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ALTER COLUMN #{table_name}_id
         SET DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass);
@@ -224,7 +224,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     describe "template table" do
       let(:create_table_sql) do
-        <<-SQL
+        <<~SQL
           CREATE TABLE #{template_table_name} (
             #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
           );
@@ -232,7 +232,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       end
 
       let(:primary_key_sql) do
-        <<-SQL
+        <<~SQL
           ALTER TABLE ONLY #{template_table_name}
           ADD CONSTRAINT #{template_table_name}_pkey PRIMARY KEY (#{table_name}_id);
         SQL
@@ -258,7 +258,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_range_partition_of" do
     let(:create_table_sql) do
-      <<-SQL
+      <<~SQL
         CREATE TABLE #{child_table_name} (
           custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
           created_at timestamp without time zone NOT NULL,
@@ -268,7 +268,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:attach_table_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ATTACH PARTITION #{child_table_name}
         FOR VALUES FROM ('#{start_range}') TO ('#{end_range}');
@@ -276,7 +276,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:primary_key_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{child_table_name}
         ADD CONSTRAINT #{child_table_name}_pkey
         PRIMARY KEY (custom_id);
@@ -294,7 +294,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     context "when subpartitioning" do
       let(:create_table_sql) do
-        <<-SQL
+        <<~SQL
           CREATE TABLE #{child_table_name} (
             custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
             created_at timestamp without time zone NOT NULL,
@@ -354,7 +354,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_list_partition_of" do
     let(:create_table_sql) do
-      <<-SQL
+      <<~SQL
         CREATE TABLE #{child_table_name} (
           #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
         );
@@ -362,7 +362,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:attach_table_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ATTACH PARTITION #{child_table_name}
         FOR VALUES IN (1, 2, 3);
@@ -370,7 +370,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:primary_key_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{child_table_name}
         ADD CONSTRAINT #{child_table_name}_pkey
         PRIMARY KEY (#{table_name}_id);
@@ -390,7 +390,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   describe "#create_table_like" do
     context "range partition" do
       let(:create_table_sql) do
-        <<-SQL
+        <<~SQL
           CREATE TABLE #{table_like_name} (
             custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
             created_at timestamp without time zone NOT NULL,
@@ -400,7 +400,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       end
 
       let(:primary_key_sql) do
-        <<-SQL
+        <<~SQL
           ALTER TABLE ONLY #{table_like_name}
           ADD CONSTRAINT #{table_like_name}_pkey
           PRIMARY KEY (custom_id);
@@ -418,7 +418,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     context "list partition" do
       let(:create_table_sql) do
-        <<-SQL
+        <<~SQL
           CREATE TABLE #{table_like_name} (
             #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
           );
@@ -426,7 +426,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       end
 
       let(:primary_key_sql) do
-        <<-SQL
+        <<~SQL
           ALTER TABLE ONLY #{table_like_name}
           ADD CONSTRAINT #{table_like_name}_pkey
           PRIMARY KEY (#{table_name}_id);
@@ -445,7 +445,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#attach_range_partition" do
     let(:attach_table_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ATTACH PARTITION #{child_table_name}
         FOR VALUES FROM ('#{start_range}') TO ('#{end_range}');
@@ -462,7 +462,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#attach_list_partition" do
     let(:attach_table_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ATTACH PARTITION #{child_table_name}
         FOR VALUES IN (1, 2, 3);
@@ -479,7 +479,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#detach_partition" do
     let(:create_table_sql) do
-      <<-SQL
+      <<~SQL
         CREATE TABLE #{child_table_name} (
           custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
           created_at timestamp without time zone NOT NULL,
@@ -551,14 +551,14 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#add_index_on_all_partitions" do
     let(:grandchild_index_sql) do
-      <<-SQL
+      <<~SQL
         CREATE INDEX #{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}
         ON #{grandchild_table_name} USING hash (updated_at)
         WHERE (created_at > '#{current_date} 00:00:00'::timestamp without time zone)
       SQL
     end
     let(:sibling_index_sql) do
-      <<-SQL
+      <<~SQL
         CREATE INDEX #{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}
         ON #{sibling_table_name} USING hash (updated_at)
         WHERE (created_at > '#{current_date} 00:00:00'::timestamp without time zone)

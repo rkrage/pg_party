@@ -148,7 +148,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_hash_partition" do
     let(:create_table_sql) do
-      <<-SQL
+      <<~SQL
         CREATE TABLE #{table_name} (
           #{table_name}_id integer NOT NULL,
           created_at timestamp without time zone NOT NULL,
@@ -158,7 +158,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:incrementing_id_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ALTER COLUMN #{table_name}_id
         SET DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass);
@@ -166,7 +166,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:primary_key_sql) do
-      <<-SQL
+      <<~SQL
           ALTER TABLE ONLY #{table_name}
           ADD CONSTRAINT #{table_name}_pkey PRIMARY KEY (#{table_name}_id);
       SQL
@@ -183,7 +183,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     describe "template table" do
       let(:create_table_sql) do
-        <<-SQL
+        <<~SQL
           CREATE TABLE #{template_table_name} (
             #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL,
             created_at timestamp without time zone NOT NULL,
@@ -193,7 +193,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       end
 
       let(:primary_key_sql) do
-        <<-SQL
+        <<~SQL
           ALTER TABLE ONLY #{template_table_name}
           ADD CONSTRAINT #{template_table_name}_pkey PRIMARY KEY (#{table_name}_id);
         SQL
@@ -256,7 +256,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_hash_partition_of" do
     let(:create_table_sql) do
-      <<-SQL
+      <<~SQL
         CREATE TABLE #{child_table_name} (
           #{table_name}_id integer DEFAULT
           nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL,
@@ -267,7 +267,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:attach_table_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ATTACH PARTITION #{child_table_name}
         FOR VALUES WITH (modulus 2, remainder 0);
@@ -275,7 +275,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
 
     let(:primary_key_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{child_table_name}
         ADD CONSTRAINT #{child_table_name}_pkey
         PRIMARY KEY (#{table_name}_id);
@@ -313,7 +313,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   describe "#create_table_like" do
     context "hash partition" do
       let(:create_table_sql) do
-        <<-SQL
+        <<~SQL
           CREATE TABLE #{table_like_name} (
             #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL,
             created_at timestamp without time zone NOT NULL,
@@ -323,7 +323,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       end
 
       let(:primary_key_sql) do
-        <<-SQL
+        <<~SQL
           ALTER TABLE ONLY #{table_like_name}
           ADD CONSTRAINT #{table_like_name}_pkey
           PRIMARY KEY (#{table_name}_id);
@@ -342,7 +342,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#attach_hash_partition" do
     let(:attach_table_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ATTACH PARTITION #{child_table_name}
         FOR VALUES WITH (modulus 2, remainder 1);
@@ -359,7 +359,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#attach_default_partition" do
     let(:attach_table_sql) do
-      <<-SQL
+      <<~SQL
         ALTER TABLE ONLY #{table_name}
         ATTACH PARTITION #{child_table_name}
         DEFAULT;
@@ -376,14 +376,14 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#add_index_on_all_partitions" do
     let(:grandchild_index_sql) do
-      <<-SQL
+      <<~SQL
         CREATE INDEX #{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}
         ON #{grandchild_table_name} USING hash (updated_at)
         WHERE (created_at > '#{current_date} 00:00:00'::timestamp without time zone)
       SQL
     end
     let(:sibling_index_sql) do
-      <<-SQL
+      <<~SQL
         CREATE INDEX #{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}
         ON #{sibling_table_name} USING hash (updated_at)
         WHERE (created_at > '#{current_date} 00:00:00'::timestamp without time zone)
