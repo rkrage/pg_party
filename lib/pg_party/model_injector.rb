@@ -49,10 +49,10 @@ module PgParty
         @model.partition_key = @key_blk.call
         @model.complex_partition_key = true
       else
-        if @key.size == 1
-          @model.partition_key = @key.first
+        @model.partition_key = if @key.size == 1
+          @key.first
         else
-          @model.partition_key = @key
+          @key
         end
 
         @model.complex_partition_key = false

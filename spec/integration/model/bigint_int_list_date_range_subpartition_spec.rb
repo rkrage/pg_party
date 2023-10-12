@@ -57,13 +57,13 @@ RSpec.describe BigintIntListDateRangeSubpartition do
       it { is_expected.to eq([]) }
     end
 
-    context 'include_subpartitions: true' do
+    context "include_subpartitions: true" do
       subject { described_class.partitions(include_subpartitions: true) }
 
       it { is_expected.to contain_exactly("#{table_name}_a", "#{table_name}_a_1", "#{table_name}_b") }
     end
 
-    context 'config.include_subpartitions_in_partition_list = true' do
+    context "config.include_subpartitions_in_partition_list = true" do
       before { PgParty.config.include_subpartitions_in_partition_list = true }
       after { PgParty.config.include_subpartitions_in_partition_list = false }
 
