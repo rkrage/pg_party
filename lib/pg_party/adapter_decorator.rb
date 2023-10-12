@@ -63,7 +63,7 @@ module PgParty
           "INCLUDING ALL EXCLUDING INDEXES"
         end
 
-      execute(<<-SQL)
+      execute(<<~SQL)
         CREATE TABLE #{quote_table_name(new_table_name)} (
           LIKE #{quote_table_name(table_name)} #{like_option}
         ) #{partition_type ? partition_by_clause(partition_type, partition_key) : nil}
@@ -73,7 +73,7 @@ module PgParty
       return unless primary_key
       return if has_primary_key?(new_table_name)
 
-      execute(<<-SQL)
+      execute(<<~SQL)
         ALTER TABLE #{quote_table_name(new_table_name)}
         ADD PRIMARY KEY (#{quote_column_name(primary_key)})
       SQL
@@ -92,7 +92,7 @@ module PgParty
     end
 
     def attach_default_partition(parent_table_name, child_table_name)
-      execute(<<-SQL)
+      execute(<<~SQL)
         ALTER TABLE #{quote_table_name(parent_table_name)}
         ATTACH PARTITION #{quote_table_name(child_table_name)}
         DEFAULT
@@ -102,7 +102,7 @@ module PgParty
     end
 
     def detach_partition(parent_table_name, child_table_name)
-      execute(<<-SQL)
+      execute(<<~SQL)
         ALTER TABLE #{quote_table_name(parent_table_name)}
         DETACH PARTITION #{quote_table_name(child_table_name)}
       SQL
@@ -259,7 +259,7 @@ module PgParty
     end
 
     def attach_partition(parent_table_name, child_table_name, constraint_clause)
-      execute(<<-SQL)
+      execute(<<~SQL)
         ALTER TABLE #{quote_table_name(parent_table_name)}
         ATTACH PARTITION #{quote_table_name(child_table_name)}
         FOR VALUES #{constraint_clause}
@@ -443,7 +443,7 @@ module PgParty
     end
 
     def index_valid?(index_name)
-      select_values(<<-SQL, "SCHEMA").empty?
+      select_values(<<~SQL, "SCHEMA").empty?
         SELECT relname FROM pg_class, pg_index WHERE pg_index.indisvalid = false AND
         pg_index.indexrelid = pg_class.oid AND relname = #{quote(index_name)}
       SQL
