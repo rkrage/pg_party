@@ -33,12 +33,11 @@ RSpec.describe "threading" do
             partitions = model.partitions
           end
 
-          Thread.current[:status] =
-            if partitions.size == 3
-              "success"
-            else
-              "failed"
-            end
+          Thread.current[:status] = if partitions.size == 3
+            "success"
+          else
+            "failed"
+          end
         end
       end
 

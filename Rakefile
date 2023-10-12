@@ -10,12 +10,11 @@ RSpec::Core::RakeTask.new(:ci) do |t|
 
   gemfile = File.basename(ENV.fetch("BUNDLE_GEMFILE", ""), ".gemfile")
 
-  output_prefix =
-    if gemfile.empty? || gemfile == "Gemfile"
-      "default"
-    else
-      gemfile
-    end
+  output_prefix = if gemfile.empty? || gemfile == "Gemfile"
+    "default"
+  else
+    gemfile
+  end
 
   t.rspec_opts = [
     "--format progress",

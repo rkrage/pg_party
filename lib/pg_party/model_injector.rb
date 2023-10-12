@@ -50,10 +50,10 @@ module PgParty
         @model.complex_partition_key = true
       else
         @model.partition_key = if @key.size == 1
-                                 @key.first
-                               else
-                                 @key
-                               end
+          @key.first
+        else
+          @key
+        end
 
         @model.complex_partition_key = false
       end
