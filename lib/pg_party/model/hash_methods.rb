@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "pg_party/model_decorator"
-require "ruby2_keywords"
 
 module PgParty
   module Model

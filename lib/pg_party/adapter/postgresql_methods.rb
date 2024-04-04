@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "pg_party/adapter_decorator"
-require "ruby2_keywords"
 
 module PgParty
   module Adapter
