@@ -27,7 +27,7 @@ RSpec.describe PgParty::Adapter::AbstractMethods do
     end
   end
 
-  describe '#create_hash_partition' do
+  describe "#create_hash_partition" do
     subject { adapter.create_hash_partition("args") }
 
     it "raises not implemented error" do

@@ -35,7 +35,7 @@ RSpec.describe PgParty::Model::Methods do
     end
 
     context "when partition key provided as block" do
-      let(:key_as_block) { ->{ key } }
+      let(:key_as_block) { -> { key } }
 
       subject { model.range_partition_by(&key_as_block) }
 
@@ -72,7 +72,7 @@ RSpec.describe PgParty::Model::Methods do
     end
 
     context "when partition key provided as block" do
-      let(:key_as_block) { ->{ key } }
+      let(:key_as_block) { -> { key } }
 
       subject { model.list_partition_by(&key_as_block) }
 
@@ -109,7 +109,7 @@ RSpec.describe PgParty::Model::Methods do
     end
 
     context "when partition key provided as block" do
-      let(:key_as_block) { ->{ key } }
+      let(:key_as_block) { -> { key } }
 
       subject { model.hash_partition_by(&key_as_block) }
 
@@ -138,7 +138,7 @@ RSpec.describe PgParty::Model::Methods do
     end
 
     context "when partition key defined" do
-      let(:block) { ->{ "blah" } }
+      let(:block) { -> { "blah" } }
 
       before { model.singleton_class.send(:define_method, :partition_key, &block) }
 

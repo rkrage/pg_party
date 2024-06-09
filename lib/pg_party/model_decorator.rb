@@ -66,7 +66,7 @@ module PgParty
       PgParty.cache.fetch_partitions(cache_key, include_subpartitions) do
         connection.partitions_for_table_name(table_name, include_subpartitions: include_subpartitions)
       end
-    rescue
+    rescue StandardError
       []
     end
 
@@ -74,7 +74,7 @@ module PgParty
       modified_options = options.merge(
         start_range: start_range,
         end_range: end_range,
-        primary_key: primary_key,
+        primary_key: primary_key
       )
 
       create_partition(:create_range_partition_of, table_name, **modified_options)
@@ -83,7 +83,7 @@ module PgParty
     def create_list_partition(values:, **options)
       modified_options = options.merge(
         values: values,
-        primary_key: primary_key,
+        primary_key: primary_key
       )
 
       create_partition(:create_list_partition_of, table_name, **modified_options)
@@ -93,7 +93,7 @@ module PgParty
       modified_options = options.merge(
         modulus: modulus,
         remainder: remainder,
-        primary_key: primary_key,
+        primary_key: primary_key
       )
 
       create_partition(:create_hash_partition_of, table_name, **modified_options)
@@ -101,7 +101,7 @@ module PgParty
 
     def create_default_partition(**options)
       modified_options = options.merge(
-        primary_key: primary_key,
+        primary_key: primary_key
       )
       create_partition(:create_default_partition_of, table_name, **modified_options)
     end
@@ -138,8 +138,8 @@ module PgParty
 
     def complex_partition_key_query(clause, *interpolated_values)
       subquery = unscoped
-        .select("*")
-        .where(clause, *interpolated_values)
+                 .select("*")
+                 .where(clause, *interpolated_values)
 
       from(subquery, current_alias)
     end
