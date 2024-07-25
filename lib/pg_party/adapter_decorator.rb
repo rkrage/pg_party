@@ -115,7 +115,7 @@ module PgParty
           FROM pg_tables
           INNER JOIN pg_inherits
             ON pg_tables.tablename::regclass = pg_inherits.inhparent::regclass
-          WHERE pg_tables.schemaname = current_schema() AND
+          WHERE pg_tables.schemaname = ANY(current_schemas(false)) AND
           pg_tables.tablename = #{quote(table_name)}
                     ], "SCHEMA").each_with_object(_accumulator) do |partition, acc|
         acc << partition
@@ -131,7 +131,7 @@ module PgParty
           FROM pg_tables
           INNER JOIN pg_inherits
             ON pg_tables.tablename::regclass = pg_inherits.inhrelid::regclass
-          WHERE pg_tables.schemaname = current_schema() AND
+          WHERE pg_tables.schemaname = ANY(current_schemas(false)) AND
           pg_tables.tablename = #{quote(table_name)}
       ], "SCHEMA").first
       return parent if parent.nil? || !traverse
@@ -173,7 +173,7 @@ module PgParty
       select_values(%[
         SELECT relkind FROM pg_catalog.pg_class AS c
         JOIN pg_catalog.pg_namespace AS ns ON c.relnamespace = ns.oid
-        WHERE relname = #{quote(table_name)} AND nspname = current_schema()
+        WHERE relname = #{quote(table_name)} AND nspname = ANY(current_schemas(false))
       ], "SCHEMA").first == 'p'
     end
 
