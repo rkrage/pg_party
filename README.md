@@ -25,7 +25,7 @@
 
 This gem is tested against:
 
-- Rails: 6.1, 7.0, 7.1
+- Rails: 6.1, 7.0, 7.1, 7.2
 - Ruby: 3.0, latest (currently 3.2 at the time of this commit)
 - PostgreSQL: 11, 12, 13, 14, 15, 16
 
@@ -177,7 +177,7 @@ These methods are available in migrations as well as `ActiveRecord::Base#connect
     may be reasonable for tables with many large partitions and hosts with 4+ CPUs/cores.
   - Use `disable_ddl_transaction!` in your migration to disable transactions when using this command with `in_threads:`
     or `algorithm: :concurrently`.
-    
+
 #### Examples
 
 Create _range_ partitioned table on `created_at::date` with two partitions:
@@ -228,7 +228,7 @@ class CreateSomeListRecord < ActiveRecord::Migration[5.1]
      create_list_partition_of \
        :some_list_records,
        values: 101..200
-    
+
     # default partition support is available in Postgres 11 or higher
      create_default_partition_of \
        :some_list_records
@@ -296,7 +296,7 @@ class CreateSomeListSubpartitionedRecord < ActiveRecord::Migration[5.1]
       name: :some_list_subpartitioned_records_default_2019,
       start_range: '2019-01-01',
       end_range: '2019-12-31T23:59:59'
-    
+
     create_default_partition_of \
       :some_list_subpartitioned_records_default
 
@@ -306,7 +306,7 @@ class CreateSomeListSubpartitionedRecord < ActiveRecord::Migration[5.1]
       values: 1..100,
       partition_type: :range,
       partition_key: :created_at
-  
+
     create_range_partition_of \
       :some_list_subpartitioned_records_1,
       name: :some_list_subpartitioned_records_1_2019,
@@ -502,7 +502,7 @@ Class methods available to _list_ partitioned models:
 - `partition_key_in`
   - Query for records where partition key in _list_ of values
   - Required arg: list of `values`
-  
+
 
 Class methods available to _hash_ partitioned models:
 
