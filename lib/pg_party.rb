@@ -5,24 +5,6 @@ require "pg_party/config"
 require "pg_party/cache"
 require "active_support"
 
-# TODO: remove me, see: https://github.com/rkrage/pg_party/pull/83#issuecomment-2282203018
-if Gem::Version.new(Rails::VERSION::STRING) >= Gem::Version.new("7.2.0") && Gem::Version.new(Rails::VERSION::STRING) < Gem::Version.new("8.0.0")
-  module ActiveRecord
-    module AttributeMethods
-      module PrimaryKey
-        module ClassMethods
-          def primary_key
-            if PRIMARY_KEY_NOT_SET.equal?(@primary_key)
-              @primary_key = reset_primary_key
-            end
-            @primary_key
-          end
-        end
-      end
-    end
-  end
-end
-
 module PgParty
   @config = Config.new
   @cache = Cache.new
