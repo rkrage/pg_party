@@ -1,6 +1,6 @@
 shared_config: &shared_config
   machine:
-    image: ubuntu-2004:202201-02
+    image: default
 
   steps:
     - checkout
