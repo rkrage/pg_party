@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "activerecord", ">= 6.1", "< 8.0"
+  spec.add_runtime_dependency "activerecord", ">= 6.1", "< 8.1"
   spec.add_runtime_dependency "parallel", "~> 1.0"
 
   spec.add_development_dependency "appraisal", "~> 2.2"

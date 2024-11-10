@@ -90,6 +90,14 @@ jobs:
       CONTAINER_PG_VERSION: 15
       UPLOAD_COVERAGE: true
 
+  build-ruby-3.0-pg-17:
+    <<: *shared_config
+
+    environment:
+      CONTAINER_RUBY_VERSION: 3.0
+      CONTAINER_PG_VERSION: 17
+      UPLOAD_COVERAGE: true      
+
   build-ruby-latest-pg-11:
     <<: *shared_config
 
@@ -132,6 +140,13 @@ jobs:
       CONTAINER_RUBY_VERSION: latest
       CONTAINER_PG_VERSION: 16
 
+  build-ruby-latest-pg-17:
+    <<: *shared_config
+
+    environment:
+      CONTAINER_RUBY_VERSION: latest
+      CONTAINER_PG_VERSION: 17      
+
 workflows:
   version: 2
   build_matrix:
@@ -142,9 +157,11 @@ workflows:
       - build-ruby-3.0-pg-14
       - build-ruby-3.0-pg-15
       - build-ruby-3.0-pg-16
+      - build-ruby-3.0-pg-17      
       - build-ruby-latest-pg-11
       - build-ruby-latest-pg-12
       - build-ruby-latest-pg-13
       - build-ruby-latest-pg-14
       - build-ruby-latest-pg-15
       - build-ruby-latest-pg-16
+      - build-ruby-latest-pg-17      
