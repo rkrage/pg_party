@@ -637,6 +637,14 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
           )
         end
       end
+      context 'when index name has more than 55 characters' do
+        let(:index_prefix) { SecureRandom.hex(28) }
+
+        it 'raises ArgumentError' do
+          expect { subject }.to raise_error(ArgumentError,
+                                            'index name is too long - must be 55 characters or fewer')
+        end
+      end
     end
   end
 

@@ -155,7 +155,7 @@ module PgParty
 
       # Postgres limits index name to 63 bytes (characters). We will use 8 characters for a `_random_suffix`
       # on partitions to ensure no conflicts, leaving 55 chars for the specified index name
-      raise ArgumentError 'index name is too long - must be 55 characters or fewer' if index_name.length > 55
+      raise ArgumentError, 'index name is too long - must be 55 characters or fewer' if index_name.length > 55
 
       recursive_add_index(
         table_name: table_name,
