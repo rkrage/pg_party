@@ -12,6 +12,7 @@ RSpec.describe PgParty::Model::SharedMethods do
   subject(:model) do
     Class.new do
       extend PgParty::Model::SharedMethods
+      mattr_accessor :primary_key
 
       def self.base_class
         self
