@@ -47,7 +47,7 @@ RSpec.describe UuidStringList do
   end
 
   describe ".create_partition" do
-    let(:values) { ["e", "f"] }
+    let(:values) { %w[e f] }
     let(:child_table_name) { "#{table_name}_c" }
 
     subject(:create_partition) { described_class.create_partition(values: values, name: child_table_name) }
@@ -84,13 +84,13 @@ RSpec.describe UuidStringList do
         expect(partitions).to contain_exactly(
           "#{table_name}_a",
           "#{table_name}_b",
-          child_table_name,
+          child_table_name
         )
       end
     end
 
     context "when values overlap" do
-      let(:values) { ["b", "c"] }
+      let(:values) { %w[b c] }
 
       it "raises error and cleans up intermediate table" do
         expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
@@ -129,7 +129,7 @@ RSpec.describe UuidStringList do
   end
 
   describe ".partition_key_in" do
-    let(:values) { ["a", "b"] }
+    let(:values) { %w[a b] }
 
     let!(:record_one) { described_class.create!(some_string: "a") }
     let!(:record_two) { described_class.create!(some_string: "b") }
@@ -142,7 +142,7 @@ RSpec.describe UuidStringList do
     end
 
     context "when spanning multiple partitions" do
-      let(:values) { ["a", "b", "c", "d"] }
+      let(:values) { %w[a b c d] }
 
       it { is_expected.to contain_exactly(record_one, record_two, record_three) }
     end

@@ -84,7 +84,7 @@ RSpec.describe BigintCustomIdIntList do
         expect(partitions).to contain_exactly(
           "#{table_name}_a",
           "#{table_name}_b",
-          child_table_name,
+          child_table_name
         )
       end
     end

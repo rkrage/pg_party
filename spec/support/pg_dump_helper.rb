@@ -12,7 +12,7 @@ class PgDumpHelper
   def self.dump_indices
     ActiveRecord::Base.connection.select_values(
       "SELECT indexdef FROM pg_indexes WHERE tablename NOT LIKE 'pg%'"
-    ).join('; ').gsub("#{schema_name}.", "")
+    ).join("; ").gsub("#{schema_name}.", "")
   end
 
   private

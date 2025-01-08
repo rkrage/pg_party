@@ -6,7 +6,7 @@ RSpec::Matchers.define :match_heredoc do |expected|
   end
 end
 
-RSpec::Matchers.alias_matcher :heredoc_matching , :match_heredoc
+RSpec::Matchers.alias_matcher :heredoc_matching, :match_heredoc
 
 RSpec::Matchers.define :include_heredoc do |expected|
   match do |actual|

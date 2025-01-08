@@ -156,7 +156,7 @@ RSpec.describe PgParty::Adapter::PostgreSQLMethods do
 
     it "delegates to decorator" do
       expect(decorator).to receive(:add_index_on_all_partitions)
-                             .with(:table_name, [:columns], unique: true, in_threads: 2)
+        .with(:table_name, [:columns], unique: true, in_threads: 2)
       subject
     end
   end
@@ -166,7 +166,7 @@ RSpec.describe PgParty::Adapter::PostgreSQLMethods do
 
     it "delegates to decorator" do
       expect(decorator).to receive(:table_partitioned?)
-                             .with(:table_name)
+        .with(:table_name)
       subject
     end
   end

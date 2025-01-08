@@ -6,7 +6,7 @@ ActiveRecord::Schema.define do
   enable_extension "uuid-ossp"
   enable_extension "pgcrypto"
 
-  create_range_partition :bigint_date_ranges, partition_key: ->{ "(created_at::date)" } do |t|
+  create_range_partition :bigint_date_ranges, partition_key: -> { "(created_at::date)" } do |t|
     t.timestamps null: false, precision: nil
   end
 
@@ -22,7 +22,7 @@ ActiveRecord::Schema.define do
     start_range: Date.tomorrow,
     end_range: Date.tomorrow + 1
 
-  create_range_partition :bigint_month_ranges, partition_key: ->{ "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" } do |t|
+  create_range_partition :bigint_month_ranges, partition_key: -> { "EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)" } do |t|
     t.timestamps null: false, precision: nil
     t.integer :some_indexed_column
   end
@@ -46,7 +46,7 @@ ActiveRecord::Schema.define do
     start_range: [(Date.today + 1.month).year, (Date.today + 1.month).month],
     end_range: [(Date.today + 2.months).year, (Date.today + 2.months).month]
 
-  create_range_partition :bigint_custom_id_int_ranges, primary_key: :some_id, partition_key: [:some_int, :some_other_int] do |t|
+  create_range_partition :bigint_custom_id_int_ranges, primary_key: :some_id, partition_key: %i[some_int some_other_int] do |t|
     t.integer :some_int, null: false
     t.integer :some_other_int, null: false
   end
@@ -136,28 +136,28 @@ ActiveRecord::Schema.define do
   create_list_partition_of \
     :uuid_string_lists,
     name: :uuid_string_lists_a,
-    values: ["a", "b"]
+    values: %w[a b]
 
   create_list_partition_of \
     :uuid_string_lists,
     name: :uuid_string_lists_b,
-    values: ["c", "d"]
+    values: %w[c d]
 
-  create_list_partition :no_pk_substring_lists, id: false, partition_key: ->{ "LEFT(some_string, 1)" } do |t|
+  create_list_partition :no_pk_substring_lists, id: false, partition_key: -> { "LEFT(some_string, 1)" } do |t|
     t.text :some_string, null: false
   end
 
   create_list_partition_of \
     :no_pk_substring_lists,
     name: :no_pk_substring_lists_a,
-    values: ["a", "b"]
+    values: %w[a b]
 
   create_list_partition_of \
     :no_pk_substring_lists,
     name: :no_pk_substring_lists_b,
-    values: ["c", "d"]
+    values: %w[c d]
 
-  create_range_partition :bigint_date_range_no_partitions, partition_key: ->{ "(created_at::date)" } do |t|
+  create_range_partition :bigint_date_range_no_partitions, partition_key: -> { "(created_at::date)" } do |t|
     t.timestamps null: false, precision: nil
   end
 end

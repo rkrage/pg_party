@@ -26,14 +26,14 @@ RSpec.describe PgParty::Model::SharedMethods do
   describe ".reset_primary_key" do
     subject { model.reset_primary_key }
 
-    context 'when using default config: config.include_subpartitions_in_partition_list = false' do
+    context "when using default config: config.include_subpartitions_in_partition_list = false" do
       it do
         expect(decorator).to receive(:partitions).with(include_subpartitions: false).and_return([])
         subject
       end
     end
 
-    context 'config.include_subpartitions_in_partition_list = true' do
+    context "config.include_subpartitions_in_partition_list = true" do
       before { PgParty.config.include_subpartitions_in_partition_list = true }
 
       it do

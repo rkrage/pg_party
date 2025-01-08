@@ -6,7 +6,7 @@ include ActiveRecord::Tasks
 
 root_dir = File.expand_path("../../dummy", __FILE__)
 
-DatabaseTasks.env = ENV["RAILS_ENV"]
+DatabaseTasks.env = ENV.fetch("RAILS_ENV", nil)
 DatabaseTasks.root = root_dir
 DatabaseTasks.database_configuration = YAML.load(ERB.new(File.read("#{root_dir}/config/database.yml")).result)
 DatabaseTasks.db_dir = "#{root_dir}/db"

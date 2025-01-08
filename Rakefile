@@ -10,10 +10,10 @@ RSpec::Core::RakeTask.new(:ci) do |t|
 
   gemfile = File.basename(ENV.fetch("BUNDLE_GEMFILE", ""), ".gemfile")
 
-  if gemfile.empty? || gemfile == "Gemfile"
-    output_prefix = "default"
+  output_prefix = if gemfile.empty? || gemfile == "Gemfile"
+    "default"
   else
-    output_prefix = gemfile
+    gemfile
   end
 
   t.rspec_opts = [
@@ -24,4 +24,4 @@ RSpec::Core::RakeTask.new(:ci) do |t|
   ]
 end
 
-task :default => :spec
+task default: :spec

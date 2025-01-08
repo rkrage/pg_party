@@ -20,7 +20,7 @@ RSpec.describe BigintCustomIdIntRange do
     subject do
       described_class.create!(
         some_int: some_int,
-        some_other_int: some_other_int,
+        some_other_int: some_other_int
       )
     end
 
@@ -95,7 +95,7 @@ RSpec.describe BigintCustomIdIntRange do
       subject(:create_partition) do
         described_class.create_partition(
           start_range: start_range,
-          end_range: end_range,
+          end_range: end_range
         )
       end
 
@@ -105,7 +105,7 @@ RSpec.describe BigintCustomIdIntRange do
         expect(partitions).to contain_exactly(
           "#{table_name}_a",
           "#{table_name}_b",
-          child_table_name,
+          child_table_name
         )
       end
     end
