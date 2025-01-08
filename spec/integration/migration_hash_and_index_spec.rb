@@ -101,7 +101,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   subject(:create_range_partition_of_subpartitioned_by_list) do
     adapter.create_range_partition(
       table_name,
-      partition_key: ->{ "(created_at::date)" },
+      partition_key: -> { "(created_at::date)" },
       primary_key: :custom_id,
       id: :uuid
     ) do |t|
@@ -136,9 +136,14 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   subject(:add_index_on_all_partitions) do
     create_range_partition_of_subpartitioned_by_list
 
-    adapter.add_index_on_all_partitions table_name, :updated_at, name: index_prefix, using: :hash,
-                                        algorithm: :concurrently,
-                                        where: "created_at > '#{current_date.to_time.iso8601}'"
+    adapter.add_index_on_all_partitions(
+      table_name,
+      :updated_at,
+      name: index_prefix,
+      using: :hash,
+      algorithm: :concurrently,
+      where: "created_at > '#{current_date.to_time.iso8601}'"
+    )
   end
 
   describe "#create_hash_partition" do
@@ -202,7 +207,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       it { is_expected.to include_heredoc(create_table_sql) }
       it { is_expected.to include_heredoc(primary_key_sql) }
 
-      context 'when config.create_template_tables = false' do
+      context "when config.create_template_tables = false" do
         before { PgParty.config.create_template_tables = false }
         after { PgParty.config.create_template_tables = true }
 
@@ -211,17 +216,17 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       end
     end
 
-    context 'when config.create_with_primary_key = true' do
+    context "when config.create_with_primary_key = true" do
       before { PgParty.config.create_with_primary_key = true }
       after { PgParty.config.create_with_primary_key = false }
 
-      context 'when create_with_primary_key: false argument is provided' do
+      context "when create_with_primary_key: false argument is provided" do
         it { is_expected.to include_heredoc(create_table_sql) }
         it { is_expected.to include_heredoc(incrementing_id_sql) }
         it { is_expected.not_to include_heredoc(primary_key_sql) }
       end
 
-      context 'when create_with_primary_key: argument is not provided' do
+      context "when create_with_primary_key: argument is not provided" do
         subject do
           adapter.create_hash_partition(
             table_name,
@@ -240,7 +245,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       end
     end
 
-    context 'when create_with_primary_key: true argument is provided' do
+    context "when create_with_primary_key: true argument is provided" do
       let(:create_with_primary_key) { true }
 
       it { is_expected.to include_heredoc(create_table_sql) }
@@ -249,7 +254,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     end
   end
 
-  describe '#create_hash_partition_of' do
+  describe "#create_hash_partition_of" do
     let(:create_table_sql) do
       <<-SQL
         CREATE TABLE #{child_table_name} (
@@ -286,7 +291,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     it { is_expected.to include_heredoc(attach_table_sql) }
     it { is_expected.to include_heredoc(primary_key_sql) }
 
-    context 'when config.create_with_primary_key = true' do
+    context "when config.create_with_primary_key = true" do
       before { PgParty.config.create_with_primary_key = true }
       after { PgParty.config.create_with_primary_key = false }
 
@@ -294,7 +299,7 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       it { is_expected.to include_heredoc(attach_table_sql) }
       it { is_expected.to include_heredoc(primary_key_sql) }
 
-      context 'when config.create_template_tables = false' do
+      context "when config.create_template_tables = false" do
         before { PgParty.config.create_template_tables = false }
         after { PgParty.config.create_template_tables = true }
 
@@ -395,76 +400,76 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
     it { is_expected.to include_heredoc(sibling_index_sql) }
     it { is_expected.to include_heredoc(grandchild_index_sql) }
 
-    it 'creates the indices using CONCURRENTLY directive because `algorthim: :concurrently` args are present' do
+    it "creates the indices using CONCURRENTLY directive because `algorthim: :concurrently` args are present" do
       subject
       expect(adapter).to have_received(:execute).with(
-        "CREATE  INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}\" "\
-        "ON \"#{grandchild_table_name}\" USING hash (\"updated_at\") "\
+        "CREATE  INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}\" " \
+        "ON \"#{grandchild_table_name}\" USING hash (\"updated_at\") " \
         "WHERE created_at > '#{current_date.to_time.iso8601}'"
       )
       expect(adapter).to have_received(:execute).with(
-        "CREATE  INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}\" "\
-        "ON \"#{sibling_table_name}\" USING hash (\"updated_at\") "\
+        "CREATE  INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}\" " \
+        "ON \"#{sibling_table_name}\" USING hash (\"updated_at\") " \
         "WHERE created_at > '#{current_date.to_time.iso8601}'"
       )
     end
 
-    it 'creates indices, non-concurrently, on partitioned tables using ON ONLY directive' do
+    it "creates indices, non-concurrently, on partitioned tables using ON ONLY directive" do
       subject
       expect(adapter).to have_received(:execute).with(
-        "CREATE  INDEX \"#{index_prefix}\" "\
-        "ON ONLY \"#{table_name}\" USING hash (\"updated_at\") "\
+        "CREATE  INDEX \"#{index_prefix}\" " \
+        "ON ONLY \"#{table_name}\" USING hash (\"updated_at\") " \
         "WHERE created_at > '#{current_date.to_time.iso8601}'"
       )
       expect(adapter).to have_received(:execute).with(
-        "CREATE  INDEX \"#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}\" "\
-        "ON ONLY \"#{child_table_name}\" USING hash (\"updated_at\") "\
+        "CREATE  INDEX \"#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}\" " \
+        "ON ONLY \"#{child_table_name}\" USING hash (\"updated_at\") " \
         "WHERE created_at > '#{current_date.to_time.iso8601}'"
       )
     end
 
-    it 'attaches the partitioned indices to the correct parent table indices' do
+    it "attaches the partitioned indices to the correct parent table indices" do
       subject
       expect(adapter).to have_received(:execute).with(
-        "ALTER INDEX \"#{index_prefix}\" ATTACH PARTITION "\
+        "ALTER INDEX \"#{index_prefix}\" ATTACH PARTITION " \
         "\"#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}\""
       )
       expect(adapter).to have_received(:execute).with(
-        "ALTER INDEX \"#{index_prefix}\" ATTACH PARTITION "\
+        "ALTER INDEX \"#{index_prefix}\" ATTACH PARTITION " \
         "\"#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}\""
       )
       expect(adapter).to have_received(:execute).with(
-        "ALTER INDEX \"#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}\" ATTACH PARTITION "\
+        "ALTER INDEX \"#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}\" ATTACH PARTITION " \
         "\"#{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}\""
       )
     end
 
-    context 'when an index is not valid at the end of the operation' do
+    context "when an index is not valid at the end of the operation" do
       let(:index_dump) { PgDumpHelper.dump_indices }
 
       before do
         # Simulate failure to attach a child index
         allow(adapter).to receive(:execute).with(
-          "ALTER INDEX \"#{index_prefix}\" ATTACH PARTITION "\
+          "ALTER INDEX \"#{index_prefix}\" ATTACH PARTITION " \
           "\"#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}\""
         )
       end
 
-      it 'raises error, after dropping any indices created in the operation' do
-        expect { add_index_on_all_partitions }.to raise_error 'index creation failed - an index was marked invalid'
+      it "raises error, after dropping any indices created in the operation" do
+        expect { add_index_on_all_partitions }.to raise_error "index creation failed - an index was marked invalid"
         expect(index_dump).not_to include_heredoc(sibling_index_sql)
         expect(index_dump).not_to include_heredoc(grandchild_index_sql)
         expect(adapter).to have_received(:execute).with(
-          %[DROP INDEX IF EXISTS "#{index_prefix}"]
+          %(DROP INDEX IF EXISTS "#{index_prefix}")
         )
         expect(adapter).to have_received(:execute).with(
-          %[DROP INDEX IF EXISTS "#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}"]
+          %(DROP INDEX IF EXISTS "#{index_prefix}_#{Digest::MD5.hexdigest(sibling_table_name)[0..6]}")
         )
         expect(adapter).to have_received(:execute).with(
-          %[DROP INDEX IF EXISTS "#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}"]
+          %(DROP INDEX IF EXISTS "#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}")
         )
         expect(adapter).to have_received(:execute).with(
-          %[DROP INDEX IF EXISTS "#{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}"]
+          %(DROP INDEX IF EXISTS "#{index_prefix}_#{Digest::MD5.hexdigest(grandchild_table_name)[0..6]}")
         )
       end
     end

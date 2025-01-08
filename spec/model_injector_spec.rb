@@ -39,7 +39,7 @@ RSpec.describe PgParty::ModelInjector do
     end
 
     context "when key is array" do
-      let(:key) { ["created_at", "updated_at"] }
+      let(:key) { %w[created_at updated_at] }
 
       it "extends range methods" do
         expect(model).to receive(:extend).with(PgParty::Model::RangeMethods)
@@ -57,13 +57,13 @@ RSpec.describe PgParty::ModelInjector do
           model
         end
 
-        its(:partition_key) { is_expected.to eq(["created_at", "updated_at"]) }
+        its(:partition_key) { is_expected.to eq(%w[created_at updated_at]) }
         its(:complex_partition_key) { is_expected.to eq(false) }
       end
     end
 
     context "when block is provided" do
-      let(:blk) { ->{ "created_at::date" } }
+      let(:blk) { -> { "created_at::date" } }
 
       let(:injector) { described_class.new(model, &blk) }
 
@@ -115,7 +115,7 @@ RSpec.describe PgParty::ModelInjector do
     end
 
     context "when key is array" do
-      let(:key) { ["created_at", "updated_at"] }
+      let(:key) { %w[created_at updated_at] }
 
       it "extends list methods" do
         expect(model).to receive(:extend).with(PgParty::Model::ListMethods)
@@ -133,13 +133,13 @@ RSpec.describe PgParty::ModelInjector do
           model
         end
 
-        its(:partition_key) { is_expected.to eq(["created_at", "updated_at"]) }
+        its(:partition_key) { is_expected.to eq(%w[created_at updated_at]) }
         its(:complex_partition_key) { is_expected.to eq(false) }
       end
     end
 
     context "when block is provided" do
-      let(:blk) { ->{ "created_at::date" } }
+      let(:blk) { -> { "created_at::date" } }
 
       let(:injector) { described_class.new(model, &blk) }
 
@@ -191,7 +191,7 @@ RSpec.describe PgParty::ModelInjector do
     end
 
     context "when key is array" do
-      let(:key) { ["created_at", "updated_at"] }
+      let(:key) { %w[created_at updated_at] }
 
       it "extends hash methods" do
         expect(model).to receive(:extend).with(PgParty::Model::HashMethods)
@@ -209,13 +209,13 @@ RSpec.describe PgParty::ModelInjector do
           model
         end
 
-        its(:partition_key) { is_expected.to eq(["created_at", "updated_at"]) }
+        its(:partition_key) { is_expected.to eq(%w[created_at updated_at]) }
         its(:complex_partition_key) { is_expected.to eq(false) }
       end
     end
 
     context "when block is provided" do
-      let(:blk) { ->{ "created_at::date" } }
+      let(:blk) { -> { "created_at::date" } }
 
       let(:injector) { described_class.new(model, &blk) }
 

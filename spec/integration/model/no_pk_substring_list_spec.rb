@@ -46,7 +46,7 @@ RSpec.describe NoPkSubstringList do
   end
 
   describe ".create_partition" do
-    let(:values) { ["e", "f"] }
+    let(:values) { %w[e f] }
     let(:child_table_name) { "#{table_name}_c" }
 
     subject(:create_partition) { described_class.create_partition(values: values, name: child_table_name) }
@@ -83,13 +83,13 @@ RSpec.describe NoPkSubstringList do
         expect(partitions).to contain_exactly(
           "#{table_name}_a",
           "#{table_name}_b",
-          child_table_name,
+          child_table_name
         )
       end
     end
 
     context "when ranges overlap" do
-      let(:values) { ["b", "c"] }
+      let(:values) { %w[b c] }
 
       it "raises error and cleans up intermediate table" do
         expect { create_partition }.to raise_error(ActiveRecord::StatementInvalid, /PG::InvalidObjectDefinition/)
@@ -119,7 +119,7 @@ RSpec.describe NoPkSubstringList do
         it do
           is_expected.to contain_exactly(
             an_object_having_attributes(some_string: "a_foo"),
-            an_object_having_attributes(some_string: "b_foo"),
+            an_object_having_attributes(some_string: "b_foo")
           )
         end
       end
@@ -137,7 +137,7 @@ RSpec.describe NoPkSubstringList do
   end
 
   describe ".partition_key_in" do
-    let(:values) { ["a", "b"] }
+    let(:values) { %w[a b] }
 
     let!(:record_one) { described_class.create!(some_string: "a_foo") }
     let!(:record_two) { described_class.create!(some_string: "b_foo") }
@@ -149,19 +149,19 @@ RSpec.describe NoPkSubstringList do
       it do
         is_expected.to contain_exactly(
           an_object_having_attributes(some_string: "a_foo"),
-          an_object_having_attributes(some_string: "b_foo"),
+          an_object_having_attributes(some_string: "b_foo")
         )
       end
     end
 
     context "when spanning multiple partitions" do
-      let(:values) { ["a", "b", "c", "d"] }
+      let(:values) { %w[a b c d] }
 
       it do
         is_expected.to contain_exactly(
           an_object_having_attributes(some_string: "a_foo"),
           an_object_having_attributes(some_string: "b_foo"),
-          an_object_having_attributes(some_string: "c_foo"),
+          an_object_having_attributes(some_string: "c_foo")
         )
       end
     end

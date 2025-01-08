@@ -33,11 +33,12 @@ RSpec.describe "threading" do
             partitions = model.partitions
           end
 
-          if partitions.size == 3
-            Thread.current[:status] = "success"
-          else
-            Thread.current[:status] = "failed"
-          end
+          Thread.current[:status] =
+            if partitions.size == 3
+              "success"
+            else
+              "failed"
+            end
         end
       end
 
@@ -47,7 +48,7 @@ RSpec.describe "threading" do
       model.create_partition(
         start_range: current_date + 2.days,
         end_range: current_date + 3.days,
-        name: child_table_name,
+        name: child_table_name
       )
 
       expect(model.partitions.size).to eq(2)
@@ -62,10 +63,10 @@ RSpec.describe "threading" do
 
   describe ".in_partition" do
     before do
-      (0..23).each do |i|
+      24.times do |i|
         model.create!(
           created_at: current_time + i.hours,
-          updated_at: current_time + i.hours,
+          updated_at: current_time + i.hours
         )
       end
     end
@@ -82,22 +83,23 @@ RSpec.describe "threading" do
             partition_b_data = model.in_partition("#{table_name}_b").all
           end
 
-          if partition_a_data.count == 13 && partition_b_data.count == 13
-            Thread.current[:status] = "success"
-          else
-            Thread.current[:status] = "failed"
-          end
+          Thread.current[:status] =
+            if partition_a_data.count == 13 && partition_b_data.count == 13
+              "success"
+            else
+              "failed"
+            end
         end
       end
 
       model.create!(
         created_at: current_time,
-        updated_at: current_time,
+        updated_at: current_time
       )
 
       model.create!(
         created_at: current_time + 12.hours,
-        updated_at: current_time + 12.hours,
+        updated_at: current_time + 12.hours
       )
 
       threads.map(&:join).each do |t|

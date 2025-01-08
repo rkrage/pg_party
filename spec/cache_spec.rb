@@ -3,16 +3,16 @@
 require "spec_helper"
 
 RSpec.describe PgParty::Cache do
-  let(:block) { ->{ :new_value } }
+  let(:block) { -> { :new_value } }
 
   subject(:cache) { described_class.new }
-  subject(:fetch_model) { cache.fetch_model(12345678901, :child, &block) }
-  subject(:fetch_partitions) { cache.fetch_partitions(12345678901, false, &block) }
+  subject(:fetch_model) { cache.fetch_model(12_345_678_901, :child, &block) }
+  subject(:fetch_partitions) { cache.fetch_partitions(12_345_678_901, false, &block) }
 
   describe ".clear!" do
     before do
-      cache.fetch_partitions(12345678901, false) { :old_value }
-      cache.fetch_model(12345678901, :child) { :old_value }
+      cache.fetch_partitions(12_345_678_901, false) { :old_value }
+      cache.fetch_model(12_345_678_901, :child) { :old_value }
     end
 
     subject { cache.clear! }
@@ -44,7 +44,7 @@ RSpec.describe PgParty::Cache do
 
     context "when key exists" do
       before do
-        cache.fetch_model(12345678901, :child) { :old_value }
+        cache.fetch_model(12_345_678_901, :child) { :old_value }
       end
 
       it { is_expected.to eq(:old_value) }
@@ -58,7 +58,7 @@ RSpec.describe PgParty::Cache do
     context "when caching disabled" do
       before do
         PgParty.config.caching = false
-        cache.fetch_model(12345678901, :child) { :old_value }
+        cache.fetch_model(12_345_678_901, :child) { :old_value }
       end
 
       it { is_expected.to eq(:new_value) }
@@ -72,7 +72,7 @@ RSpec.describe PgParty::Cache do
     context "when TTL expires" do
       around do |example|
         PgParty.config.caching_ttl = 60
-        cache.fetch_model(12345678901, :child) { :old_value }
+        cache.fetch_model(12_345_678_901, :child) { :old_value }
         Timecop.freeze(Time.now + 61, &example)
       end
 
@@ -99,7 +99,7 @@ RSpec.describe PgParty::Cache do
 
     context "when key exists for include_sub_partitions = false" do
       before do
-        cache.fetch_partitions(12345678901, false) { :old_value }
+        cache.fetch_partitions(12_345_678_901, false) { :old_value }
       end
 
       it { is_expected.to eq(:old_value) }
@@ -109,14 +109,14 @@ RSpec.describe PgParty::Cache do
         subject
       end
 
-      it 'does not cache value for include_sub_partitions = true' do
-        expect(cache.fetch_partitions(12345678901, true, &block)).to be :new_value
+      it "does not cache value for include_sub_partitions = true" do
+        expect(cache.fetch_partitions(12_345_678_901, true, &block)).to be :new_value
       end
     end
 
-    context 'when key exists for include_sub_partitions = true' do
+    context "when key exists for include_sub_partitions = true" do
       before do
-        cache.fetch_partitions(12345678901, true) { :old_value }
+        cache.fetch_partitions(12_345_678_901, true) { :old_value }
       end
 
       it { is_expected.to eq(:new_value) }
@@ -126,15 +126,15 @@ RSpec.describe PgParty::Cache do
         subject
       end
 
-      it 'caches value for include_sub_partitions = true' do
-        expect(cache.fetch_partitions(12345678901, true, &block)).to be :old_value
+      it "caches value for include_sub_partitions = true" do
+        expect(cache.fetch_partitions(12_345_678_901, true, &block)).to be :old_value
       end
     end
 
     context "when caching disabled" do
       before do
         PgParty.config.caching = false
-        cache.fetch_partitions(12345678901, false) { :old_value }
+        cache.fetch_partitions(12_345_678_901, false) { :old_value }
       end
 
       it { is_expected.to eq(:new_value) }
@@ -148,7 +148,7 @@ RSpec.describe PgParty::Cache do
     context "when TTL expires" do
       around do |example|
         PgParty.config.caching_ttl = 60
-        cache.fetch_partitions(12345678901, false) { :old_value }
+        cache.fetch_partitions(12_345_678_901, false) { :old_value }
         Timecop.freeze(Time.now + 61, &example)
       end
 

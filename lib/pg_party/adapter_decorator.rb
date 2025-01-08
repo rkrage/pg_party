@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
-require 'parallel'
+require "parallel"
 
 module PgParty
   class AdapterDecorator < SimpleDelegator
@@ -53,14 +53,15 @@ module PgParty
       validate_primary_key(primary_key) unless create_with_pks
       if partition_type
         validate_supported_partition_type!(partition_type)
-        raise ArgumentError, '`partition_key` is required when specifying a partition_type' unless partition_key
+        raise ArgumentError, "`partition_key` is required when specifying a partition_type" unless partition_key
       end
 
-      like_option = if !partition_type || create_with_pks
-                      'INCLUDING ALL'
-                    else
-                      'INCLUDING ALL EXCLUDING INDEXES'
-                    end
+      like_option =
+        if !partition_type || create_with_pks
+          "INCLUDING ALL"
+        else
+          "INCLUDING ALL EXCLUDING INDEXES"
+        end
 
       execute(<<-SQL)
         CREATE TABLE #{quote_table_name(new_table_name)} (
@@ -69,7 +70,7 @@ module PgParty
       SQL
 
       return if partition_type
-      return if !primary_key
+      return unless primary_key
       return if has_primary_key?(new_table_name)
 
       execute(<<-SQL)
@@ -136,7 +137,7 @@ module PgParty
       ], "SCHEMA").first
       return parent if parent.nil? || !traverse
 
-      while (parents_parent = parent_for_table_name(parent)) do
+      while (parents_parent = parent_for_table_name(parent))
         parent = parents_parent
       end
 
@@ -145,8 +146,8 @@ module PgParty
 
     def add_index_on_all_partitions(table_name, column_name, in_threads: nil, **options)
       if in_threads && open_transactions > 0
-        raise ArgumentError, '`in_threads:` cannot be used within a transaction. If running in a migration, use '\
-              '`disable_ddl_transaction!` and break out this operation into its own migration.'
+        raise ArgumentError, "`in_threads:` cannot be used within a transaction. If running in a migration, use " \
+                             "`disable_ddl_transaction!` and break out this operation into its own migration."
       end
 
       index_name, index_type, index_columns, index_options, algorithm, using = extract_index_options(
@@ -155,7 +156,7 @@ module PgParty
 
       # Postgres limits index name to 63 bytes (characters). We will use 8 characters for a `_random_suffix`
       # on partitions to ensure no conflicts, leaving 55 chars for the specified index name
-      raise ArgumentError, 'index name is too long - must be 55 characters or fewer' if index_name.length > 55
+      raise ArgumentError, "index name is too long - must be 55 characters or fewer" if index_name.length > 55
 
       recursive_add_index(
         table_name: table_name,
@@ -174,7 +175,7 @@ module PgParty
         SELECT relkind FROM pg_catalog.pg_class AS c
         JOIN pg_catalog.pg_namespace AS ns ON c.relnamespace = ns.oid
         WHERE relname = #{quote(table_name)} AND nspname = ANY(current_schemas(false))
-      ], "SCHEMA").first == 'p'
+      ], "SCHEMA").first == "p"
     end
 
     private
@@ -231,11 +232,21 @@ module PgParty
       validate_default_partition_support! if options[:default_partition]
 
       if schema_cache.data_source_exists?(template_table_name)
-        create_table_like(template_table_name, child_table_name, primary_key: false,
-                          partition_type: options[:partition_type], partition_key: options[:partition_key])
+        create_table_like(
+          template_table_name,
+          child_table_name,
+          primary_key: false,
+          partition_type: options[:partition_type],
+          partition_key: options[:partition_key]
+        )
       else
-        create_table_like(table_name, child_table_name, primary_key: primary_key,
-                          partition_type: options[:partition_type], partition_key: options[:partition_key])
+        create_table_like(
+          table_name,
+          child_table_name,
+          primary_key: primary_key,
+          partition_type: options[:partition_type],
+          partition_key: options[:partition_key]
+        )
       end
 
       if options[:default_partition]
@@ -264,8 +275,14 @@ module PgParty
 
       # If this is a partitioned table, add index ONLY on this table.
       if table_partitioned?(table_name)
-        add_index_only(table_name, type: index_type, name: updated_name, using: using, columns: index_columns,
-                       options: index_options)
+        add_index_only(
+          table_name,
+          type: index_type,
+          name: updated_name,
+          using: using,
+          columns: index_columns,
+          options: index_options
+        )
         _created_index_names << updated_name
 
         parallel_map(partitions, in_threads: in_threads) do |partition_name|
@@ -283,16 +300,24 @@ module PgParty
         end
       else
         _created_index_names << updated_name # Track as created before execution of concurrent index command
-        add_index_from_options(table_name, name: updated_name, type: index_type, algorithm: algorithm, using: using,
-                               columns: index_columns, options: index_options)
+
+        add_index_from_options(
+          table_name,
+          name: updated_name,
+          type: index_type,
+          algorithm: algorithm,
+          using: using,
+          columns: index_columns,
+          options: index_options
+        )
       end
 
       attach_child_index(updated_name, _parent_index_name) if _parent_index_name
 
       return true if index_valid?(updated_name)
 
-      raise 'index creation failed - an index was marked invalid'
-    rescue => e
+      raise "index creation failed - an index was marked invalid"
+    rescue StandardError => e
       # Clean up any indexes created so this command can be retried later
       drop_indices_if_exist(_created_index_names)
       raise e
@@ -307,12 +332,12 @@ module PgParty
     def add_index_only(table_name, type:, name:, using:, columns:, options:)
       return unless postgres_major_version >= 11
 
-      execute "CREATE #{type} INDEX #{quote_column_name(name)} ON ONLY "\
+      execute "CREATE #{type} INDEX #{quote_column_name(name)} ON ONLY " \
               "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
     end
 
     def add_index_from_options(table_name, name:, type:, algorithm:, using:, columns:, options:)
-      execute "CREATE #{type} INDEX #{algorithm} #{quote_column_name(name)} ON "\
+      execute "CREATE #{type} INDEX #{algorithm} #{quote_column_name(name)} ON " \
               "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
     end
 
@@ -329,7 +354,7 @@ module PgParty
 
       [
         index_definition.name,
-        index_definition.unique ? 'UNIQUE' : index_definition.type,
+        index_definition.unique ? "UNIQUE" : index_definition.type,
         index_columns,
         index_definition.where ? " WHERE #{index_definition.where}" : nil,
         add_index_options_result.second, # algorithm option
@@ -346,7 +371,7 @@ module PgParty
       return arr.map { |item| yield(item) } unless in_threads && in_threads > 1
 
       if ActiveRecord::Base.connection_pool.size <= in_threads
-        raise ArgumentError, 'in_threads: must be lower than your database connection pool size'
+        raise ArgumentError, "in_threads: must be lower than your database connection pool size"
       end
 
       Parallel.map(arr, in_threads: in_threads) do |item|
@@ -418,11 +443,10 @@ module PgParty
     end
 
     def index_valid?(index_name)
-      select_values(
-        "SELECT relname FROM pg_class, pg_index WHERE pg_index.indisvalid = false AND "\
-          "pg_index.indexrelid = pg_class.oid AND relname = #{quote(index_name)}",
-        "SCHEMA"
-      ).empty?
+      select_values(<<-SQL, "SCHEMA").empty?
+        SELECT relname FROM pg_class, pg_index WHERE pg_index.indisvalid = false AND
+        pg_index.indexrelid = pg_class.oid AND relname = #{quote(index_name)}
+      SQL
     end
 
     def generate_index_name(index_name, table_name)
@@ -433,7 +457,7 @@ module PgParty
       if (sym = partition_type.to_s.downcase.to_sym) && sym.in?(SUPPORTED_PARTITION_TYPES)
         return if sym != :hash || postgres_major_version >= 11
 
-        raise NotImplementedError, 'Hash partitions are only available in Postgres 11 or higher'
+        raise NotImplementedError, "Hash partitions are only available in Postgres 11 or higher"
       end
 
       raise ArgumentError, "Supported partition types are #{SUPPORTED_PARTITION_TYPES.join(', ')}"
@@ -442,7 +466,7 @@ module PgParty
     def validate_default_partition_support!
       return if postgres_major_version >= 11
 
-      raise NotImplementedError, 'Default partitions are only available in Postgres 11 or higher'
+      raise NotImplementedError, "Default partitions are only available in Postgres 11 or higher"
     end
 
     def supports_partitions?
@@ -450,7 +474,7 @@ module PgParty
     end
 
     def postgres_major_version
-      __getobj__.send(:postgresql_version)/10000
+      __getobj__.send(:postgresql_version)/10_000
     end
 
     def migration_or_adapter(blk)
