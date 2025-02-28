@@ -41,6 +41,10 @@ ActiveSupport.on_load(:active_record) do
     PgParty::Hacks::PostgreSQLDatabaseTasks
   )
 
+  ActiveRecord::SchemaDumper.prepend(
+    PgParty::Hacks::SchemaDumper
+  )
+
   begin
     require "active_record/connection_adapters/postgresql_adapter"
     require "pg_party/adapter/postgresql_methods"
