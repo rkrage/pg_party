@@ -36,6 +36,7 @@ ActiveSupport.on_load(:active_record) do
 
   require "active_record/tasks/postgresql_database_tasks"
   require "pg_party/hacks/postgresql_database_tasks"
+  require "pg_party/hacks/schema_dumper"
 
   ActiveRecord::Tasks::PostgreSQLDatabaseTasks.prepend(
     PgParty::Hacks::PostgreSQLDatabaseTasks
