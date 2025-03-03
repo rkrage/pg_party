@@ -2,6 +2,7 @@
 
 ENV["RAILS_ENV"] ||= "test"
 
+require "logger"
 require "combustion"
 require "timecop"
 require "pry-byebug"
