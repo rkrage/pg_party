@@ -583,6 +583,28 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
       )
     end
 
+    context 'when an error occurs while creating the index' do
+      subject(:add_index_on_all_partitions) do
+        create_list_partition_of
+
+        adapter.add_index_on_all_partitions table_name, "#{table_name}_id", name: index_prefix,
+                                            in_threads: index_threads, algorithm: :concurrently
+      end
+
+      let(:index_name) { "#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}" }
+      let(:create_index_query) do
+        "CREATE  INDEX CONCURRENTLY \"#{index_name}\" " \
+          "ON \"#{child_table_name}\"  (\"#{table_name}_id\")"
+      end
+      let(:query_error) { ActiveRecord::StatementInvalid }
+
+      it 'deletes the created indexes' do
+        expect(adapter).to receive(:execute).with(create_index_query).and_raise(query_error)
+        expect(adapter).to receive(:execute).with("DROP INDEX IF EXISTS \"#{index_name}\"")
+        expect { subject }.to raise_error(query_error)
+      end
+    end
+
     context 'when unique: true index option is used' do
       subject(:add_index_on_all_partitions) do
         create_list_partition_of
@@ -597,6 +619,33 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
           "CREATE UNIQUE INDEX CONCURRENTLY \"#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}\" "\
           "ON \"#{child_table_name}\"  (\"#{table_name}_id\")"
         )
+      end
+    end
+
+    context 'when if_not_exists: true index option is used' do
+      subject(:add_index_on_all_partitions) do
+        create_list_partition_of
+
+        adapter.add_index_on_all_partitions table_name, "#{table_name}_id", name: index_prefix,
+                                            in_threads: index_threads, algorithm: :concurrently, if_not_exists: true
+      end
+
+      let(:index_name) { "#{index_prefix}_#{Digest::MD5.hexdigest(child_table_name)[0..6]}" }
+      let(:create_index_query) do
+        "CREATE  INDEX CONCURRENTLY IF NOT EXISTS \"#{index_name}\" " \
+          "ON \"#{child_table_name}\"  (\"#{table_name}_id\")"
+      end
+      let(:query_error) { ActiveRecord::StatementInvalid }
+
+      it 'creates an index if it does not exist already' do
+        subject
+        expect(adapter).to have_received(:execute).with(create_index_query)
+      end
+
+      it 'keeps indexes on error' do
+        expect(adapter).to receive(:execute).with(create_index_query).and_raise(query_error)
+        expect(adapter).not_to receive(:execute).with("DROP INDEX IF EXISTS \"#{index_name}\"")
+        expect { subject }.to raise_error(query_error)
       end
     end
 
