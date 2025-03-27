@@ -3,7 +3,6 @@
 ENV["RAILS_ENV"] ||= "test"
 
 require "logger"
-require "base64"
 require "combustion"
 require "timecop"
 require "pry-byebug"

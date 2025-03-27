@@ -24,10 +24,13 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "activerecord", ">= 7.0", "< 8.1"
   spec.add_runtime_dependency "parallel", "~> 1.0"
-  spec.add_runtime_dependency "base64"
 
   spec.add_development_dependency "appraisal", "~> 2.2"
   spec.add_development_dependency "byebug", "~> 11.0"
+  spec.add_development_dependency "base64", "~> 0.2.0"
+  spec.add_development_dependency "bigdecimal", "~> 3.1"
+  spec.add_development_dependency "mutex_m", "~> 0.3.0"
+  spec.add_development_dependency "drb", "~> 2.2"
   spec.add_development_dependency "combustion", "~> 1.3"
   spec.add_development_dependency "nokogiri", ">= 1.10.4", "< 2.0"
   spec.add_development_dependency "pry-byebug", "~> 3.7"
