@@ -7,6 +7,7 @@ require "timecop"
 require "pry-byebug"
 require "simplecov"
 require "rake"
+require "logger"
 
 if ENV["CODE_COVERAGE"] == "true"
   SimpleCov.command_name Rails.gem_version.to_s

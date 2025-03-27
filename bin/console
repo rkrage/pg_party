@@ -5,6 +5,7 @@
 ENV["RAILS_ENV"] ||= "development"
 
 require "bundler/setup"
+require "logger"
 require "combustion"
 
 Combustion.path = "spec/dummy"
