@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "activerecord", ">= 7.0", "< 8.1"
   spec.add_runtime_dependency "parallel", "~> 1.0"
+  spec.add_runtime_dependency "base64"
 
   spec.add_development_dependency "appraisal", "~> 2.2"
   spec.add_development_dependency "byebug", "~> 11.0"
