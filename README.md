@@ -25,9 +25,9 @@
 
 This gem is tested against:
 
-- Rails: 7.0, 7.1, 7.2, 8.0
+- Rails: 7.0, 7.1, 7.2, 8.0, 8.1
 - Ruby: 3.2, latest (currently 3.3 at the time of this commit)
-- PostgreSQL: 13, 14, 15, 16, 17
+- PostgreSQL: 13, 14, 15, 16, 17, 18
 
 ## Future Work
 

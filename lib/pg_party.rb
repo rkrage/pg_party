@@ -37,9 +37,15 @@ ActiveSupport.on_load(:active_record) do
   require "active_record/tasks/postgresql_database_tasks"
   require "pg_party/hacks/postgresql_database_tasks"
 
-  ActiveRecord::Tasks::PostgreSQLDatabaseTasks.prepend(
-    PgParty::Hacks::PostgreSQLDatabaseTasks
-  )
+  if ActiveRecord::VERSION::MAJOR >= 8 && ActiveRecord::VERSION::MINOR >= 1
+    ActiveRecord::Tasks::PostgreSQLDatabaseTasks.prepend(
+      PgParty::Hacks::PostgreSQLDatabaseTasks81
+    )
+  else
+    ActiveRecord::Tasks::PostgreSQLDatabaseTasks.prepend(
+      PgParty::Hacks::PostgreSQLDatabaseTasks
+    )
+  end
 
   begin
     require "active_record/connection_adapters/postgresql_adapter"
