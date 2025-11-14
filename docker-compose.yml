@@ -1,14 +1,13 @@
-version: "3.3"
 services:
   postgres:
-    image: postgres:${CONTAINER_PG_VERSION:-16}
+    image: postgres:${CONTAINER_PG_VERSION:-18}
     environment:
       - POSTGRES_PASSWORD=postgres
   code:
     build:
       context: .
       args:
-        - CONTAINER_PG_VERSION=${CONTAINER_PG_VERSION:-16}
+        - CONTAINER_PG_VERSION=${CONTAINER_PG_VERSION:-18}
         - CONTAINER_RUBY_VERSION=${CONTAINER_RUBY_VERSION:-3}
     image: pg_party
     environment:

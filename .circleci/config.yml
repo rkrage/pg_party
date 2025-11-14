@@ -7,7 +7,7 @@ shared_config: &shared_config
 
     - run:
         name: Prepare and start containers
-        command: docker-compose up -d
+        command: docker-compose up -d --build
 
     - run:
         name: Install global gems
@@ -47,13 +47,6 @@ shared_config: &shared_config
 
 version: 2
 jobs:
-  build-ruby-3.2-pg-13:
-    <<: *shared_config
-
-    environment:
-      CONTAINER_RUBY_VERSION: "3.2"
-      CONTAINER_PG_VERSION: 13
-
   build-ruby-3.2-pg-14:
     <<: *shared_config
 
@@ -82,12 +75,12 @@ jobs:
       CONTAINER_RUBY_VERSION: "3.2"
       CONTAINER_PG_VERSION: 17
 
-  build-ruby-latest-pg-13:
+  build-ruby-3.2-pg-18:
     <<: *shared_config
 
     environment:
-      CONTAINER_RUBY_VERSION: latest
-      CONTAINER_PG_VERSION: 13
+      CONTAINER_RUBY_VERSION: "3.2"
+      CONTAINER_PG_VERSION: 17
 
   build-ruby-latest-pg-14:
     <<: *shared_config
@@ -116,19 +109,26 @@ jobs:
     environment:
       CONTAINER_RUBY_VERSION: latest
       CONTAINER_PG_VERSION: 17
+
+  build-ruby-latest-pg-18:
+    <<: *shared_config
+
+    environment:
+      CONTAINER_RUBY_VERSION: latest
+      CONTAINER_PG_VERSION: 18
       UPLOAD_COVERAGE: true
 
 workflows:
   version: 2
   build_matrix:
     jobs:
-      - build-ruby-3.2-pg-13
       - build-ruby-3.2-pg-14
       - build-ruby-3.2-pg-15
       - build-ruby-3.2-pg-16
       - build-ruby-3.2-pg-17
-      - build-ruby-latest-pg-13
+      - build-ruby-3.2-pg-18
       - build-ruby-latest-pg-14
       - build-ruby-latest-pg-15
       - build-ruby-latest-pg-16
       - build-ruby-latest-pg-17
+      - build-ruby-latest-pg-18

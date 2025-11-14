@@ -218,11 +218,19 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     describe "template table" do
       let(:create_table_sql) do
-        <<-SQL
-          CREATE TABLE #{template_table_name} (
-            #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
-          );
-        SQL
+        if ActiveRecord::Base.connection.postgresql_version >= 180000
+          <<-SQL
+            CREATE TABLE #{template_table_name} (
+              #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) CONSTRAINT #{table_name}_#{table_name}_id_not_null NOT NULL
+            );
+          SQL
+        else
+          <<-SQL
+            CREATE TABLE #{template_table_name} (
+              #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
+            );
+          SQL
+        end
       end
 
       let(:primary_key_sql) do
@@ -252,13 +260,23 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_range_partition_of" do
     let(:create_table_sql) do
-      <<-SQL
-        CREATE TABLE #{child_table_name} (
-          custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
-          created_at timestamp without time zone NOT NULL,
-          updated_at timestamp without time zone NOT NULL
-        );
-      SQL
+      if ActiveRecord::Base.connection.postgresql_version >= 180000
+        <<-SQL
+          CREATE TABLE #{child_table_name} (
+            custom_id uuid DEFAULT gen_random_uuid() CONSTRAINT #{table_name}_custom_id_not_null NOT NULL,
+            created_at timestamp without time zone CONSTRAINT #{table_name}_created_at_not_null NOT NULL,
+            updated_at timestamp without time zone CONSTRAINT #{table_name}_updated_at_not_null NOT NULL
+          );
+        SQL
+      else
+        <<-SQL
+          CREATE TABLE #{child_table_name} (
+            custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
+            created_at timestamp without time zone NOT NULL,
+            updated_at timestamp without time zone NOT NULL
+          );
+        SQL
+      end
     end
 
     let(:attach_table_sql) do
@@ -288,14 +306,25 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     context 'when subpartitioning' do
       let(:create_table_sql) do
-        <<-SQL
-          CREATE TABLE #{child_table_name} (
-            custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
-            created_at timestamp without time zone NOT NULL,
-            updated_at timestamp without time zone NOT NULL
-          )
-          PARTITION BY LIST (custom_id);
-        SQL
+        if ActiveRecord::Base.connection.postgresql_version >= 180000
+          <<-SQL
+            CREATE TABLE #{child_table_name} (
+              custom_id uuid DEFAULT gen_random_uuid() CONSTRAINT #{table_name}_custom_id_not_null NOT NULL,
+              created_at timestamp without time zone CONSTRAINT #{table_name}_created_at_not_null NOT NULL,
+              updated_at timestamp without time zone CONSTRAINT #{table_name}_updated_at_not_null NOT NULL
+            )
+            PARTITION BY LIST (custom_id);
+          SQL
+        else
+          <<-SQL
+            CREATE TABLE #{child_table_name} (
+              custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
+              created_at timestamp without time zone NOT NULL,
+              updated_at timestamp without time zone NOT NULL
+            )
+            PARTITION BY LIST (custom_id);
+          SQL
+        end
       end
 
       subject do
@@ -348,11 +377,19 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#create_list_partition_of" do
     let(:create_table_sql) do
-      <<-SQL
-        CREATE TABLE #{child_table_name} (
-          #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
-        );
-      SQL
+      if ActiveRecord::Base.connection.postgresql_version >= 180000
+        <<-SQL
+          CREATE TABLE #{child_table_name} (
+            #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) CONSTRAINT #{table_name}_#{table_name}_id_not_null NOT NULL
+          );
+        SQL
+      else
+        <<-SQL
+          CREATE TABLE #{child_table_name} (
+            #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
+          );
+        SQL
+      end
     end
 
     let(:attach_table_sql) do
@@ -384,13 +421,23 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
   describe "#create_table_like" do
     context "range partition" do
       let(:create_table_sql) do
-        <<-SQL
-          CREATE TABLE #{table_like_name} (
-            custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
-            created_at timestamp without time zone NOT NULL,
-            updated_at timestamp without time zone NOT NULL
-          );
-        SQL
+        if ActiveRecord::Base.connection.postgresql_version >= 180000
+          <<-SQL
+            CREATE TABLE #{table_like_name} (
+              custom_id uuid DEFAULT gen_random_uuid() CONSTRAINT #{table_name}_custom_id_not_null NOT NULL,
+              created_at timestamp without time zone CONSTRAINT #{table_name}_created_at_not_null NOT NULL,
+              updated_at timestamp without time zone CONSTRAINT #{table_name}_updated_at_not_null NOT NULL
+            );
+          SQL
+        else
+          <<-SQL
+            CREATE TABLE #{table_like_name} (
+              custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
+              created_at timestamp without time zone NOT NULL,
+              updated_at timestamp without time zone NOT NULL
+            );
+          SQL
+        end
       end
 
       let(:primary_key_sql) do
@@ -412,11 +459,19 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
     context "list partition" do
       let(:create_table_sql) do
-        <<-SQL
-          CREATE TABLE #{table_like_name} (
-            #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
-          );
-        SQL
+        if ActiveRecord::Base.connection.postgresql_version >= 180000
+          <<-SQL
+            CREATE TABLE #{table_like_name} (
+              #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) CONSTRAINT #{table_name}_#{table_name}_id_not_null NOT NULL
+            );
+          SQL
+        else
+          <<-SQL
+            CREATE TABLE #{table_like_name} (
+              #{table_name}_id integer DEFAULT nextval('#{table_name}_#{table_name}_id_seq'::regclass) NOT NULL
+            );
+          SQL
+        end
       end
 
       let(:primary_key_sql) do
@@ -473,13 +528,23 @@ RSpec.describe ActiveRecord::ConnectionAdapters::PostgreSQLAdapter do
 
   describe "#detach_partition" do
     let(:create_table_sql) do
-      <<-SQL
-        CREATE TABLE #{child_table_name} (
-          custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
-          created_at timestamp without time zone NOT NULL,
-          updated_at timestamp without time zone NOT NULL
-        );
-      SQL
+      if ActiveRecord::Base.connection.postgresql_version >= 180000
+        <<-SQL
+          CREATE TABLE #{child_table_name} (
+            custom_id uuid DEFAULT gen_random_uuid() CONSTRAINT #{table_name}_custom_id_not_null NOT NULL,
+            created_at timestamp without time zone CONSTRAINT #{table_name}_created_at_not_null NOT NULL,
+            updated_at timestamp without time zone CONSTRAINT #{table_name}_updated_at_not_null NOT NULL
+          );
+        SQL
+      else
+        <<-SQL
+          CREATE TABLE #{child_table_name} (
+            custom_id uuid DEFAULT gen_random_uuid() NOT NULL,
+            created_at timestamp without time zone NOT NULL,
+            updated_at timestamp without time zone NOT NULL
+          );
+        SQL
+      end
     end
 
     subject do
