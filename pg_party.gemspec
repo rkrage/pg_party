@@ -23,14 +23,16 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "activerecord", ">= 7.2", "< 8.2"
-  spec.add_runtime_dependency "parallel", "~> 1.0"
+  spec.add_runtime_dependency "parallel", ">= 1.0", "< 3.0"
 
   spec.add_development_dependency "appraisal", "~> 2.2"
   spec.add_development_dependency "byebug", "~> 11.0"
   spec.add_development_dependency "combustion", "~> 1.3"
   spec.add_development_dependency "nokogiri", ">= 1.10.4", "< 2.0"
+  spec.add_development_dependency "ostruct"
   spec.add_development_dependency "pry-byebug", "~> 3.7"
   spec.add_development_dependency "rake", "~> 12.3"
+  spec.add_development_dependency "readline"
   spec.add_development_dependency "rspec-its", "~> 1.3"
   spec.add_development_dependency "rspec-rails", "~> 6.0"
   spec.add_development_dependency "rspec_junit_formatter", "~> 0.4"
