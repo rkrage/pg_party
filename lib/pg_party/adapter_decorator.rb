@@ -183,6 +183,7 @@ module PgParty
       modified_options      = options.except(:id, :primary_key, :template, :create_with_primary_key)
       template              = options.fetch(:template, PgParty.config.create_template_tables)
       id                    = options.fetch(:id, :bigserial)
+      default               = options.fetch(:default, "gen_random_uuid()")
       primary_key           = options.fetch(:primary_key) { calculate_primary_key(table_name) }
       create_with_pks       = options.fetch(
                                 :create_with_primary_key,
@@ -202,7 +203,7 @@ module PgParty
 
       migration_or_adapter(blk).create_table(table_name, **modified_options) do |td|
         if !modified_options[:id] && id == :uuid
-          td.column(primary_key, id, null: false, default: "gen_random_uuid()")
+          td.column(primary_key, id, null: false, default: default)
         elsif !modified_options[:id] && id
           td.column(primary_key, id, null: false)
         end
