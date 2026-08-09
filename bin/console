@@ -4,6 +4,7 @@
 
 ENV["RAILS_ENV"] ||= "development"
 
+require "logger"
 require "bundler/setup"
 require "combustion"
 

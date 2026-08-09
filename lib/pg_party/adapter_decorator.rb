@@ -149,7 +149,7 @@ module PgParty
               '`disable_ddl_transaction!` and break out this operation into its own migration.'
       end
 
-      index_name, index_type, index_columns, index_options, algorithm, using = extract_index_options(
+      index_name, index_type, index_columns, index_options, algorithm, using, if_not_exists = extract_index_options(
         add_index_options(table_name, column_name, **options)
       )
 
@@ -165,6 +165,7 @@ module PgParty
         index_options: index_options,
         algorithm: algorithm,
         using: using,
+        if_not_exists: if_not_exists,
         in_threads: in_threads
       )
     end
@@ -258,14 +259,14 @@ module PgParty
     end
 
     def recursive_add_index(table_name:, index_name:, index_type:, index_columns:, index_options:, using:, algorithm:,
-                            in_threads: nil, _parent_index_name: nil, _created_index_names: [])
+                            if_not_exists: nil, in_threads: nil, _parent_index_name: nil, _created_index_names: [])
       partitions = partitions_for_table_name(table_name, include_subpartitions: false)
       updated_name = _created_index_names.empty? ? index_name : generate_index_name(index_name, table_name)
 
       # If this is a partitioned table, add index ONLY on this table.
       if table_partitioned?(table_name)
         add_index_only(table_name, type: index_type, name: updated_name, using: using, columns: index_columns,
-                       options: index_options)
+                       options: index_options, if_not_exists: if_not_exists)
         _created_index_names << updated_name
 
         parallel_map(partitions, in_threads: in_threads) do |partition_name|
@@ -277,6 +278,7 @@ module PgParty
             index_options: index_options,
             using: using,
             algorithm: algorithm,
+            if_not_exists: if_not_exists,
             _parent_index_name: updated_name,
             _created_index_names: _created_index_names
           )
@@ -284,7 +286,7 @@ module PgParty
       else
         _created_index_names << updated_name # Track as created before execution of concurrent index command
         add_index_from_options(table_name, name: updated_name, type: index_type, algorithm: algorithm, using: using,
-                               columns: index_columns, options: index_options)
+                              if_not_exists: if_not_exists, columns: index_columns, options: index_options)
       end
 
       attach_child_index(updated_name, _parent_index_name) if _parent_index_name
@@ -294,7 +296,8 @@ module PgParty
       raise 'index creation failed - an index was marked invalid'
     rescue => e
       # Clean up any indexes created so this command can be retried later
-      drop_indices_if_exist(_created_index_names)
+      # If if_not_exists is specified then it is fine to resume where we left off
+      drop_indices_if_exist(_created_index_names) unless if_not_exists
       raise e
     end
 
@@ -304,15 +307,15 @@ module PgParty
       execute "ALTER INDEX #{quote_column_name(parent)} ATTACH PARTITION #{quote_column_name(child)}"
     end
 
-    def add_index_only(table_name, type:, name:, using:, columns:, options:)
+    def add_index_only(table_name, type:, name:, using:, columns:, options:, if_not_exists: nil)
       return unless postgres_major_version >= 11
 
-      execute "CREATE #{type} INDEX #{quote_column_name(name)} ON ONLY "\
+      execute "CREATE #{type} INDEX#{if_not_exists} #{quote_column_name(name)} ON ONLY "\
               "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
     end
 
-    def add_index_from_options(table_name, name:, type:, algorithm:, using:, columns:, options:)
-      execute "CREATE #{type} INDEX #{algorithm} #{quote_column_name(name)} ON "\
+    def add_index_from_options(table_name, name:, type:, algorithm:, using:, columns:, options:, if_not_exists: nil)
+      execute "CREATE #{type} INDEX #{algorithm}#{if_not_exists} #{quote_column_name(name)} ON "\
               "#{quote_table_name(table_name)} #{using} (#{columns})#{options}"
     end
 
@@ -333,7 +336,8 @@ module PgParty
         index_columns,
         index_definition.where ? " WHERE #{index_definition.where}" : nil,
         add_index_options_result.second, # algorithm option
-        index_definition.using ? "USING #{index_definition.using}" : nil
+        index_definition.using ? "USING #{index_definition.using}" : nil,
+        add_index_options_result.third ? ' IF NOT EXISTS' : nil
       ]
     end
 
